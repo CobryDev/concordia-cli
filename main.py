@@ -1,15 +1,20 @@
 import click
 
+from initialization import run_initialization
 
-@click.command()
-@click.option('--count', default=1, help='Number of greetings.')
-@click.option('--name', prompt='Your name',
-              help='The person to greet.')
-def hello(count, name):
-    """Simple program that greets NAME for a total of COUNT times."""
-    for x in range(count):
-        click.echo(f"Hello {name}!")
+
+@click.group()
+def cli():
+    """Concordia CLI - Generate LookML from your data warehouse."""
+    pass
+
+
+@cli.command()
+@click.option('--force', is_flag=True, help='Overwrite existing concordia.yaml file')
+def init(force):
+    """Initialize a new concordia.yaml configuration file."""
+    run_initialization(force)
 
 
 if __name__ == '__main__':
-    hello()
+    cli()
