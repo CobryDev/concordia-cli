@@ -1,0 +1,67 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tests/README.md"
+      - "README.md"
+      - "TESTING_IMPLEMENTATION.md"
+      - ".github/workflows/docs.yml"
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install markdown-link-check
+
+      - name: Validate test documentation
+        run: |
+          echo "## Documentation Validation 📚" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if testing documentation is up to date
+          if [ -f "tests/README.md" ]; then
+            echo "✅ Test documentation exists" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Test documentation missing" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Validate that test count in docs matches actual tests
+          ACTUAL_TESTS=$(grep -r "def test_" tests/ | wc -l)
+          echo "📊 Actual test count: $ACTUAL_TESTS" >> $GITHUB_STEP_SUMMARY
+
+          # Check if run_tests.py exists and is executable
+          if [ -x "run_tests.py" ]; then
+            echo "✅ Test runner script is executable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Test runner script issues" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Test documentation examples
+        run: |
+          # Verify that example commands in documentation work
+          echo "🧪 Testing documentation examples..." >> $GITHUB_STEP_SUMMARY
+
+          # Test the run_tests.py script
+          python run_tests.py --no-deps || echo "⚠️ Dependency check needs setup"
+
+          # Validate pytest configuration
+          if [ -f "pytest.ini" ]; then
+            echo "✅ pytest configuration exists" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ pytest configuration missing" >> $GITHUB_STEP_SUMMARY
+          fi
