@@ -11,7 +11,7 @@ def find_file_in_tree(filename: str, start_path: str = ".") -> Optional[str]:
     Search for a file recursively starting from start_path.
     Returns the relative path to the directory containing the file, or None if not found.
     """
-    start_path = Path(start_path).resolve()
+    start_path = str(Path(start_path).resolve())
 
     # Search in current directory and all subdirectories
     for root, dirs, files in os.walk(start_path):
@@ -172,3 +172,4 @@ def run_initialization(force: bool = False):
 
     except Exception as e:
         click.echo(f"Error during initialization: {e}")
+        raise click.ClickException(f"Initialization failed: {e}")

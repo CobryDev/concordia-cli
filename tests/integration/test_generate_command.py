@@ -13,6 +13,7 @@ import yaml
 from pathlib import Path
 from unittest.mock import patch, Mock, MagicMock
 from click.testing import CliRunner
+import click
 
 from main import cli
 from actions.looker.generate import generate_lookml
@@ -216,7 +217,7 @@ class TestGenerateCommandIntegration:
 
         result = self.runner.invoke(cli, ['looker', 'generate'])
 
-        assert result.exit_code == 0
+        assert result.exit_code != 0
         assert 'Configuration error' in result.output
 
     @patch('actions.looker.generate.BigQueryClient')
@@ -280,8 +281,9 @@ class TestGenerateCommandIntegration:
 
         result = self.runner.invoke(cli, ['looker', 'generate'])
 
-        # Should handle error gracefully
-        assert result.exit_code == 0
+        # Should handle error gracefully by catching it and reporting failure
+        assert result.exit_code != 0
+        assert "❌ Unexpected error" in result.output
 
         # Restore permissions for cleanup
         if os.name != 'nt':
@@ -302,7 +304,7 @@ class TestGenerateCommandIntegration:
         with patch('click.confirm', return_value=True):
             result = self.runner.invoke(cli, ['looker', 'generate'])
 
-        assert result.exit_code == 0
+        assert result.exit_code != 0
         assert 'Unexpected error' in result.output
 
     def test_generate_command_invalid_yaml_config(self):
@@ -313,7 +315,7 @@ class TestGenerateCommandIntegration:
 
         result = self.runner.invoke(cli, ['looker', 'generate'])
 
-        assert result.exit_code == 0
+        assert result.exit_code != 0
         assert 'Configuration error' in result.output
 
     @patch('actions.looker.generate.BigQueryClient')
@@ -382,12 +384,14 @@ class TestGenerateFunctionUnit:
         runner = CliRunner()
 
         with patch('actions.looker.generate.click.echo') as mock_echo:
-            generate_lookml()
+            with pytest.raises(click.ClickException) as exc_info:
+                generate_lookml()
 
             # Check that configuration error was handled
             mock_echo.assert_called()
             args = [call.args[0] for call in mock_echo.call_args_list]
             assert any('Configuration error' in arg for arg in args)
+            assert 'Configuration error' in str(exc_info.value)
 
     @patch('actions.looker.generate.load_config')
     @patch('actions.looker.generate.get_bigquery_credentials')
@@ -398,10 +402,12 @@ class TestGenerateFunctionUnit:
 
         with patch('actions.looker.generate.click.echo') as mock_echo, \
                 patch('actions.looker.generate.click.confirm', return_value=False):
-            generate_lookml()
+            with pytest.raises(click.ClickException) as exc_info:
+                generate_lookml()
 
             args = [call.args[0] for call in mock_echo.call_args_list]
             assert any('Unexpected error' in arg for arg in args)
+            assert 'Unexpected error' in str(exc_info.value)
 
     @patch('actions.looker.generate.load_config')
     @patch('actions.looker.generate.get_bigquery_credentials')

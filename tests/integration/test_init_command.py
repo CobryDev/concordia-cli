@@ -156,7 +156,7 @@ class TestInitCommandIntegration:
             with patch('click.confirm', return_value=True):
                 result = self.runner.invoke(cli, ['init'])
 
-        assert result.exit_code == 0
+        assert result.exit_code != 0
         assert 'Error during initialization' in result.output
 
     def test_gitignore_creation_new_file(self):
@@ -315,7 +315,7 @@ class TestInitCommandErrorScenarios:
             with patch('click.confirm', return_value=True):
                 result = self.runner.invoke(cli, ['init'])
 
-        assert result.exit_code == 0
+        assert result.exit_code != 0
         assert 'Error during initialization' in result.output
 
     def test_init_command_gitignore_permission_error(self):
@@ -326,8 +326,8 @@ class TestInitCommandErrorScenarios:
         with patch('click.confirm', return_value=True):
             result = self.runner.invoke(cli, ['init'])
 
-        # Command should still complete despite gitignore error
-        assert result.exit_code == 0
+        # Command should fail due to gitignore error
+        assert result.exit_code != 0
 
     @pytest.mark.slow
     def test_init_command_with_deep_directory_structure(self):
@@ -352,8 +352,10 @@ class TestInitCommandErrorScenarios:
             with patch('click.confirm', return_value=True):
                 result = self.runner.invoke(cli, ['init'])
 
-            # Should handle permission error gracefully
-            assert result.exit_code == 0
+            # Should handle permission error gracefully by reporting failure
+            assert result.exit_code != 0
+            # The permission error might manifest differently depending on when it occurs
+            assert "No Dataform project found" in result.output or "Error during initialization" in result.output
 
             # Restore permissions for cleanup
             os.chmod(self.test_dir, 0o755)
