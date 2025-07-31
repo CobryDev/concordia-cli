@@ -80,7 +80,7 @@ connection:
 # Looker project configuration
 looker:
   project_path: './looker_project/' # Path to your local Looker git repo
-  views_path: 'views/generated/' # Subdirectory for generated views
+  views_path: 'views/base/base.view.lkml' # Path for generated base view
   connection: 'bigquery-prod' # The name of your Looker connection
 
 # Rules for how models and fields are generated
@@ -129,7 +129,7 @@ datasets: - 'marts' - 'finance'
 
 looker:
 project_path: './looker_project/' # Path to your local Looker git repo
-views_path: 'views/generated/' # Subdirectory for generated views
+views_path: 'views/base/base.view.lkml' # Path for generated base view
 connection: 'bigquery-prod' # The name of your Looker connection
 
 # Rules for how models and fields are generated

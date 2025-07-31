@@ -3,7 +3,7 @@ import click
 from pathlib import Path
 from typing import Optional
 
-from config import generate_concordia_config, write_yaml_with_comments
+from .config import generate_concordia_config, write_yaml_with_comments
 
 
 def find_file_in_tree(filename: str, start_path: str = ".") -> Optional[str]:
@@ -56,13 +56,14 @@ def scan_for_projects():
     """Scan for Dataform and Looker projects and return their paths."""
     click.echo("🔍 Scanning for Dataform and Looker projects...")
 
-    # Search for Dataform project (workflow_settings.yaml)
-    dataform_path = find_file_in_tree('workflow_settings.yaml')
-    if dataform_path:
+    # Search for Dataform project (workflow_settings.yaml) in root directory only
+    dataform_path = None
+    if os.path.exists('workflow_settings.yaml'):
+        dataform_path = '.'  # Root directory
         click.echo(f"✅ Found Dataform project in: {dataform_path}")
     else:
         click.echo(
-            "❌ No Dataform project found (workflow_settings.yaml not found)")
+            "❌ No Dataform project found (workflow_settings.yaml not found in root)")
 
     # Search for Looker project (manifest.lkml)
     looker_path = find_file_in_tree('manifest.lkml')

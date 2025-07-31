@@ -32,7 +32,7 @@ def generate_concordia_config(dataform_path: Optional[str], looker_path: Optiona
         '# Looker project configuration': None,
         'looker': {
             'project_path': f'./{looker_path}/' if looker_path else './path/to/your/looker_project/',
-            'views_path': 'views/generated/',
+            'views_path': 'views/base/base.view.lkml',
             'connection': 'your-bigquery-connection'  # This is the Looker connection name
         },
 
