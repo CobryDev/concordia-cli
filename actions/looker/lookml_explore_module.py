@@ -7,6 +7,7 @@ It handles explore definitions, joins between views, and explore-level configura
 
 from typing import List, Dict, Any, Optional
 import click
+from .field_utils import FieldIdentifier
 
 
 class LookMLExploreGenerator:
@@ -22,6 +23,7 @@ class LookMLExploreGenerator:
         self.config = config
         self.model_rules = config['model_rules']
         self.looker_config = config['looker']
+        self.field_identifier = FieldIdentifier(self.model_rules)
 
     def generate_explores_for_views(self, tables_metadata: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -157,16 +159,9 @@ class LookMLExploreGenerator:
 
         # Try to infer table name from foreign key name using configured suffixes
         # Example: user_fk -> users table, customer_fk -> customers table
-        fk_suffix = self.model_rules.get(
-            'naming_conventions', {}).get('fk_suffix', '_fk')
-
-        if fk_name.endswith(fk_suffix):
-            # Remove fk_suffix and add s
-            potential_table = fk_name[:-len(fk_suffix)] + 's'
-        # Keep backward compatibility with _id suffix
-        elif fk_name.endswith('_id'):
-            potential_table = fk_name[:-3] + 's'  # Remove _id and add s
-        else:
+        potential_table = self.field_identifier.infer_table_name_from_foreign_key(
+            fk_name)
+        if not potential_table:
             return None
 
         # Look for matching table
@@ -399,18 +394,12 @@ class LookMLExploreGenerator:
 
     def _is_foreign_key(self, field_name: str) -> bool:
         """Check if a field is a foreign key based on naming conventions."""
-        fk_suffix = self.model_rules['naming_conventions'].get(
-            'fk_suffix', '_fk')
-        return field_name.endswith(fk_suffix)
+        return self.field_identifier.is_foreign_key(field_name)
 
     def _is_primary_key(self, field_name: str) -> bool:
         """Check if a field is a primary key based on naming conventions."""
-        pk_suffix = self.model_rules['naming_conventions'].get(
-            'pk_suffix', '_pk')
-        return field_name.endswith(pk_suffix) or field_name == 'id'
+        return self.field_identifier.is_primary_key(field_name)
 
     def _should_hide_field(self, field_name: str) -> bool:
         """Check if a field should be hidden based on configuration."""
-        hide_suffixes = self.model_rules['defaults'].get(
-            'hide_fields_by_suffix', [])
-        return any(field_name.endswith(suffix) for suffix in hide_suffixes)
+        return self.field_identifier.should_hide_field(field_name)

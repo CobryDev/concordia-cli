@@ -5,6 +5,7 @@ from google.cloud import bigquery
 from google.api_core.exceptions import NotFound, PermissionDenied
 from .config_loader import ConfigurationError
 from .lookml_base_dict import MetadataExtractor
+from .field_utils import FieldIdentifier
 
 
 class ErrorTracker:
@@ -171,6 +172,7 @@ class BigQueryClient:
         self.credentials = credentials
         self.config = config or {}
         self.model_rules = self.config.get('model_rules', {})
+        self.field_identifier = FieldIdentifier(self.model_rules)
         self.client = bigquery.Client(
             credentials=credentials,
             project=project_id,
@@ -329,8 +331,7 @@ class BigQueryClient:
         """Infer the referenced table from a foreign key column name."""
         # Remove configured suffixes
         base_name = column_name
-        fk_suffix = self.model_rules.get(
-            'naming_conventions', {}).get('fk_suffix', '_fk')
+        fk_suffix = self.field_identifier.get_foreign_key_suffix()
 
         if base_name.endswith(fk_suffix):
             base_name = base_name[:-len(fk_suffix)]
@@ -401,12 +402,8 @@ class BigQueryClient:
 
     def _is_foreign_key(self, field_name: str) -> bool:
         """Check if a field is a foreign key based on naming conventions."""
-        fk_suffix = self.model_rules.get('naming_conventions', {}).get(
-            'fk_suffix', '_fk')
-        return field_name.endswith(fk_suffix)
+        return self.field_identifier.is_foreign_key(field_name)
 
     def _is_primary_key(self, field_name: str) -> bool:
         """Check if a field is a primary key based on naming conventions."""
-        pk_suffix = self.model_rules.get('naming_conventions', {}).get(
-            'pk_suffix', '_pk')
-        return field_name.endswith(pk_suffix)
+        return self.field_identifier.is_primary_key(field_name)

@@ -7,6 +7,7 @@ It handles dimensions, dimension groups, and view-level configurations.
 
 from typing import List, Dict, Any, Optional
 import click
+from .field_utils import FieldIdentifier
 
 
 class LookMLViewGenerator:
@@ -23,6 +24,7 @@ class LookMLViewGenerator:
         self.model_rules = config['model_rules']
         self.looker_config = config['looker']
         self.connection_name = self.looker_config['connection']
+        self.field_identifier = FieldIdentifier(self.model_rules)
 
     def generate_view_dict(self, table_metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -216,21 +218,15 @@ class LookMLViewGenerator:
 
     def _should_hide_field(self, field_name: str) -> bool:
         """Check if a field should be hidden based on configuration."""
-        hide_suffixes = self.model_rules['defaults'].get(
-            'hide_fields_by_suffix', [])
-        return any(field_name.endswith(suffix) for suffix in hide_suffixes)
+        return self.field_identifier.should_hide_field(field_name)
 
     def _is_primary_key(self, field_name: str) -> bool:
         """Check if a field is a primary key based on naming conventions."""
-        pk_suffix = self.model_rules['naming_conventions'].get(
-            'pk_suffix', '_pk')
-        return field_name.endswith(pk_suffix)
+        return self.field_identifier.is_primary_key(field_name)
 
     def _is_foreign_key(self, field_name: str) -> bool:
         """Check if a field is a foreign key based on naming conventions."""
-        fk_suffix = self.model_rules['naming_conventions'].get(
-            'fk_suffix', '_fk')
-        return field_name.endswith(fk_suffix)
+        return self.field_identifier.is_foreign_key(field_name)
 
 
 class LookMLDimensionGenerator:
