@@ -13,6 +13,8 @@ import argparse
 from pathlib import Path
 
 # Handle Windows encoding issues with Unicode emojis
+
+
 def setup_encoding():
     """Set up proper encoding for cross-platform compatibility."""
     try:
@@ -24,6 +26,7 @@ def setup_encoding():
     except (AttributeError, UnicodeError):
         # Fallback for older Python versions or encoding issues
         pass
+
 
 def safe_print(message):
     """Print message with fallback for encoding issues."""
@@ -50,6 +53,7 @@ def safe_print(message):
             safe_message = safe_message.replace(emoji, replacement)
         print(safe_message)
 
+
 # Initialize encoding setup
 setup_encoding()
 
@@ -67,7 +71,8 @@ def run_command(cmd, description):
         safe_print(f"❌ {description} failed with exit code {e.returncode}")
         return False
     except FileNotFoundError:
-        safe_print(f"❌ Command not found. Make sure pytest is installed: pip install -r requirements.txt")
+        safe_print(
+            f"❌ Command not found. Make sure pytest is installed: pip install -r requirements.txt")
         return False
 
 
