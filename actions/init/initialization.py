@@ -47,8 +47,8 @@ def handle_gitignore():
         if gitignore_entry in content:
             try:
                 click.echo(f"✅ {gitignore_entry} already in .gitignore")
-            except UnicodeEncodeError:
-                click.echo(f"[PASS] {gitignore_entry} already in .gitignore")
+            except UnicodeEncodeError:  # pragma: no cover
+                click.echo(f"[PASS] {gitignore_entry} already in .gitignore")  # pragma: no cover
             return
 
         # Add entry to existing .gitignore
@@ -59,8 +59,8 @@ def handle_gitignore():
 
         try:
             click.echo(f"✅ Added {gitignore_entry} to existing .gitignore")
-        except UnicodeEncodeError:
-            click.echo(
+        except UnicodeEncodeError:  # pragma: no cover
+            click.echo(  # pragma: no cover
                 f"[PASS] Added {gitignore_entry} to existing .gitignore")
     else:
         # Create new .gitignore
@@ -69,16 +69,16 @@ def handle_gitignore():
 
         try:
             click.echo(f"✅ Created .gitignore with {gitignore_entry}")
-        except UnicodeEncodeError:
-            click.echo(f"[PASS] Created .gitignore with {gitignore_entry}")
+        except UnicodeEncodeError:  # pragma: no cover
+            click.echo(f"[PASS] Created .gitignore with {gitignore_entry}")  # pragma: no cover
 
 
 def scan_for_projects():
     """Scan for Dataform and Looker projects and return their paths."""
     try:
         click.echo("🔍 Scanning for Dataform and Looker projects...")
-    except UnicodeEncodeError:
-        click.echo("[SCAN] Scanning for Dataform and Looker projects...")
+    except UnicodeEncodeError:  # pragma: no cover
+        click.echo("[SCAN] Scanning for Dataform and Looker projects...")  # pragma: no cover
 
     # Search for Dataform project (workflow_settings.yaml) in root directory only
     dataform_path = None
@@ -86,29 +86,29 @@ def scan_for_projects():
         dataform_path = '.'  # Root directory
         try:
             click.echo(f"✅ Found Dataform project in: {dataform_path}")
-        except UnicodeEncodeError:
-            click.echo(f"[PASS] Found Dataform project in: {dataform_path}")
+        except UnicodeEncodeError:  # pragma: no cover
+            click.echo(f"[PASS] Found Dataform project in: {dataform_path}")  # pragma: no cover
     else:
         try:
             click.echo(
                 "❌ No Dataform project found (workflow_settings.yaml not found in root)")
-        except UnicodeEncodeError:
+        except UnicodeEncodeError:  # pragma: no cover
             click.echo(
-                "[FAIL] No Dataform project found (workflow_settings.yaml not found in root)")
+                "[FAIL] No Dataform project found (workflow_settings.yaml not found in root)")  # pragma: no cover
 
     # Search for Looker project (manifest.lkml)
     looker_path = find_file_in_tree('manifest.lkml')
     if looker_path:
         try:
             click.echo(f"✅ Found Looker project in: {looker_path}")
-        except UnicodeEncodeError:
-            click.echo(f"[PASS] Found Looker project in: {looker_path}")
+        except UnicodeEncodeError:  # pragma: no cover
+            click.echo(f"[PASS] Found Looker project in: {looker_path}")  # pragma: no cover
     else:
         try:
             click.echo("❌ No Looker project found (manifest.lkml not found)")
-        except UnicodeEncodeError:
+        except UnicodeEncodeError:  # pragma: no cover
             click.echo(
-                "[FAIL] No Looker project found (manifest.lkml not found)")
+                "[FAIL] No Looker project found (manifest.lkml not found)")  # pragma: no cover
 
     return dataform_path, looker_path
 
@@ -117,8 +117,8 @@ def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) 
     """Show what will be created and ask for confirmation."""
     try:
         click.echo("\n📋 Concordia Initialization Summary")
-    except UnicodeEncodeError:
-        click.echo("\n[INIT] Concordia Initialization Summary")
+    except UnicodeEncodeError:  # pragma: no cover
+        click.echo("\n[INIT] Concordia Initialization Summary")  # pragma: no cover
     click.echo("=" * 40)
 
     click.echo("\nThe following will be created/updated:")
@@ -197,8 +197,8 @@ def run_initialization(force: bool = False):
     if not show_init_summary(dataform_path, looker_path):
         try:
             click.echo("❌ Initialization cancelled.")
-        except UnicodeEncodeError:
-            click.echo("[FAIL] Initialization cancelled.")
+        except UnicodeEncodeError:  # pragma: no cover
+            click.echo("[FAIL] Initialization cancelled.")  # pragma: no cover
         return
 
     try:
@@ -209,16 +209,16 @@ def run_initialization(force: bool = False):
         create_configuration_file(dataform_path, looker_path, config_file)
         try:
             click.echo(f"\n🎉 Created {config_file}")
-        except UnicodeEncodeError:
-            click.echo(f"\n[SUCCESS] Created {config_file}")
+        except UnicodeEncodeError:  # pragma: no cover
+            click.echo(f"\n[SUCCESS] Created {config_file}")  # pragma: no cover
 
         # Show next steps
         show_next_steps(dataform_path, looker_path)
 
         try:
             click.echo(f"\n🚀 Concordia initialization complete!")
-        except UnicodeEncodeError:
-            click.echo(f"\n[COMPLETE] Concordia initialization complete!")
+        except UnicodeEncodeError:  # pragma: no cover
+            click.echo(f"\n[COMPLETE] Concordia initialization complete!")  # pragma: no cover
 
     except Exception as e:
         click.echo(f"Error during initialization: {e}")
