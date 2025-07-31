@@ -202,12 +202,13 @@ class TestGenerateCommandIntegration:
 
         # Check file contents contain expected LookML
         views_content = views_file.read_text()
-        assert 'view: users' in views_content
-        assert 'view: orders' in views_content
+        assert 'users:' in views_content  # Updated for dict format
+        assert 'orders:' in views_content  # Updated for dict format
         assert 'sql_table_name:' in views_content
 
         explores_content = explores_file.read_text()
-        assert 'explore: users' in explores_content or 'explore: orders' in explores_content
+        # Updated for dict format
+        assert 'users:' in explores_content or 'orders:' in explores_content
 
     def test_generate_command_missing_config_file(self):
         """Test generate command when concordia.yaml is missing."""
@@ -395,7 +396,8 @@ class TestGenerateFunctionUnit:
         mock_load_config.return_value = {'connection': {'datasets': ['test']}}
         mock_creds.side_effect = Exception("Credentials error")
 
-        with patch('actions.looker.generate.click.echo') as mock_echo:
+        with patch('actions.looker.generate.click.echo') as mock_echo, \
+                patch('actions.looker.generate.click.confirm', return_value=False):
             generate_lookml()
 
             args = [call.args[0] for call in mock_echo.call_args_list]

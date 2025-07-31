@@ -310,7 +310,7 @@ class TestInitCommandErrorScenarios:
 
     def test_init_command_yaml_generation_error(self):
         """Test init command when YAML generation fails."""
-        with patch('actions.init.config.generate_concordia_config',
+        with patch('actions.init.initialization.generate_concordia_config',
                    side_effect=Exception("YAML error")):
             with patch('click.confirm', return_value=True):
                 result = self.runner.invoke(cli, ['init'])
