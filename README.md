@@ -1,8 +1,6 @@
 Concordia
 
-<p align="center">
-<img src="https://placehold.co/600x300/4F46E5/FFFFFF?text=Concordia&font=roboto-serif" alt="Concordia Logo"/>
-</p>
+![concordia-logo](/docs/logo.jpg)
 
 <p align="center">
 <em>Bring harmony to your data stack.</em>
