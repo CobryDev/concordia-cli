@@ -11,3 +11,4 @@ __pycache__/
 *repomix*
 .df-credentials.json
 *monorepo*
+/monorepo

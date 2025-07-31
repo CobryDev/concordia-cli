@@ -89,7 +89,7 @@ def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) 
         if dataform_path:
             click.echo(f"• Dataform project: {dataform_path}")
             click.echo(
-                "  → Will set dataform_credentials_file to './dataform.json'")
+                "  → Will set dataform_credentials_file to './.df-credentials.json'")
         if looker_path:
             click.echo(f"• Looker project: {looker_path}")
             click.echo(f"  → Will set project_path to './{looker_path}/'")

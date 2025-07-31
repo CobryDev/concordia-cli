@@ -64,7 +64,7 @@ All configuration is handled in the concordia.yml file.
 # BigQuery Connection Details
 connection:
   # (Recommended) Point to your Dataform credentials file.
-  dataform_credentials_file: './dataform.json'
+  dataform_credentials_file: './.df-credentials.json'
 
   # If the file above is not found, Concordia falls back to Google ADC.
 
@@ -112,7 +112,7 @@ connection:
 
 # (Recommended) Point to your Dataform credentials file.
 
-dataform_credentials_file: './dataform.json'
+dataform_credentials_file: './.df-credentials.json'
 
 # If the file above is not found, Concordia falls back to Google ADC.
 
@@ -129,7 +129,8 @@ datasets: - 'marts' - 'finance'
 
 looker:
 project_path: './looker_project/' # Path to your local Looker git repo
-views_path: 'views/base/base.view.lkml' # Path for generated base view
+views_path: 'views/generated_views.view.lkml' # File path where generated views will be written
+explores_path: 'views/generated_explores.view.lkml' # File path where generated explores will be written
 connection: 'bigquery-prod' # The name of your Looker connection
 
 # Rules for how models and fields are generated

@@ -11,7 +11,7 @@ def generate_concordia_config(dataform_path: Optional[str], looker_path: Optiona
             '# Method 1 (Preferred): Point to a Dataform credentials JSON file.': None,
             '# Concordia will parse the \'credentials\' key from this file to authenticate.': None,
             '# The path should be relative to this config file.': None,
-            'dataform_credentials_file': './dataform.json' if dataform_path else 'path/to/your/dataform.json',
+            'dataform_credentials_file': './.df-credentials.json' if dataform_path else 'path/to/your/.df-credentials.json',
 
             '# Method 2 (Fallback): If \'dataform_credentials_file\' is omitted or invalid,': None,
             '# Concordia will automatically use Google Application Default Credentials (ADC).': None,
@@ -32,7 +32,8 @@ def generate_concordia_config(dataform_path: Optional[str], looker_path: Optiona
         '# Looker project configuration': None,
         'looker': {
             'project_path': f'./{looker_path}/' if looker_path else './path/to/your/looker_project/',
-            'views_path': 'views/base/base.view.lkml',
+            'views_path': 'views/generated_views.view.lkml',
+            'explores_path': 'views/generated_explores.view.lkml',
             'connection': 'your-bigquery-connection'  # This is the Looker connection name
         },
 
@@ -156,7 +157,10 @@ def write_yaml_with_comments(data: Dict[str, Any], file_path: str):
     yaml_content.append('looker:')
     yaml_content.append(
         f'  project_path: \'{data["looker"]["project_path"]}\'')
-    yaml_content.append(f'  views_path: \'{data["looker"]["views_path"]}\'')
+    yaml_content.append(
+        f'  views_path: \'{data["looker"]["views_path"]}\' # File path where generated views will be written')
+    yaml_content.append(
+        f'  explores_path: \'{data["looker"]["explores_path"]}\' # File path where generated explores will be written')
     yaml_content.append(
         f'  connection: \'{data["looker"]["connection"]}\' # This is the Looker connection name')
     yaml_content.append('')
