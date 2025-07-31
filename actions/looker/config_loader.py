@@ -119,9 +119,32 @@ def get_bigquery_credentials(config: Dict[str, Any]) -> tuple:
         )
 
 
+def _parse_dataform_config(creds_path: str) -> Dict[str, Any]:
+    """
+    Parse a Dataform credentials file and extract configuration.
+
+    Args:
+        creds_path: Path to the Dataform credentials JSON file
+
+    Returns:
+        Dictionary containing parsed configuration
+
+    Raises:
+        ConfigurationError: If file cannot be parsed
+    """
+    with open(creds_path, 'r') as f:
+        dataform_config = json.load(f)
+
+    return dataform_config
+
+
 def _load_dataform_credentials(creds_path: str) -> tuple:
     """
     Load credentials from a Dataform credentials file.
+
+    Supports two formats:
+    1. Service account format: {"credentials": {...service account info...}}
+    2. Simple format: {"projectId": "...", "location": "..."}
 
     Args:
         creds_path: Path to the Dataform credentials JSON file
@@ -129,32 +152,73 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
     Returns:
         Tuple of (credentials, project_id)
     """
-    with open(creds_path, 'r') as f:
-        dataform_config = json.load(f)
+    dataform_config = _parse_dataform_config(creds_path)
 
-    # Extract the credentials section from Dataform config
-    if 'credentials' not in dataform_config:
+    # Format 1: Service account credentials with nested 'credentials' key
+    if 'credentials' in dataform_config:
+        creds_data = dataform_config['credentials']
+
+        # Create service account credentials
+        credentials = service_account.Credentials.from_service_account_info(
+            creds_data)
+
+        # Extract project ID
+        project_id = creds_data.get('project_id')
+        if not project_id:
+            raise ConfigurationError(
+                "No 'project_id' found in Dataform credentials")
+
+        return credentials, project_id
+
+    # Format 2: Simple format with projectId and location at root level
+    elif 'projectId' in dataform_config:
+        # For simple format, we need to use Application Default Credentials
+        # but extract the project ID from the file
+        project_id = dataform_config['projectId']
+
+        try:
+            # Use Application Default Credentials
+            credentials, _ = default()
+            return credentials, project_id
+        except Exception as e:
+            raise ConfigurationError(
+                f"Failed to load Application Default Credentials: {e}. "
+                "Please run 'gcloud auth application-default login'."
+            )
+
+    else:
         raise ConfigurationError(
-            "No 'credentials' section found in Dataform credentials file")
-
-    creds_data = dataform_config['credentials']
-
-    # Create service account credentials
-    credentials = service_account.Credentials.from_service_account_info(
-        creds_data)
-
-    # Extract project ID
-    project_id = creds_data.get('project_id')
-    if not project_id:
-        raise ConfigurationError(
-            "No 'project_id' found in Dataform credentials")
-
-    return credentials, project_id
+            "Invalid credentials file format. Expected either 'credentials' "
+            "section (service account) or 'projectId' field (simple format)."
+        )
 
 
 def get_bigquery_location(config: Dict[str, Any]) -> Optional[str]:
-    """Get BigQuery location from configuration."""
-    location = config['connection'].get('location')
+    """
+    Get BigQuery location from configuration.
+
+    Checks both the configuration file and the credentials file for location.
+    """
+    connection = config['connection']
+
+    # First, check the config file
+    location = connection.get('location')
     if location and location != 'your-region':
         return location
+
+    # If not found in config, try to get it from the credentials file
+    if 'dataform_credentials_file' in connection:
+        creds_path = connection['dataform_credentials_file']
+        if os.path.exists(creds_path):
+            try:
+                dataform_config = _parse_dataform_config(creds_path)
+                # Check for location in the credentials file
+                creds_location = dataform_config.get('location')
+                if creds_location:
+                    return creds_location
+            except Exception:
+                # If we can't parse the credentials file, just continue
+                # without the location (it's optional)
+                pass
+
     return None
