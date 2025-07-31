@@ -1,201 +1,179 @@
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from typing import Optional, Dict, Any
 
 
-def generate_concordia_config(dataform_path: Optional[str], looker_path: Optional[str]) -> Dict[str, Any]:
-    """Generate the concordia.yaml configuration dictionary."""
+def generate_concordia_config(dataform_path: Optional[str], looker_path: Optional[str]) -> CommentedMap:
+    """Generate the concordia.yaml configuration with comments using ruamel.yaml."""
 
-    config = {
-        '# concordia.yml - Generated Configuration': None,
-        'connection': {
-            '# Method 1 (Preferred): Point to a Dataform credentials JSON file.': None,
-            '# Concordia will parse the \'credentials\' key from this file to authenticate.': None,
-            '# The path should be relative to this config file.': None,
-            'dataform_credentials_file': './.df-credentials.json' if dataform_path else 'path/to/your/.df-credentials.json',
+    # Create the main configuration object
+    config = CommentedMap()
 
-            '# Method 2 (Fallback): If \'dataform_credentials_file\' is omitted or invalid,': None,
-            '# Concordia will automatically use Google Application Default Credentials (ADC).': None,
-            '# This is useful for local development or running in a configured GCP environment.': None,
+    # Add file header comment
+    config.yaml_set_start_comment("concordia.yml - Generated Configuration")
 
-            '# The GCP project ID to target. If not provided here, it will be inferred': None,
-            '# from the credentials file or ADC.': None,
-            'project_id': 'your-gcp-project-id',
+    # Connection section
+    connection = CommentedMap()
+    connection.yaml_set_comment_before_after_key(
+        'dataform_credentials_file',
+        before="""Method 1 (Preferred): Point to a Dataform credentials JSON file.
+Concordia will parse the 'credentials' key from this file to authenticate.
+The path should be relative to this config file."""
+    )
 
-            '# The default location/region for BigQuery jobs. If not provided, it will be': None,
-            '# inferred from the credentials file.': None,
-            'location': 'your-region',  # e.g., 'europe-west2'
+    connection['dataform_credentials_file'] = './.df-credentials.json' if dataform_path else 'path/to/your/.df-credentials.json'
 
-            '# The datasets to scan for tables.': None,
-            'datasets': ['dataset1', 'dataset2']
-        },
+    connection.yaml_set_comment_before_after_key(
+        'project_id',
+        before="""Method 2 (Fallback): If 'dataform_credentials_file' is omitted or invalid,
+Concordia will automatically use Google Application Default Credentials (ADC).
+This is useful for local development or running in a configured GCP environment.
 
-        '# Looker project configuration': None,
-        'looker': {
-            'project_path': f'./{looker_path}/' if looker_path else './path/to/your/looker_project/',
-            'views_path': 'views/generated_views.view.lkml',
-            'explores_path': 'views/generated_explores.view.lkml',
-            'connection': 'your-bigquery-connection'  # This is the Looker connection name
-        },
+The GCP project ID to target. If not provided here, it will be inferred
+from the credentials file or ADC."""
+    )
+    connection['project_id'] = 'your-gcp-project-id'
 
-        '# Rules for how models and fields are generated': None,
-        'model_rules': {
-            '# Define how database column names are interpreted': None,
-            'naming_conventions': {
-                'pk_suffix': '_pk',
-                'fk_suffix': '_fk'
-            },
+    connection.yaml_set_comment_before_after_key(
+        'location',
+        before="""The default location/region for BigQuery jobs. If not provided, it will be
+inferred from the credentials file."""
+    )
+    connection['location'] = 'your-region'  # e.g., 'europe-west2'
 
-            '# Define default behaviors for generated views': None,
-            'defaults': {
-                'measures': ['count'],  # Automatically create a count measure
-                'hide_fields_by_suffix': ['_pk', '_fk']  # Hide PKs and FKs
-            },
+    connection.yaml_set_comment_before_after_key(
+        'datasets',
+        before="The datasets to scan for tables."
+    )
+    datasets = CommentedSeq(['dataset1', 'dataset2'])
+    connection['datasets'] = datasets
 
-            '# Rules for mapping warehouse data types to LookML types and parameters': None,
-            'type_mapping': [
-                {
-                    'bq_type': 'TIMESTAMP',
-                    'lookml_type': 'dimension_group',
-                    'lookml_params': {
-                        'type': 'time',
-                        'timeframes': '[raw, time, date, week, month, quarter, year]',
-                        'sql': '${TABLE}.%s'
-                    }
-                },
-                {
-                    'bq_type': 'DATE',
-                    'lookml_type': 'dimension_group',
-                    'lookml_params': {
-                        'type': 'time',
-                        'timeframes': '[date, week, month, quarter, year]',
-                        'sql': '${TABLE}.%s'
-                    }
-                },
-                {
-                    'bq_type': 'INTEGER',
-                    'lookml_type': 'dimension',
-                    'lookml_params': {
-                        'type': 'number'
-                    }
-                },
-                {
-                    'bq_type': 'STRING',
-                    'lookml_type': 'dimension',
-                    'lookml_params': {
-                        'type': 'string'
-                    }
-                },
-                {
-                    'bq_type': 'BOOL',
-                    'lookml_type': 'dimension',
-                    'lookml_params': {
-                        'type': 'yesno'
-                    }
-                }
-            ]
-        }
-    }
+    config['connection'] = connection
+    config.yaml_set_comment_before_after_key(
+        'connection', before="BigQuery Connection Details")
+
+    # Looker section
+    looker = CommentedMap()
+    looker['project_path'] = f'./{looker_path}/' if looker_path else './path/to/your/looker_project/'
+    looker['views_path'] = 'views/generated_views.view.lkml'
+    looker['explores_path'] = 'views/generated_explores.view.lkml'
+    looker['connection'] = 'your-bigquery-connection'
+
+    # Add inline comments for looker section
+    looker.yaml_add_eol_comment(
+        'File path where generated views will be written', 'views_path')
+    looker.yaml_add_eol_comment(
+        'File path where generated explores will be written', 'explores_path')
+    looker.yaml_add_eol_comment(
+        'This is the Looker connection name', 'connection')
+
+    config['looker'] = looker
+    config.yaml_set_comment_before_after_key(
+        'looker', before="Looker project configuration")
+
+    # Model rules section
+    model_rules = CommentedMap()
+
+    # Naming conventions
+    naming_conventions = CommentedMap()
+    naming_conventions['pk_suffix'] = '_pk'
+    naming_conventions['fk_suffix'] = '_fk'
+    model_rules['naming_conventions'] = naming_conventions
+    model_rules.yaml_set_comment_before_after_key(
+        'naming_conventions',
+        before="Define how database column names are interpreted"
+    )
+
+    # Defaults
+    defaults = CommentedMap()
+    measures = CommentedSeq(['count'])
+    measures.yaml_add_eol_comment('Automatically create a count measure', 0)
+    defaults['measures'] = measures
+
+    hide_fields = CommentedSeq(['_pk', '_fk'])
+    hide_fields.yaml_add_eol_comment('Hide PKs and FKs', 0)
+    defaults['hide_fields_by_suffix'] = hide_fields
+
+    model_rules['defaults'] = defaults
+    model_rules.yaml_set_comment_before_after_key(
+        'defaults',
+        before="Define default behaviors for generated views"
+    )
+
+    # Type mappings
+    type_mapping = CommentedSeq()
+
+    # TIMESTAMP mapping
+    timestamp_mapping = CommentedMap()
+    timestamp_mapping['bq_type'] = 'TIMESTAMP'
+    timestamp_mapping['lookml_type'] = 'dimension_group'
+    timestamp_params = CommentedMap()
+    timestamp_params['type'] = 'time'
+    timestamp_params['timeframes'] = '[raw, time, date, week, month, quarter, year]'
+    timestamp_params['sql'] = '${TABLE}.%s'
+    timestamp_mapping['lookml_params'] = timestamp_params
+    type_mapping.append(timestamp_mapping)
+
+    # DATE mapping
+    date_mapping = CommentedMap()
+    date_mapping['bq_type'] = 'DATE'
+    date_mapping['lookml_type'] = 'dimension_group'
+    date_params = CommentedMap()
+    date_params['type'] = 'time'
+    date_params['timeframes'] = '[date, week, month, quarter, year]'
+    date_params['sql'] = '${TABLE}.%s'
+    date_mapping['lookml_params'] = date_params
+    type_mapping.append(date_mapping)
+
+    # INTEGER mapping
+    integer_mapping = CommentedMap()
+    integer_mapping['bq_type'] = 'INTEGER'
+    integer_mapping['lookml_type'] = 'dimension'
+    integer_params = CommentedMap()
+    integer_params['type'] = 'number'
+    integer_mapping['lookml_params'] = integer_params
+    type_mapping.append(integer_mapping)
+
+    # STRING mapping
+    string_mapping = CommentedMap()
+    string_mapping['bq_type'] = 'STRING'
+    string_mapping['lookml_type'] = 'dimension'
+    string_params = CommentedMap()
+    string_params['type'] = 'string'
+    string_mapping['lookml_params'] = string_params
+    type_mapping.append(string_mapping)
+
+    # BOOL mapping
+    bool_mapping = CommentedMap()
+    bool_mapping['bq_type'] = 'BOOL'
+    bool_mapping['lookml_type'] = 'dimension'
+    bool_params = CommentedMap()
+    bool_params['type'] = 'yesno'
+    bool_mapping['lookml_params'] = bool_params
+    type_mapping.append(bool_mapping)
+
+    model_rules['type_mapping'] = type_mapping
+    model_rules.yaml_set_comment_before_after_key(
+        'type_mapping',
+        before="Rules for mapping warehouse data types to LookML types and parameters"
+    )
+
+    config['model_rules'] = model_rules
+    config.yaml_set_comment_before_after_key(
+        'model_rules',
+        before="Rules for how models and fields are generated"
+    )
 
     return config
 
 
-class IndentedDumper(yaml.SafeDumper):
-    """Custom YAML dumper to handle proper indentation and comments."""
-
-    def increase_indent(self, flow=False, indentless=False):
-        return super(IndentedDumper, self).increase_indent(flow, False)
-
-    def write_line_break(self, data=None):
-        super(IndentedDumper, self).write_line_break(data)
-
-
-def write_yaml_with_comments(data: Dict[str, Any], file_path: str):
-    """Write YAML file with proper formatting and comments."""
-
-    yaml_content = []
-
-    # Write header comment
-    yaml_content.append('# concordia.yml - Generated Configuration')
-    yaml_content.append('')
-
-    # Process the main structure manually for better control
-    yaml_content.append('# BigQuery Connection Details')
-    yaml_content.append('connection:')
-    yaml_content.append(
-        '  # Method 1 (Preferred): Point to a Dataform credentials JSON file.')
-    yaml_content.append(
-        '  # Concordia will parse the \'credentials\' key from this file to authenticate.')
-    yaml_content.append('  # The path should be relative to this config file.')
-    yaml_content.append(
-        f'  dataform_credentials_file: \'{data["connection"]["dataform_credentials_file"]}\'')
-    yaml_content.append('')
-    yaml_content.append(
-        '  # Method 2 (Fallback): If \'dataform_credentials_file\' is omitted or invalid,')
-    yaml_content.append(
-        '  # Concordia will automatically use Google Application Default Credentials (ADC).')
-    yaml_content.append(
-        '  # This is useful for local development or running in a configured GCP environment.')
-    yaml_content.append('')
-    yaml_content.append(
-        '  # The GCP project ID to target. If not provided here, it will be inferred')
-    yaml_content.append('  # from the credentials file or ADC.')
-    yaml_content.append(
-        f'  project_id: \'{data["connection"]["project_id"]}\'')
-    yaml_content.append('')
-    yaml_content.append(
-        '  # The default location/region for BigQuery jobs. If not provided, it will be')
-    yaml_content.append('  # inferred from the credentials file.')
-    yaml_content.append(f'  location: \'{data["connection"]["location"]}\'')
-    yaml_content.append('')
-    yaml_content.append('  # The datasets to scan for tables.')
-    yaml_content.append('  datasets:')
-    for dataset in data["connection"]["datasets"]:
-        yaml_content.append(f'    - \'{dataset}\'')
-    yaml_content.append('')
-
-    yaml_content.append('# Looker project configuration')
-    yaml_content.append('looker:')
-    yaml_content.append(
-        f'  project_path: \'{data["looker"]["project_path"]}\'')
-    yaml_content.append(
-        f'  views_path: \'{data["looker"]["views_path"]}\' # File path where generated views will be written')
-    yaml_content.append(
-        f'  explores_path: \'{data["looker"]["explores_path"]}\' # File path where generated explores will be written')
-    yaml_content.append(
-        f'  connection: \'{data["looker"]["connection"]}\' # This is the Looker connection name')
-    yaml_content.append('')
-
-    yaml_content.append('# Rules for how models and fields are generated')
-    yaml_content.append('model_rules:')
-    yaml_content.append('  # Define how database column names are interpreted')
-    yaml_content.append('  naming_conventions:')
-    yaml_content.append(
-        f'    pk_suffix: \'{data["model_rules"]["naming_conventions"]["pk_suffix"]}\'')
-    yaml_content.append(
-        f'    fk_suffix: \'{data["model_rules"]["naming_conventions"]["fk_suffix"]}\'')
-    yaml_content.append('')
-    yaml_content.append('  # Define default behaviors for generated views')
-    yaml_content.append('  defaults:')
-    yaml_content.append('    measures:')
-    for measure in data["model_rules"]["defaults"]["measures"]:
-        yaml_content.append(f'      - {measure}')
-    yaml_content.append('    hide_fields_by_suffix:')
-    for suffix in data["model_rules"]["defaults"]["hide_fields_by_suffix"]:
-        yaml_content.append(f'      - \'{suffix}\'')
-    yaml_content.append('')
-
-    yaml_content.append(
-        '  # Rules for mapping warehouse data types to LookML types and parameters')
-    yaml_content.append('  type_mapping:')
-    for mapping in data["model_rules"]["type_mapping"]:
-        yaml_content.append(f'    - bq_type: \'{mapping["bq_type"]}\'')
-        yaml_content.append(f'      lookml_type: \'{mapping["lookml_type"]}\'')
-        yaml_content.append('      lookml_params:')
-        for param_key, param_value in mapping["lookml_params"].items():
-            if isinstance(param_value, str):
-                yaml_content.append(f'        {param_key}: \'{param_value}\'')
-            else:
-                yaml_content.append(f'        {param_key}: {param_value}')
+def write_yaml_with_comments(config: CommentedMap, file_path: str):
+    """Write YAML file with proper formatting and comments using ruamel.yaml."""
+    yaml = YAML()
+    yaml.preserve_quotes = True
+    yaml.default_flow_style = False
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.width = 4096  # Prevent line wrapping
 
     with open(file_path, 'w') as f:
-        f.write('\n'.join(yaml_content))
+        yaml.dump(config, f)
