@@ -11,13 +11,24 @@ def find_file_in_tree(filename: str, start_path: str = ".") -> Optional[str]:
     Search for a file recursively starting from start_path.
     Returns the relative path to the directory containing the file, or None if not found.
     """
-    start_path = str(Path(start_path).resolve())
+    start_path_obj = Path(start_path)
 
     # Search in current directory and all subdirectories
     for root, dirs, files in os.walk(start_path):
         if filename in files:
-            # Return path relative to the current working directory
-            return os.path.relpath(root)
+            # Convert to Path for better cross-platform handling
+            root_path = Path(root)
+            # Return path relative to the start_path, not the current working directory
+            try:
+                relative_path = root_path.relative_to(start_path_obj.resolve())
+                # If it's the same directory, return just the directory name
+                if relative_path == Path('.'):
+                    return start_path_obj.name if start_path_obj.name != '.' else '.'
+                # Normalize to forward slashes
+                return str(relative_path).replace('\\', '/')
+            except ValueError:
+                # Fallback to relative path from current working directory
+                return os.path.relpath(root).replace('\\', '/')
 
     return None
 
@@ -34,7 +45,10 @@ def handle_gitignore():
 
         # Check if entry already exists
         if gitignore_entry in content:
-            click.echo(f"✅ {gitignore_entry} already in .gitignore")
+            try:
+                click.echo(f"✅ {gitignore_entry} already in .gitignore")
+            except UnicodeEncodeError:
+                click.echo(f"[PASS] {gitignore_entry} already in .gitignore")
             return
 
         # Add entry to existing .gitignore
@@ -43,41 +57,68 @@ def handle_gitignore():
                 f.write('\n')
             f.write(f'{gitignore_entry}\n')
 
-        click.echo(f"✅ Added {gitignore_entry} to existing .gitignore")
+        try:
+            click.echo(f"✅ Added {gitignore_entry} to existing .gitignore")
+        except UnicodeEncodeError:
+            click.echo(
+                f"[PASS] Added {gitignore_entry} to existing .gitignore")
     else:
         # Create new .gitignore
         with open(gitignore_path, 'w') as f:
             f.write(f'# Dataform credentials\n{gitignore_entry}\n')
 
-        click.echo(f"✅ Created .gitignore with {gitignore_entry}")
+        try:
+            click.echo(f"✅ Created .gitignore with {gitignore_entry}")
+        except UnicodeEncodeError:
+            click.echo(f"[PASS] Created .gitignore with {gitignore_entry}")
 
 
 def scan_for_projects():
     """Scan for Dataform and Looker projects and return their paths."""
-    click.echo("🔍 Scanning for Dataform and Looker projects...")
+    try:
+        click.echo("🔍 Scanning for Dataform and Looker projects...")
+    except UnicodeEncodeError:
+        click.echo("[SCAN] Scanning for Dataform and Looker projects...")
 
     # Search for Dataform project (workflow_settings.yaml) in root directory only
     dataform_path = None
     if os.path.exists('workflow_settings.yaml'):
         dataform_path = '.'  # Root directory
-        click.echo(f"✅ Found Dataform project in: {dataform_path}")
+        try:
+            click.echo(f"✅ Found Dataform project in: {dataform_path}")
+        except UnicodeEncodeError:
+            click.echo(f"[PASS] Found Dataform project in: {dataform_path}")
     else:
-        click.echo(
-            "❌ No Dataform project found (workflow_settings.yaml not found in root)")
+        try:
+            click.echo(
+                "❌ No Dataform project found (workflow_settings.yaml not found in root)")
+        except UnicodeEncodeError:
+            click.echo(
+                "[FAIL] No Dataform project found (workflow_settings.yaml not found in root)")
 
     # Search for Looker project (manifest.lkml)
     looker_path = find_file_in_tree('manifest.lkml')
     if looker_path:
-        click.echo(f"✅ Found Looker project in: {looker_path}")
+        try:
+            click.echo(f"✅ Found Looker project in: {looker_path}")
+        except UnicodeEncodeError:
+            click.echo(f"[PASS] Found Looker project in: {looker_path}")
     else:
-        click.echo("❌ No Looker project found (manifest.lkml not found)")
+        try:
+            click.echo("❌ No Looker project found (manifest.lkml not found)")
+        except UnicodeEncodeError:
+            click.echo(
+                "[FAIL] No Looker project found (manifest.lkml not found)")
 
     return dataform_path, looker_path
 
 
 def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) -> bool:
     """Show what will be created and ask for confirmation."""
-    click.echo("\n📋 Concordia Initialization Summary")
+    try:
+        click.echo("\n📋 Concordia Initialization Summary")
+    except UnicodeEncodeError:
+        click.echo("\n[INIT] Concordia Initialization Summary")
     click.echo("=" * 40)
 
     click.echo("\nThe following will be created/updated:")
@@ -154,7 +195,10 @@ def run_initialization(force: bool = False):
 
     # Show summary and get confirmation
     if not show_init_summary(dataform_path, looker_path):
-        click.echo("❌ Initialization cancelled.")
+        try:
+            click.echo("❌ Initialization cancelled.")
+        except UnicodeEncodeError:
+            click.echo("[FAIL] Initialization cancelled.")
         return
 
     try:
@@ -163,12 +207,18 @@ def run_initialization(force: bool = False):
 
         # Create configuration file
         create_configuration_file(dataform_path, looker_path, config_file)
-        click.echo(f"\n🎉 Created {config_file}")
+        try:
+            click.echo(f"\n🎉 Created {config_file}")
+        except UnicodeEncodeError:
+            click.echo(f"\n[SUCCESS] Created {config_file}")
 
         # Show next steps
         show_next_steps(dataform_path, looker_path)
 
-        click.echo(f"\n🚀 Concordia initialization complete!")
+        try:
+            click.echo(f"\n🚀 Concordia initialization complete!")
+        except UnicodeEncodeError:
+            click.echo(f"\n[COMPLETE] Concordia initialization complete!")
 
     except Exception as e:
         click.echo(f"Error during initialization: {e}")

@@ -143,7 +143,7 @@ class TestLookMLFileWriter:
 
         # Verify file was created at the correct path
         expected_path = os.path.join(
-            self.temp_dir, 'explores/test.explore.lkml')
+            self.temp_dir, 'explores', 'test.explore.lkml')
         assert file_path == expected_path
         assert os.path.exists(file_path)
 

@@ -49,7 +49,7 @@ jobs:
       - name: Check dependencies
         run: |
           python run_tests.py --no-deps
-          python -c "import pytest, pytest_cov, pytest_mock; print('✅ All test dependencies installed')"
+          python -c "import pytest, pytest_cov, pytest_mock; print('[PASS] All test dependencies installed')"
 
       - name: Lint code with flake8
         run: |

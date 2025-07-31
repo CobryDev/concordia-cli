@@ -276,18 +276,25 @@ class TestGenerateCommandIntegration:
         # Create read-only directory to cause write error
         looker_dir = Path('looker_project/views')
         looker_dir.mkdir(parents=True)
-        if os.name != 'nt':  # Skip on Windows
+
+        if os.name != 'nt':  # Skip permission test on Windows
             os.chmod(looker_dir, 0o444)
 
-        result = self.runner.invoke(cli, ['looker', 'generate'])
+            result = self.runner.invoke(cli, ['looker', 'generate'])
 
-        # Should handle error gracefully by catching it and reporting failure
-        assert result.exit_code != 0
-        assert "❌ Unexpected error" in result.output
+            # Should handle error gracefully by catching it and reporting failure
+            assert result.exit_code != 0
+            assert "❌ Unexpected error" in result.output
 
-        # Restore permissions for cleanup
-        if os.name != 'nt':
+            # Restore permissions for cleanup
             os.chmod(looker_dir, 0o755)
+        else:
+            # On Windows, just verify the command runs without the permission restriction
+            result = self.runner.invoke(cli, ['looker', 'generate'])
+            # Windows doesn't enforce the same permission model, so command may succeed
+            # Just ensure it doesn't crash
+            # Either success or controlled failure
+            assert result.exit_code in [0, 1]
 
     @patch('actions.looker.generate.BigQueryClient')
     @patch('actions.looker.generate.get_bigquery_credentials')
