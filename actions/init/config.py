@@ -134,6 +134,33 @@ inferred from the credentials file."""
     integer_mapping['lookml_params'] = integer_params
     type_mapping.append(integer_mapping)
 
+    # INT64 mapping
+    int64_mapping = CommentedMap()
+    int64_mapping['bq_type'] = 'INT64'
+    int64_mapping['lookml_type'] = 'dimension'
+    int64_params = CommentedMap()
+    int64_params['type'] = 'number'
+    int64_mapping['lookml_params'] = int64_params
+    type_mapping.append(int64_mapping)
+
+    # FLOAT64 mapping
+    float64_mapping = CommentedMap()
+    float64_mapping['bq_type'] = 'FLOAT64'
+    float64_mapping['lookml_type'] = 'dimension'
+    float64_params = CommentedMap()
+    float64_params['type'] = 'number'
+    float64_mapping['lookml_params'] = float64_params
+    type_mapping.append(float64_mapping)
+
+    # NUMERIC mapping
+    numeric_mapping = CommentedMap()
+    numeric_mapping['bq_type'] = 'NUMERIC'
+    numeric_mapping['lookml_type'] = 'dimension'
+    numeric_params = CommentedMap()
+    numeric_params['type'] = 'number'
+    numeric_mapping['lookml_params'] = numeric_params
+    type_mapping.append(numeric_mapping)
+
     # STRING mapping
     string_mapping = CommentedMap()
     string_mapping['bq_type'] = 'STRING'
@@ -151,6 +178,15 @@ inferred from the credentials file."""
     bool_params['type'] = 'yesno'
     bool_mapping['lookml_params'] = bool_params
     type_mapping.append(bool_mapping)
+
+    # GEOGRAPHY mapping
+    geography_mapping = CommentedMap()
+    geography_mapping['bq_type'] = 'GEOGRAPHY'
+    geography_mapping['lookml_type'] = 'dimension'
+    geography_params = CommentedMap()
+    geography_params['type'] = 'string'
+    geography_mapping['lookml_params'] = geography_params
+    type_mapping.append(geography_mapping)
 
     model_rules['type_mapping'] = type_mapping
     model_rules.yaml_set_comment_before_after_key(
