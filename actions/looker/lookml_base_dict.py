@@ -72,6 +72,9 @@ class MetadataExtractor:
                 credentials=self.credentials,
                 location=self.location
             )
+            # Ensure we have a DataFrame
+            if df is None:
+                return pd.DataFrame()
             click.echo(f"✅ Found {len(df)} tables")
             return df
         except Exception as e:
@@ -129,6 +132,9 @@ class MetadataExtractor:
                 credentials=self.credentials,
                 location=self.location
             )
+            # Ensure we have a DataFrame
+            if df is None:
+                return pd.DataFrame()
             click.echo(f"✅ Found {len(df)} columns")
             return df
         except Exception as e:
@@ -174,6 +180,9 @@ class MetadataExtractor:
                 credentials=self.credentials,
                 location=self.location
             )
+            # Ensure we have a DataFrame
+            if df is None:
+                return pd.DataFrame()
             click.echo(f"✅ Found {len(df)} primary key constraints")
             return df
         except Exception as e:
