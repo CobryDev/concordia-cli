@@ -39,27 +39,30 @@ class MetadataExtractor:
         Returns:
             DataFrame containing table metadata
         """
-        # Build the query to get table information
-        dataset_filter = "', '".join(dataset_ids)
+        # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
+        union_queries = []
+        for dataset_id in dataset_ids:
+            union_queries.append(f"""
+            SELECT 
+                table_catalog as project_id,
+                table_schema as dataset_id,
+                table_name as table_id,
+                table_type,
+                ddl as creation_ddl,
+                -- Try to extract table comment from DDL or use NULL
+                CASE 
+                    WHEN REGEXP_CONTAINS(ddl, r'description\\s*=\\s*"[^"]*"')
+                    THEN REGEXP_EXTRACT(ddl, r'description\\s*=\\s*"([^"]*)"')
+                    WHEN REGEXP_CONTAINS(ddl, r"description\\s*=\\s*'[^']*'")
+                    THEN REGEXP_EXTRACT(ddl, r"description\\s*=\\s*'([^']*)'")
+                    ELSE NULL
+                END as table_description
+            FROM `{dataset_id}.INFORMATION_SCHEMA.TABLES`
+            WHERE table_type = 'BASE TABLE'
+            """)
 
-        query = f"""
-        SELECT 
-            table_catalog as project_id,
-            table_schema as dataset_id,
-            table_name as table_id,
-            table_type,
-            ddl as creation_ddl,
-            -- Try to extract table comment from DDL or use NULL
-            CASE 
-                WHEN REGEXP_CONTAINS(ddl, r'OPTIONS\\s*\\(.*description\\s*=\\s*["\']([^"\']*)["\'].*\\)')
-                THEN REGEXP_EXTRACT(ddl, r'OPTIONS\\s*\\(.*description\\s*=\\s*["\']([^"\']*)["\'].*\\)')
-                ELSE NULL
-            END as table_description
-        FROM `{self.project_id}.region-{self.location or 'us'}.INFORMATION_SCHEMA.TABLES`
-        WHERE table_schema IN ('{dataset_filter}')
-            AND table_type = 'BASE TABLE'
-        ORDER BY table_schema, table_name
-        """
+        query = " UNION ALL ".join(union_queries) + \
+            "\nORDER BY dataset_id, table_id"
 
         try:
             click.echo("🔍 Extracting table metadata from INFORMATION_SCHEMA...")
@@ -85,35 +88,37 @@ class MetadataExtractor:
         Returns:
             DataFrame containing column metadata
         """
-        dataset_filter = "', '".join(dataset_ids)
+        # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
+        union_queries = []
+        for dataset_id in dataset_ids:
+            union_queries.append(f"""
+            SELECT 
+                table_catalog as project_id,
+                table_schema as dataset_id,
+                table_name as table_id,
+                column_name,
+                ordinal_position,
+                is_nullable,
+                data_type,
+                is_generated,
+                generation_expression,
+                is_stored,
+                is_hidden,
+                is_updatable,
+                is_system_defined,
+                is_partitioning_column,
+                clustering_ordinal_position,
+                collation_name,
+                column_default,
+                -- Column description/comment (not available in INFORMATION_SCHEMA.COLUMNS)
+                CAST(NULL AS STRING) as column_description,
+                -- Full table identifier for joining
+                CONCAT(table_catalog, '.', table_schema, '.', table_name) as full_table_id
+            FROM `{dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+            """)
 
-        query = f"""
-        SELECT 
-            table_catalog as project_id,
-            table_schema as dataset_id,
-            table_name as table_id,
-            column_name,
-            ordinal_position,
-            is_nullable,
-            data_type,
-            is_generated,
-            generation_expression,
-            is_stored,
-            is_hidden,
-            is_updatable,
-            is_system_defined,
-            is_partitioning_column,
-            clustering_ordinal_position,
-            collation_name,
-            column_default,
-            -- Column description/comment
-            description as column_description,
-            -- Full table identifier for joining
-            CONCAT(table_catalog, '.', table_schema, '.', table_name) as full_table_id
-        FROM `{self.project_id}.region-{self.location or 'us'}.INFORMATION_SCHEMA.COLUMNS`
-        WHERE table_schema IN ('{dataset_filter}')
-        ORDER BY table_schema, table_name, ordinal_position
-        """
+        query = " UNION ALL ".join(
+            union_queries) + "\nORDER BY dataset_id, table_id, ordinal_position"
 
         try:
             click.echo(
@@ -140,23 +145,25 @@ class MetadataExtractor:
         Returns:
             DataFrame containing primary key metadata
         """
-        dataset_filter = "', '".join(dataset_ids)
+        # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
+        union_queries = []
+        for dataset_id in dataset_ids:
+            union_queries.append(f"""
+            SELECT 
+                constraint_catalog as project_id,
+                constraint_schema as dataset_id,
+                table_name as table_id,
+                constraint_name,
+                constraint_type,
+                is_deferrable,
+                initially_deferred,
+                enforced
+            FROM `{dataset_id}.INFORMATION_SCHEMA.TABLE_CONSTRAINTS`
+            WHERE constraint_type = 'PRIMARY KEY'
+            """)
 
-        query = f"""
-        SELECT 
-            constraint_catalog as project_id,
-            constraint_schema as dataset_id,
-            table_name as table_id,
-            constraint_name,
-            constraint_type,
-            is_deferrable,
-            initially_deferred,
-            enforced
-        FROM `{self.project_id}.region-{self.location or 'us'}.INFORMATION_SCHEMA.TABLE_CONSTRAINTS`
-        WHERE constraint_schema IN ('{dataset_filter}')
-            AND constraint_type = 'PRIMARY KEY'
-        ORDER BY constraint_schema, table_name
-        """
+        query = " UNION ALL ".join(union_queries) + \
+            "\nORDER BY dataset_id, table_id"
 
         try:
             click.echo(
