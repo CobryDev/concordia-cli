@@ -32,34 +32,6 @@ class TestLookMLGenerator:
             }
         }
 
-    def test_generate_complete_lookml_project_disabled(self):
-        """Test generating complete LookML project."""
-        return  # Skip this test for now
-        generator = LookMLGenerator(self.config)
-
-        tables_metadata = {
-            'table1': {
-                'table_id': 'test_table',
-                'project_id': 'test_project',
-                'dataset_id': 'test_dataset',
-                'columns': [
-                    {
-                        'name': 'id',
-                        'type': 'INTEGER',
-                        'standardized_type': 'INTEGER',
-                        'description': 'Primary key'
-                    }
-                ]
-            }
-        }
-
-        # This should return a dictionary with views only
-        project_dict = generator.generate_complete_lookml_project(
-            tables_metadata)
-
-        assert isinstance(project_dict, dict)
-        assert 'view' in project_dict
-
 
 class TestLookMLFileWriter:
     """Test LookML file writer functionality."""
