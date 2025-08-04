@@ -90,32 +90,32 @@ def scan_for_projects():
 def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) -> bool:
     """Show what will be created and ask for confirmation."""
     safe_echo("\n📋 Concordia Initialization Summary")
-    click.echo("=" * 40)
+    safe_echo("=" * 40)
 
-    click.echo("\nThe following will be created/updated:")
-    click.echo("• concordia.yaml configuration file")
-    click.echo("• .gitignore (to protect credentials)")
+    safe_echo("\nThe following will be created/updated:")
+    safe_echo("• concordia.yaml configuration file")
+    safe_echo("• .gitignore (to protect credentials)")
 
     if dataform_path or looker_path:
-        click.echo("\nAuto-detected projects:")
+        safe_echo("\nAuto-detected projects:")
         if dataform_path:
-            click.echo(f"• Dataform project: {dataform_path}")
-            click.echo(
+            safe_echo(f"• Dataform project: {dataform_path}")
+            safe_echo(
                 "  → Will set dataform_credentials_file to './.df-credentials.json'")
         if looker_path:
-            click.echo(f"• Looker project: {looker_path}")
-            click.echo(f"  → Will set project_path to './{looker_path}/'")
+            safe_echo(f"• Looker project: {looker_path}")
+            safe_echo(f"  → Will set project_path to './{looker_path}/'")
 
-    click.echo("\nYou will still need to manually configure:")
+    safe_echo("\nYou will still need to manually configure:")
     if not dataform_path:
-        click.echo("• Dataform credentials file path")
-    click.echo("• GCP project ID and location")
-    click.echo("• BigQuery datasets to scan")
+        safe_echo("• Dataform credentials file path")
+    safe_echo("• GCP project ID and location")
+    safe_echo("• BigQuery datasets to scan")
     if not looker_path:
-        click.echo("• Looker project path")
-    click.echo("• Looker BigQuery connection name")
+        safe_echo("• Looker project path")
+    safe_echo("• Looker BigQuery connection name")
 
-    click.echo("\n" + "=" * 40)
+    safe_echo("\n" + "=" * 40)
 
     return click.confirm("Do you want to proceed with initialization?")
 
@@ -131,19 +131,19 @@ def show_next_steps(dataform_path: Optional[str], looker_path: Optional[str]):
     if not dataform_path or not looker_path:
         safe_echo("\n⚠️  Manual configuration required:")
         if not dataform_path:
-            click.echo(
+            safe_echo(
                 "   • Update dataform_credentials_file path in concordia.yaml")
-            click.echo("   • Set your GCP project_id and location")
-            click.echo("   • Configure your BigQuery datasets")
+            safe_echo("   • Set your GCP project_id and location")
+            safe_echo("   • Configure your BigQuery datasets")
         if not looker_path:
-            click.echo("   • Update looker.project_path in concordia.yaml")
-            click.echo("   • Set your Looker connection name")
+            safe_echo("   • Update looker.project_path in concordia.yaml")
+            safe_echo("   • Set your Looker connection name")
     else:
         safe_echo("\n📝 Next steps:")
-        click.echo("   • Review and update the generated configuration")
-        click.echo("   • Set your GCP project_id and location")
-        click.echo("   • Configure your BigQuery datasets")
-        click.echo("   • Set your Looker connection name")
+        safe_echo("   • Review and update the generated configuration")
+        safe_echo("   • Set your GCP project_id and location")
+        safe_echo("   • Configure your BigQuery datasets")
+        safe_echo("   • Set your Looker connection name")
 
 
 def run_initialization(force: bool = False):
@@ -157,7 +157,7 @@ def run_initialization(force: bool = False):
 
     # Check if config file already exists
     if os.path.exists(config_file) and not force:
-        click.echo(
+        safe_echo(
             f"Error: {config_file} already exists. Use --force to overwrite.")
         return
 
@@ -183,5 +183,5 @@ def run_initialization(force: bool = False):
         safe_echo(f"\n🚀 Concordia initialization complete!")
 
     except Exception as e:
-        click.echo(f"Error during initialization: {e}")
+        safe_echo(f"Error during initialization: {e}")
         raise click.ClickException(f"Initialization failed: {e}")
