@@ -6,7 +6,6 @@ import lkml
 from .lookml_base_dict import MetadataExtractor
 from .lookml_module import LookMLViewGenerator
 from .lookml_measure_module import LookMLMeasureGenerator
-from .lookml_explore_module import LookMLExploreGenerator
 
 
 class LookMLGenerator:
@@ -30,7 +29,6 @@ class LookMLGenerator:
         # Initialize the modular generators
         self.view_generator = LookMLViewGenerator(config)
         self.measure_generator = LookMLMeasureGenerator(config)
-        self.explore_generator = LookMLExploreGenerator(config)
 
     def generate_view_dict_for_table_metadata(self, table_metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -72,32 +70,12 @@ class LookMLGenerator:
             String containing the LookML view definition
         """
         view_dict = self.generate_view_dict_for_table_metadata(table_metadata)
-        return lkml.dump(view_dict)
-
-    def generate_explores_dict(self, tables_metadata: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Generate LookML explores dictionary for multiple tables.
-
-        Args:
-            tables_metadata: Dictionary of table metadata
-
-        Returns:
-            Dictionary containing the LookML explores definition
-        """
-        explores = self.explore_generator.generate_explores_for_views(
-            tables_metadata)
-
-        # Combine all explores into a single dictionary
-        combined_explores = {}
-        for explore in explores:
-            if 'explore' in explore:
-                combined_explores.update(explore['explore'])
-
-        return {'explore': combined_explores} if combined_explores else {}
+        result = lkml.dump(view_dict)
+        return result if result is not None else ""
 
     def generate_complete_lookml_project(self, tables_metadata: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
         """
-        Generate a complete LookML project with views and explores.
+        Generate a complete LookML project with views only.
 
         Args:
             tables_metadata: Dictionary of table metadata
@@ -117,11 +95,6 @@ class LookMLGenerator:
 
         if views:
             project_dict['view'] = views
-
-        # Generate explores
-        explores_dict = self.generate_explores_dict(tables_metadata)
-        if explores_dict and 'explore' in explores_dict:
-            project_dict.update(explores_dict)
 
         return project_dict
 
@@ -176,7 +149,7 @@ class LookMLFileWriter:
 
         Args:
             lookml_dict: Dictionary containing LookML structure
-            file_suffix: Suffix for the file name (e.g., "views", "explores")
+            file_suffix: Suffix for the file name (e.g., "views")
 
         Returns:
             Path to the written file
@@ -186,8 +159,6 @@ class LookMLFileWriter:
         # Generate file name
         if file_suffix == "views":
             file_path = project_path / self.looker_config['views_path']
-        elif file_suffix == "explores":
-            file_path = project_path / self.looker_config['explores_path']
         else:
             # For any other file types, generate a new file name using views_path as base
             base_name = Path(self.looker_config['views_path']).stem
@@ -203,7 +174,7 @@ class LookMLFileWriter:
 
         # Write the file
         with open(file_path, 'w') as f:
-            f.write(lookml_content)
+            f.write(lookml_content if lookml_content is not None else "")
 
         return str(file_path)
 
@@ -219,21 +190,9 @@ class LookMLFileWriter:
         """
         return self.write_lookml_dict_file(views_dict, "views")
 
-    def write_explores_dict_file(self, explores_dict: Dict[str, Any]) -> str:
-        """
-        Write explores from dictionary to file.
-
-        Args:
-            explores_dict: Dictionary containing explore definitions
-
-        Returns:
-            Path to the written file
-        """
-        return self.write_lookml_dict_file(explores_dict, "explores")
-
     def write_complete_project(self, project_dict: Dict[str, Any]) -> List[str]:
         """
-        Write a complete LookML project with separate files for views and explores.
+        Write a complete LookML project with views only.
 
         Args:
             project_dict: Dictionary containing the complete project structure
@@ -248,11 +207,5 @@ class LookMLFileWriter:
             views_file = self.write_lookml_dict_file(
                 {'view': project_dict['view']}, "views")
             written_files.append(views_file)
-
-        # Write explores file
-        if 'explore' in project_dict:
-            explores_file = self.write_lookml_dict_file(
-                {'explore': project_dict['explore']}, "explores")
-            written_files.append(explores_file)
 
         return written_files

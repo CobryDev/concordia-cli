@@ -62,7 +62,7 @@ def _validate_config(config: Dict[str, Any]) -> None:
     # Validate looker section
     looker = config['looker']
     required_looker_fields = ['project_path',
-                              'views_path', 'explores_path', 'connection']
+                              'views_path', 'connection']
     for field in required_looker_fields:
         if field not in looker:
             raise ConfigurationError(

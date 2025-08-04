@@ -66,7 +66,6 @@ def sample_config(sample_model_rules) -> Dict[str, Any]:
         'looker': {
             'project_path': './test_looker_project/',
             'views_path': 'views/test_views.view.lkml',
-            'explores_path': 'views/test_explores.view.lkml',
             'connection': 'test-bigquery-connection'
         },
         'model_rules': sample_model_rules

@@ -48,7 +48,7 @@ class TestGenerateCommandIntegration:
             'looker': {
                 'project_path': './looker_project/',
                 'views_path': 'views/generated_views.view.lkml',
-                'explores_path': 'views/generated_explores.view.lkml',
+
                 'connection': 'test-bigquery-connection'
             },
             'model_rules': {
@@ -195,21 +195,14 @@ class TestGenerateCommandIntegration:
 
         # Check that output files were created
         views_file = Path('looker_project/views/generated_views.view.lkml')
-        explores_file = Path(
-            'looker_project/views/generated_explores.view.lkml')
 
         assert views_file.exists()
-        assert explores_file.exists()
 
         # Check file contents contain expected LookML
         views_content = views_file.read_text()
         assert 'users:' in views_content  # Updated for dict format
         assert 'orders:' in views_content  # Updated for dict format
         assert 'sql_table_name:' in views_content
-
-        explores_content = explores_file.read_text()
-        # Updated for dict format
-        assert 'users:' in explores_content or 'orders:' in explores_content
 
     def test_generate_command_missing_config_file(self):
         """Test generate command when concordia.yaml is missing."""
@@ -430,7 +423,7 @@ class TestGenerateFunctionUnit:
             'looker': {
                 'project_path': './test_looker/',
                 'views_path': 'views/test.view.lkml',
-                'explores_path': 'views/explores.view.lkml'
+
             },
             'model_rules': {
                 'naming_conventions': {'pk_suffix': '_pk'},
@@ -465,8 +458,7 @@ class TestGenerateFunctionUnit:
             with patch('actions.looker.generate.LookMLFileWriter') as mock_writer:
                 mock_gen_instance = Mock()
                 mock_gen_instance.generate_complete_lookml_project.return_value = {
-                    'view': {'sample': {}},
-                    'explore': {'sample': {}}
+                    'view': {'sample': {}}
                 }
                 mock_generator.return_value = mock_gen_instance
 

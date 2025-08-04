@@ -20,15 +20,14 @@ class TestLookMLGenerator:
             'looker': {
                 'project_path': './test_looker',
                 'views_path': 'views/test.view.lkml',
-                'explores_path': 'explores/test.explore.lkml',
+
                 'connection': 'test_connection'
             },
             'model_rules': {
                 'naming_conventions': {
                     'view_prefix': '',
                     'view_suffix': '',
-                    'explore_prefix': '',
-                    'explore_suffix': ''
+
                 }
             }
         }
@@ -54,12 +53,12 @@ class TestLookMLGenerator:
             }
         }
 
-        # This should return a dictionary with views and explores
+        # This should return a dictionary with views only
         project_dict = generator.generate_complete_lookml_project(
             tables_metadata)
 
         assert isinstance(project_dict, dict)
-        assert 'view' in project_dict or 'explore' in project_dict
+        assert 'view' in project_dict
 
 
 class TestLookMLFileWriter:
@@ -72,7 +71,7 @@ class TestLookMLFileWriter:
             'looker': {
                 'project_path': self.temp_dir,
                 'views_path': 'views/test.view.lkml',
-                'explores_path': 'explores/test.explore.lkml'
+
             }
         }
 
@@ -126,27 +125,6 @@ class TestLookMLFileWriter:
 
         assert 'view:' in content
 
-    def test_write_lookml_dict_file_explores(self):
-        """Test writing LookML dictionary to explores file."""
-        writer = LookMLFileWriter(self.config)
-
-        lookml_dict = {
-            'explore': {
-                'test_explore': {
-                    'type': 'table',
-                    'join': []
-                }
-            }
-        }
-
-        file_path = writer.write_lookml_dict_file(lookml_dict, "explores")
-
-        # Verify file was created at the correct path
-        expected_path = os.path.join(
-            self.temp_dir, 'explores', 'test.explore.lkml')
-        assert file_path == expected_path
-        assert os.path.exists(file_path)
-
     def test_write_views_dict_file(self):
         """Test writing views dictionary to file."""
         writer = LookMLFileWriter(self.config)
@@ -162,23 +140,8 @@ class TestLookMLFileWriter:
         # Verify file was created
         assert os.path.exists(file_path)
 
-    def test_write_explores_dict_file(self):
-        """Test writing explores dictionary to file."""
-        writer = LookMLFileWriter(self.config)
-
-        explores_dict = {
-            'test_explore': {
-                'type': 'table'
-            }
-        }
-
-        file_path = writer.write_explores_dict_file(explores_dict)
-
-        # Verify file was created
-        assert os.path.exists(file_path)
-
     def test_write_complete_project(self):
-        """Test writing complete project with views and explores."""
+        """Test writing complete project with views only."""
         writer = LookMLFileWriter(self.config)
 
         project_dict = {
@@ -186,18 +149,13 @@ class TestLookMLFileWriter:
                 'test_view': {
                     'dimension': {'id': {'type': 'number'}}
                 }
-            },
-            'explore': {
-                'test_explore': {
-                    'type': 'table'
-                }
             }
         }
 
         written_files = writer.write_complete_project(project_dict)
 
-        # Verify both files were created
-        assert len(written_files) == 2
+        # Verify one file was created
+        assert len(written_files) == 1
 
         for file_path in written_files:
             assert os.path.exists(file_path)

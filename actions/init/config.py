@@ -56,14 +56,11 @@ inferred from the credentials file."""
     looker = CommentedMap()
     looker['project_path'] = f'./{looker_path}/' if looker_path else './path/to/your/looker_project/'
     looker['views_path'] = 'views/generated_views.view.lkml'
-    looker['explores_path'] = 'views/generated_explores.view.lkml'
     looker['connection'] = 'your-bigquery-connection'
 
     # Add inline comments for looker section
     looker.yaml_add_eol_comment(
         'File path where generated views will be written', 'views_path')
-    looker.yaml_add_eol_comment(
-        'File path where generated explores will be written', 'explores_path')
     looker.yaml_add_eol_comment(
         'This is the Looker connection name', 'connection')
 

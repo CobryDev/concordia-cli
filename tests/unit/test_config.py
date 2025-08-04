@@ -89,13 +89,13 @@ class TestGenerateConcordiaConfig:
         # Check required fields
         assert 'project_path' in looker
         assert 'views_path' in looker
-        assert 'explores_path' in looker
+
         assert 'connection' in looker
 
         # Check default values (note: gets ./ prefix added)
         assert looker['project_path'] == '././looker/'
         assert looker['views_path'] == 'views/generated_views.view.lkml'
-        assert looker['explores_path'] == 'views/generated_explores.view.lkml'
+
         assert looker['connection'] == 'your-bigquery-connection'
 
     def test_model_rules_section_structure(self):

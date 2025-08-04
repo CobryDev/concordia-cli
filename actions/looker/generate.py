@@ -50,7 +50,7 @@ def generate_lookml():
         file_writer = LookMLFileWriter(config)
 
         # Generate LookML project using dictionary-based approach
-        click.echo("⚙️  Generating LookML project...")
+        click.echo("⚙️  Generating LookML views...")
         project_dict = generator.generate_complete_lookml_project(
             tables_metadata)
 
@@ -63,11 +63,6 @@ def generate_lookml():
                 views_file = project_path / config['looker']['views_path']
                 click.echo(f"   Views: {views_file}")
 
-            if 'explore' in project_dict:
-                explores_file = project_path / \
-                    config['looker']['explores_path']
-                click.echo(f"   Explores: {explores_file}")
-
         # Write the complete project
         if project_dict:
             output_files = file_writer.write_complete_project(project_dict)
@@ -78,11 +73,9 @@ def generate_lookml():
 
             # Summary
             view_count = len(project_dict.get('view', {}))
-            explore_count = len(project_dict.get('explore', {}))
 
             click.echo(f"\n🎉 Successfully generated LookML project!")
             click.echo(f"   Views: {view_count}")
-            click.echo(f"   Explores: {explore_count}")
             click.echo(f"   Files: {len(output_files)}")
         else:
             click.echo("❌ No LookML content was generated.")
@@ -92,12 +85,12 @@ def generate_lookml():
 
         # Next steps
         click.echo("\n📝 Next steps:")
-        click.echo("   1. Review the generated LookML files")
+        click.echo("   1. Review the generated LookML view files")
         click.echo("   2. Include the files in your Looker project")
-        click.echo("   3. Test the views and explores in Looker")
+        click.echo("   3. Test the views in Looker")
         click.echo(
             "   4. Customize field names, descriptions, or types as needed")
-        click.echo("   5. Set up relationships between explores if needed")
+        click.echo("   5. Set up explores for your views as needed")
 
     except ConfigurationError as e:
         click.echo(f"❌ Configuration error: {e}")

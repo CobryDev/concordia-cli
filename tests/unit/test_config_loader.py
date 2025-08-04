@@ -54,7 +54,7 @@ class TestConfigLoader:
             'looker': {
                 'project_path': './looker',
                 'views_path': 'views/generated.view.lkml',
-                'explores_path': 'explores/generated.explore.lkml',
+
                 'connection': 'test_connection'
             },
             'model_rules': {}
@@ -86,7 +86,7 @@ class TestConfigLoader:
             'looker': {
                 'project_path': './looker',
                 'views_path': 'views/generated.view.lkml',
-                'explores_path': 'explores/generated.explore.lkml',
+
                 'connection': 'test_connection'
             },
             'model_rules': {}
