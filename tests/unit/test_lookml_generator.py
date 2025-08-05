@@ -9,6 +9,10 @@ import lkml
 from pathlib import Path
 from unittest.mock import Mock, patch
 from actions.looker.lookml_generator import LookMLGenerator, LookMLFileWriter
+from actions.models.config import (
+    ConcordiaConfig, ConnectionConfig, LookerConfig, ModelRules,
+    NamingConventions, DefaultBehaviors, TypeMapping, LookMLParams
+)
 
 
 class TestLookMLGenerator:
@@ -39,13 +43,28 @@ class TestLookMLFileWriter:
     def setup_method(self):
         """Set up test fixtures."""
         self.temp_dir = tempfile.mkdtemp()
-        self.config = {
-            'looker': {
-                'project_path': self.temp_dir,
-                'views_path': 'views/test.view.lkml',
+        from actions.models.config import ConcordiaConfig, ConnectionConfig, LookerConfig, ModelRules
 
-            }
-        }
+        self.config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                project_id='test-project',
+                datasets=['test']
+            ),
+            looker=LookerConfig(
+                project_path=self.temp_dir,
+                views_path='views/test.view.lkml',
+                connection='test-connection'
+            ),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(
+                    pk_suffix='_pk', fk_suffix='_fk'),
+                defaults=DefaultBehaviors(
+                    measures=['count'], hide_fields_by_suffix=['_pk']),
+                type_mapping=[
+                    TypeMapping(bq_type='STRING', lookml_type='dimension',
+                                lookml_params=LookMLParams(type='string'))]
+            )
+        )
 
     def teardown_method(self):
         """Clean up test fixtures."""

@@ -397,7 +397,17 @@ class TestGenerateFunctionUnit:
     @patch('actions.looker.generate.get_bigquery_credentials')
     def test_generate_lookml_credentials_error(self, mock_creds, mock_load_config):
         """Test generate_lookml when credentials loading fails."""
-        mock_load_config.return_value = {'connection': {'datasets': ['test']}}
+        from actions.models.config import ConcordiaConfig, ConnectionConfig, LookerConfig, ModelRules
+        mock_config = ConcordiaConfig(
+            connection=ConnectionConfig(datasets=['test']),
+            looker=LookerConfig(
+                project_path='./test/',
+                views_path='views/test.view.lkml',
+                connection='test-connection'
+            ),
+            model_rules=ModelRules(type_mapping=[])
+        )
+        mock_load_config.return_value = mock_config
         mock_creds.side_effect = Exception("Credentials error")
 
         with patch('actions.looker.generate.click.echo') as mock_echo, \
@@ -415,22 +425,28 @@ class TestGenerateFunctionUnit:
     @patch('actions.looker.generate.BigQueryClient')
     def test_generate_lookml_complete_workflow(self, mock_bq_client, mock_location, mock_creds, mock_load_config):
         """Test complete generate_lookml workflow."""
-        # Mock all dependencies
-        mock_config = {
-            'connection': {
-                'datasets': ['test_dataset']
-            },
-            'looker': {
-                'project_path': './test_looker/',
-                'views_path': 'views/test.view.lkml',
+        # Import required models
+        from actions.models.config import (
+            ConcordiaConfig, ConnectionConfig, LookerConfig, ModelRules,
+            NamingConventions, DefaultBehaviors
+        )
 
-            },
-            'model_rules': {
-                'naming_conventions': {'pk_suffix': '_pk'},
-                'defaults': {'measures': ['count']},
-                'type_mapping': []
-            }
-        }
+        # Create a proper ConcordiaConfig object
+        mock_config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                datasets=['test_dataset']
+            ),
+            looker=LookerConfig(
+                project_path='./test_looker/',
+                views_path='views/test.view.lkml',
+                connection='test-connection'
+            ),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(pk_suffix='_pk'),
+                defaults=DefaultBehaviors(measures=['count']),
+                type_mapping=[]
+            )
+        )
 
         mock_load_config.return_value = mock_config
         mock_creds.return_value = (Mock(), 'test-project')
@@ -457,9 +473,17 @@ class TestGenerateFunctionUnit:
         with patch('actions.looker.generate.LookMLGenerator') as mock_generator:
             with patch('actions.looker.generate.LookMLFileWriter') as mock_writer:
                 mock_gen_instance = Mock()
-                mock_gen_instance.generate_complete_lookml_project.return_value = {
-                    'view': {'sample': {}}
-                }
+                # Create a proper LookMLProject object with some content
+                from actions.models.lookml import LookMLProject, LookMLView
+                mock_project = LookMLProject()
+                # Add a mock view to make project_dict non-empty
+                mock_view = LookMLView(
+                    name='sample',
+                    sql_table_name='test.sample',
+                    connection='test-connection'
+                )
+                mock_project.add_view(mock_view)
+                mock_gen_instance.generate_complete_lookml_project.return_value = mock_project
                 mock_generator.return_value = mock_gen_instance
 
                 mock_writer_instance = Mock()

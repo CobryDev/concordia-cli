@@ -6,6 +6,7 @@ and other field-related operations based on naming conventions defined in model 
 """
 
 from typing import Dict, Any, Optional
+from actions.models.config import ModelRules
 
 
 class FieldIdentifier:
@@ -16,12 +17,12 @@ class FieldIdentifier:
     foreign keys, or other types based on configured suffix rules.
     """
 
-    def __init__(self, model_rules: Dict[str, Any]):
+    def __init__(self, model_rules: ModelRules):
         """
         Initialize with model rules configuration.
 
         Args:
-            model_rules: Dictionary containing naming conventions and other rules
+            model_rules: ModelRules object containing naming conventions and other rules
         """
         self.model_rules = model_rules
 
@@ -35,8 +36,7 @@ class FieldIdentifier:
         Returns:
             True if the field is identified as a primary key
         """
-        pk_suffix = self.model_rules.get(
-            'naming_conventions', {}).get('pk_suffix', '_pk')
+        pk_suffix = self.model_rules.naming_conventions.pk_suffix
         return field_name.endswith(pk_suffix) or field_name == 'id'
 
     def is_foreign_key(self, field_name: str) -> bool:
@@ -49,8 +49,7 @@ class FieldIdentifier:
         Returns:
             True if the field is identified as a foreign key
         """
-        fk_suffix = self.model_rules.get(
-            'naming_conventions', {}).get('fk_suffix', '_fk')
+        fk_suffix = self.model_rules.naming_conventions.fk_suffix
         return field_name.endswith(fk_suffix)
 
     def should_hide_field(self, field_name: str) -> bool:
@@ -63,8 +62,7 @@ class FieldIdentifier:
         Returns:
             True if the field should be hidden
         """
-        hide_suffixes = self.model_rules.get(
-            'defaults', {}).get('hide_fields_by_suffix', [])
+        hide_suffixes = self.model_rules.defaults.hide_fields_by_suffix
         return any(field_name.endswith(suffix) for suffix in hide_suffixes)
 
     def get_foreign_key_suffix(self) -> str:
@@ -74,7 +72,7 @@ class FieldIdentifier:
         Returns:
             The foreign key suffix from configuration (default: '_fk')
         """
-        return self.model_rules.get('naming_conventions', {}).get('fk_suffix', '_fk')
+        return self.model_rules.naming_conventions.fk_suffix
 
     def get_primary_key_suffix(self) -> str:
         """
@@ -83,7 +81,7 @@ class FieldIdentifier:
         Returns:
             The primary key suffix from configuration (default: '_pk')
         """
-        return self.model_rules.get('naming_conventions', {}).get('pk_suffix', '_pk')
+        return self.model_rules.naming_conventions.pk_suffix
 
     def infer_table_name_from_foreign_key(self, fk_name: str) -> Optional[str]:
         """

@@ -13,9 +13,12 @@ from actions.looker.config_loader import (
     get_bigquery_credentials,
     get_bigquery_location,
     ConfigurationError,
-    _validate_config,
     _load_dataform_credentials,
     _parse_dataform_config
+)
+from actions.models.config import (
+    ConcordiaConfig, ConnectionConfig, LookerConfig, ModelRules,
+    NamingConventions, DefaultBehaviors, TypeMapping, LookMLParams
 )
 
 
@@ -57,7 +60,17 @@ class TestConfigLoader:
 
                 'connection': 'test_connection'
             },
-            'model_rules': {}
+            'model_rules': {
+                'naming_conventions': {'pk_suffix': '_pk', 'fk_suffix': '_fk'},
+                'defaults': {'measures': ['count'], 'hide_fields_by_suffix': ['_pk', '_fk']},
+                'type_mapping': [
+                    {
+                        'bq_type': 'STRING',
+                        'lookml_type': 'dimension',
+                        'lookml_params': {'type': 'string'}
+                    }
+                ]
+            }
         }
 
         with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
@@ -66,49 +79,81 @@ class TestConfigLoader:
 
         try:
             config = load_config(temp_path)
-            assert config == config_data
+            # Compare key attributes instead of direct equality since it's now a Pydantic model
+            assert config.connection.datasets == config_data['connection']['datasets']
+            assert config.looker.project_path == config_data['looker']['project_path']
+            assert config.looker.views_path == config_data['looker']['views_path']
+            assert config.looker.connection == config_data['looker']['connection']
         finally:
             os.unlink(temp_path)
 
-    def test_validate_config_missing_sections(self):
-        """Test _validate_config raises error for missing required sections."""
-        config = {'connection': {}}  # Missing 'looker' and 'model_rules'
+    def test_load_config_validation_missing_sections(self):
+        """Test load_config raises error for missing required sections through Pydantic validation."""
+        # Create a temporary file with invalid config
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump({"connection": {"datasets": ["test"]}}, f)
+            temp_file = f.name
 
-        with pytest.raises(ConfigurationError) as exc_info:
-            _validate_config(config)
+        try:
+            with pytest.raises(ConfigurationError) as exc_info:
+                load_config(temp_file)
 
-        assert "Missing required section" in str(exc_info.value)
+            assert "looker" in str(
+                exc_info.value) or "field required" in str(exc_info.value)
+        finally:
+            os.unlink(temp_file)
 
-    def test_validate_config_missing_datasets(self):
-        """Test _validate_config raises error for missing datasets."""
-        config = {
-            'connection': {},  # Missing datasets
-            'looker': {
-                'project_path': './looker',
-                'views_path': 'views/generated.view.lkml',
+    def test_load_config_validation_missing_datasets(self):
+        """Test load_config raises error for missing datasets through Pydantic validation."""
+        # Create a temporary file with invalid config
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump({
+                "connection": {},
+                "looker": {
+                    "project_path": "test",
+                    "views_path": "test",
+                    "connection": "test"
+                },
+                "model_rules": {
+                    "naming_conventions": {"pk_suffix": "_pk", "fk_suffix": "_fk"},
+                    "defaults": {"measures": ["count"], "hide_fields_by_suffix": ["_pk"]},
+                    "type_mapping": []
+                }
+            }, f)
+            temp_file = f.name
 
-                'connection': 'test_connection'
-            },
-            'model_rules': {}
-        }
+        try:
+            with pytest.raises(ConfigurationError) as exc_info:
+                load_config(temp_file)
 
-        with pytest.raises(ConfigurationError) as exc_info:
-            _validate_config(config)
+            assert "datasets" in str(
+                exc_info.value) or "field required" in str(exc_info.value)
+        finally:
+            os.unlink(temp_file)
 
-        assert "At least one dataset must be specified" in str(exc_info.value)
+    def test_load_config_validation_missing_looker_fields(self):
+        """Test load_config raises error for missing looker fields through Pydantic validation."""
+        # Create a temporary file with invalid config
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump({
+                "connection": {"datasets": ["test"]},
+                "looker": {"project_path": "test"},
+                "model_rules": {
+                    "naming_conventions": {"pk_suffix": "_pk", "fk_suffix": "_fk"},
+                    "defaults": {"measures": ["count"], "hide_fields_by_suffix": ["_pk"]},
+                    "type_mapping": []
+                }
+            }, f)
+            temp_file = f.name
 
-    def test_validate_config_missing_looker_fields(self):
-        """Test _validate_config raises error for missing looker fields."""
-        config = {
-            'connection': {'datasets': ['test_dataset']},
-            'looker': {'project_path': './looker'},  # Missing required fields
-            'model_rules': {}
-        }
+        try:
+            with pytest.raises(ConfigurationError) as exc_info:
+                load_config(temp_file)
 
-        with pytest.raises(ConfigurationError) as exc_info:
-            _validate_config(config)
-
-        assert "Missing required field" in str(exc_info.value)
+            assert "views_path" in str(
+                exc_info.value) or "connection" in str(exc_info.value)
+        finally:
+            os.unlink(temp_file)
 
     @patch('actions.looker.config_loader.default')
     def test_get_bigquery_credentials_application_default(self, mock_default):
@@ -117,11 +162,26 @@ class TestConfigLoader:
         mock_credentials = Mock()
         mock_default.return_value = (mock_credentials, 'default-project')
 
-        config = {
-            'connection': {
-                'project_id': 'test-project'
-            }
-        }
+        config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                project_id='test-project',
+                datasets=['test']
+            ),
+            looker=LookerConfig(
+                project_path='./test',
+                views_path='test.lkml',
+                connection='test'
+            ),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(
+                    pk_suffix='_pk', fk_suffix='_fk'),
+                defaults=DefaultBehaviors(
+                    measures=['count'], hide_fields_by_suffix=['_pk']),
+                type_mapping=[
+                    TypeMapping(bq_type='STRING', lookml_type='dimension',
+                                lookml_params=LookMLParams(type='string'))]
+            )
+        )
 
         credentials, project_id = get_bigquery_credentials(config)
 
@@ -134,9 +194,26 @@ class TestConfigLoader:
         mock_credentials = Mock()
         mock_default.return_value = (mock_credentials, None)
 
-        config = {
-            'connection': {}
-        }
+        config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                project_id=None,
+                datasets=['test']
+            ),
+            looker=LookerConfig(
+                project_path='./test',
+                views_path='test.lkml',
+                connection='test'
+            ),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(
+                    pk_suffix='_pk', fk_suffix='_fk'),
+                defaults=DefaultBehaviors(
+                    measures=['count'], hide_fields_by_suffix=['_pk']),
+                type_mapping=[
+                    TypeMapping(bq_type='STRING', lookml_type='dimension',
+                                lookml_params=LookMLParams(type='string'))]
+            )
+        )
 
         with pytest.raises(ConfigurationError) as exc_info:
             get_bigquery_credentials(config)
@@ -145,7 +222,25 @@ class TestConfigLoader:
 
     def test_get_bigquery_location_default(self):
         """Test get_bigquery_location returns None when no location configured."""
-        config = {'connection': {}}
+        config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                datasets=['test']
+            ),
+            looker=LookerConfig(
+                project_path='./test',
+                views_path='test.lkml',
+                connection='test'
+            ),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(
+                    pk_suffix='_pk', fk_suffix='_fk'),
+                defaults=DefaultBehaviors(
+                    measures=['count'], hide_fields_by_suffix=['_pk']),
+                type_mapping=[
+                    TypeMapping(bq_type='STRING', lookml_type='dimension',
+                                lookml_params=LookMLParams(type='string'))]
+            )
+        )
 
         location = get_bigquery_location(config)
 
@@ -153,11 +248,26 @@ class TestConfigLoader:
 
     def test_get_bigquery_location_from_config(self):
         """Test get_bigquery_location returns configured location."""
-        config = {
-            'connection': {
-                'location': 'EU'
-            }
-        }
+        config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                location='EU',
+                datasets=['test']
+            ),
+            looker=LookerConfig(
+                project_path='./test',
+                views_path='test.lkml',
+                connection='test'
+            ),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(
+                    pk_suffix='_pk', fk_suffix='_fk'),
+                defaults=DefaultBehaviors(
+                    measures=['count'], hide_fields_by_suffix=['_pk']),
+                type_mapping=[
+                    TypeMapping(bq_type='STRING', lookml_type='dimension',
+                                lookml_params=LookMLParams(type='string'))]
+            )
+        )
 
         location = get_bigquery_location(config)
 
@@ -176,12 +286,26 @@ class TestConfigLoader:
             creds_path = f.name
 
         try:
-            config = {
-                'connection': {
-                    'dataform_credentials_file': creds_path
-                    # No location in config - should come from credentials file
-                }
-            }
+            config = ConcordiaConfig(
+                connection=ConnectionConfig(
+                    dataform_credentials_file=creds_path,
+                    datasets=['test']
+                ),
+                looker=LookerConfig(
+                    project_path='./test',
+                    views_path='test.lkml',
+                    connection='test'
+                ),
+                model_rules=ModelRules(
+                    naming_conventions=NamingConventions(
+                        pk_suffix='_pk', fk_suffix='_fk'),
+                    defaults=DefaultBehaviors(
+                        measures=['count'], hide_fields_by_suffix=['_pk']),
+                    type_mapping=[
+                        TypeMapping(bq_type='STRING', lookml_type='dimension',
+                                    lookml_params=LookMLParams(type='string'))]
+                )
+            )
 
             location = get_bigquery_location(config)
             assert location == 'US'
@@ -363,12 +487,27 @@ class TestConfigLoader:
             creds_path = f.name
 
         try:
-            config = {
-                'connection': {
-                    'dataform_credentials_file': creds_path,
-                    'project_id': 'config-project'  # Should override dataform project
-                }
-            }
+            config = ConcordiaConfig(
+                connection=ConnectionConfig(
+                    dataform_credentials_file=creds_path,
+                    project_id='config-project',
+                    datasets=['test']
+                ),
+                looker=LookerConfig(
+                    project_path='./test',
+                    views_path='test.lkml',
+                    connection='test'
+                ),
+                model_rules=ModelRules(
+                    naming_conventions=NamingConventions(
+                        pk_suffix='_pk', fk_suffix='_fk'),
+                    defaults=DefaultBehaviors(
+                        measures=['count'], hide_fields_by_suffix=['_pk']),
+                    type_mapping=[
+                        TypeMapping(bq_type='STRING', lookml_type='dimension',
+                                    lookml_params=LookMLParams(type='string'))]
+                )
+            )
 
             credentials, project_id = get_bigquery_credentials(config)
 

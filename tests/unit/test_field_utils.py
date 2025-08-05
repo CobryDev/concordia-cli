@@ -7,6 +7,7 @@ based on naming conventions.
 
 import pytest
 from actions.looker.field_utils import FieldIdentifier
+from actions.models.config import ModelRules, NamingConventions, DefaultBehaviors, TypeMapping, LookMLParams
 
 
 class TestFieldIdentifier:
@@ -14,26 +15,36 @@ class TestFieldIdentifier:
 
     def test_init_with_default_values(self):
         """Test initialization with default naming conventions."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         assert identifier.model_rules == model_rules
 
     def test_init_with_custom_naming_conventions(self):
         """Test initialization with custom naming conventions."""
-        model_rules = {
-            'naming_conventions': {
-                'pk_suffix': '_id',
-                'fk_suffix': '_ref'
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(
+                pk_suffix='_id',
+                fk_suffix='_ref'
+            ),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         assert identifier.model_rules == model_rules
 
     def test_is_primary_key_with_default_suffix(self):
         """Test primary key identification with default '_pk' suffix."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test default _pk suffix
@@ -50,11 +61,11 @@ class TestFieldIdentifier:
 
     def test_is_primary_key_with_custom_suffix(self):
         """Test primary key identification with custom suffix."""
-        model_rules = {
-            'naming_conventions': {
-                'pk_suffix': '_id'
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(pk_suffix='_id'),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test custom _id suffix
@@ -69,7 +80,11 @@ class TestFieldIdentifier:
 
     def test_is_foreign_key_with_default_suffix(self):
         """Test foreign key identification with default '_fk' suffix."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test default _fk suffix
@@ -83,11 +98,11 @@ class TestFieldIdentifier:
 
     def test_is_foreign_key_with_custom_suffix(self):
         """Test foreign key identification with custom suffix."""
-        model_rules = {
-            'naming_conventions': {
-                'fk_suffix': '_ref'
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(fk_suffix='_ref'),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test custom _ref suffix
@@ -99,11 +114,11 @@ class TestFieldIdentifier:
 
     def test_should_hide_field_with_default_config(self):
         """Test field hiding with default configuration."""
-        model_rules = {
-            'defaults': {
-                'hide_fields_by_suffix': ['_pk', '_fk']
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(hide_fields_by_suffix=['_pk', '_fk']),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test hidden fields
@@ -116,11 +131,12 @@ class TestFieldIdentifier:
 
     def test_should_hide_field_with_custom_config(self):
         """Test field hiding with custom configuration."""
-        model_rules = {
-            'defaults': {
-                'hide_fields_by_suffix': ['_id', '_internal']
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(
+                hide_fields_by_suffix=['_id', '_internal']),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test hidden fields
@@ -133,7 +149,11 @@ class TestFieldIdentifier:
 
     def test_should_hide_field_with_empty_config(self):
         """Test field hiding with empty configuration."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(hide_fields_by_suffix=[]),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # No fields should be hidden without configuration
@@ -143,43 +163,55 @@ class TestFieldIdentifier:
 
     def test_get_foreign_key_suffix_default(self):
         """Test getting foreign key suffix with default configuration."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         assert identifier.get_foreign_key_suffix() == '_fk'
 
     def test_get_foreign_key_suffix_custom(self):
         """Test getting foreign key suffix with custom configuration."""
-        model_rules = {
-            'naming_conventions': {
-                'fk_suffix': '_ref'
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(fk_suffix='_ref'),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         assert identifier.get_foreign_key_suffix() == '_ref'
 
     def test_get_primary_key_suffix_default(self):
         """Test getting primary key suffix with default configuration."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         assert identifier.get_primary_key_suffix() == '_pk'
 
     def test_get_primary_key_suffix_custom(self):
         """Test getting primary key suffix with custom configuration."""
-        model_rules = {
-            'naming_conventions': {
-                'pk_suffix': '_id'
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(pk_suffix='_id'),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         assert identifier.get_primary_key_suffix() == '_id'
 
     def test_infer_table_name_from_foreign_key_default_suffix(self):
         """Test table name inference from foreign key with default suffix."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test with _fk suffix
@@ -199,11 +231,11 @@ class TestFieldIdentifier:
 
     def test_infer_table_name_from_foreign_key_custom_suffix(self):
         """Test table name inference from foreign key with custom suffix."""
-        model_rules = {
-            'naming_conventions': {
-                'fk_suffix': '_ref'
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(fk_suffix='_ref'),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test with custom _ref suffix
@@ -222,7 +254,11 @@ class TestFieldIdentifier:
 
     def test_infer_table_name_edge_cases(self):
         """Test edge cases for table name inference."""
-        model_rules = {}
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test empty string
@@ -239,11 +275,12 @@ class TestFieldIdentifier:
 
     def test_multiple_suffixes_in_hide_fields(self):
         """Test hiding fields with multiple suffix patterns."""
-        model_rules = {
-            'defaults': {
-                'hide_fields_by_suffix': ['_pk', '_fk', '_internal', '_temp']
-            }
-        }
+        model_rules = ModelRules(
+            naming_conventions=NamingConventions(),
+            defaults=DefaultBehaviors(hide_fields_by_suffix=[
+                                      '_pk', '_fk', '_internal', '_temp']),
+            type_mapping=[]
+        )
         identifier = FieldIdentifier(model_rules)
 
         # Test all configured suffixes

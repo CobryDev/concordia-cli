@@ -22,8 +22,8 @@ class TestLookMLViewGenerator:
         generator = LookMLViewGenerator(sample_config)
 
         assert generator.config == sample_config
-        assert generator.model_rules == sample_config['model_rules']
-        assert generator.looker_config == sample_config['looker']
+        assert generator.model_rules == sample_config.model_rules
+        assert generator.looker_config == sample_config.looker
         assert generator.connection_name == 'test-bigquery-connection'
         assert generator.field_identifier is not None
 
@@ -111,8 +111,8 @@ class TestLookMLViewGenerator:
     def test_get_view_name_with_prefix_suffix(self, sample_config):
         """Test view name generation with prefix and suffix."""
         # Add naming conventions to config
-        sample_config['model_rules']['naming_conventions']['view_prefix'] = 'vw_'
-        sample_config['model_rules']['naming_conventions']['view_suffix'] = '_view'
+        sample_config.model_rules.naming_conventions.view_prefix = 'vw_'
+        sample_config.model_rules.naming_conventions.view_suffix = '_view'
 
         generator = LookMLViewGenerator(sample_config)
 
@@ -146,11 +146,12 @@ class TestLookMLViewGenerator:
 
     def test_generate_dimension_unsupported_type(self, sample_config):
         """Test dimension generation for unsupported BigQuery type."""
-        unsupported_column = {
-            'name': 'geometry_field',
-            'type': 'GEOGRAPHY',  # Not in type mapping
-            'standardized_type': 'GEOGRAPHY'
-        }
+        from actions.models.metadata import ColumnMetadata
+        unsupported_column = ColumnMetadata(
+            name='geometry_field',
+            type='GEOGRAPHY',  # Not in type mapping
+            standardized_type='GEOGRAPHY'
+        )
 
         generator = LookMLViewGenerator(sample_config)
 
@@ -179,12 +180,13 @@ class TestLookMLViewGenerator:
 
     def test_generate_dimension_group_date_type(self, sample_config):
         """Test dimension group generation for DATE column."""
-        date_column = {
-            'name': 'birth_date',
-            'type': 'DATE',
-            'standardized_type': 'DATE',
-            'description': 'User birth date'
-        }
+        from actions.models.metadata import ColumnMetadata
+        date_column = ColumnMetadata(
+            name='birth_date',
+            type='DATE',
+            standardized_type='DATE',
+            description='User birth date'
+        )
 
         generator = LookMLViewGenerator(sample_config)
         result = generator._generate_dimension_group(date_column)
@@ -210,16 +212,25 @@ class TestLookMLViewGenerator:
         """Test time dimension identification."""
         generator = LookMLViewGenerator(sample_config)
 
+        from actions.models.metadata import ColumnMetadata
+
         # Time types
-        assert generator._is_time_dimension({'type': 'TIMESTAMP'}) is True
-        assert generator._is_time_dimension({'type': 'DATETIME'}) is True
-        assert generator._is_time_dimension({'type': 'DATE'}) is True
-        assert generator._is_time_dimension({'type': 'TIME'}) is True
+        assert generator._is_time_dimension(ColumnMetadata(
+            name='test', type='TIMESTAMP', standardized_type='TIMESTAMP')) is True
+        assert generator._is_time_dimension(ColumnMetadata(
+            name='test', type='DATETIME', standardized_type='DATETIME')) is True
+        assert generator._is_time_dimension(ColumnMetadata(
+            name='test', type='DATE', standardized_type='DATE')) is True
+        assert generator._is_time_dimension(ColumnMetadata(
+            name='test', type='TIME', standardized_type='TIME')) is True
 
         # Non-time types
-        assert generator._is_time_dimension({'type': 'STRING'}) is False
-        assert generator._is_time_dimension({'type': 'INTEGER'}) is False
-        assert generator._is_time_dimension({'type': 'BOOL'}) is False
+        assert generator._is_time_dimension(ColumnMetadata(
+            name='test', type='STRING', standardized_type='STRING')) is False
+        assert generator._is_time_dimension(ColumnMetadata(
+            name='test', type='INTEGER', standardized_type='INTEGER')) is False
+        assert generator._is_time_dimension(ColumnMetadata(
+            name='test', type='BOOL', standardized_type='BOOL')) is False
 
     def test_find_type_mapping(self, sample_config):
         """Test type mapping lookup."""
@@ -228,11 +239,11 @@ class TestLookMLViewGenerator:
         # Test existing mappings
         string_mapping = generator._find_type_mapping('STRING')
         assert string_mapping is not None
-        assert string_mapping['lookml_type'] == 'dimension'
+        assert string_mapping.lookml_type == 'dimension'
 
         integer_mapping = generator._find_type_mapping('INTEGER')
         assert integer_mapping is not None
-        assert integer_mapping['lookml_type'] == 'dimension'
+        assert integer_mapping.lookml_type == 'dimension'
 
         # Test non-existing mapping
         unknown_mapping = generator._find_type_mapping('UNKNOWN_TYPE')
@@ -283,14 +294,16 @@ class TestLookMLDimensionGenerator:
         generator = LookMLDimensionGenerator(sample_config)
 
         assert generator.config == sample_config
-        assert generator.model_rules == sample_config['model_rules']
+        assert generator.model_rules == sample_config.model_rules
 
     def test_generate_case_dimension_basic(self, sample_config):
         """Test basic case dimension generation."""
-        column = {
-            'name': 'status',
-            'type': 'STRING'
-        }
+        from actions.models.metadata import ColumnMetadata
+        column = ColumnMetadata(
+            name='status',
+            type='STRING',
+            standardized_type='STRING'
+        )
 
         case_logic = {
             'name': 'status_category',
@@ -316,10 +329,12 @@ class TestLookMLDimensionGenerator:
 
     def test_generate_case_dimension_default_name(self, sample_config):
         """Test case dimension generation with default name."""
-        column = {
-            'name': 'priority',
-            'type': 'INTEGER'
-        }
+        from actions.models.metadata import ColumnMetadata
+        column = ColumnMetadata(
+            name='priority',
+            type='INTEGER',
+            standardized_type='INTEGER'
+        )
 
         case_logic = {
             'conditions': [
@@ -337,11 +352,13 @@ class TestLookMLDimensionGenerator:
 
     def test_generate_yesno_dimension_boolean(self, sample_config):
         """Test yes/no dimension generation for boolean column."""
-        boolean_column = {
-            'name': 'is_verified',
-            'type': 'BOOLEAN',
-            'description': 'Whether user is verified'
-        }
+        from actions.models.metadata import ColumnMetadata
+        boolean_column = ColumnMetadata(
+            name='is_verified',
+            type='BOOLEAN',
+            standardized_type='BOOLEAN',
+            description='Whether user is verified'
+        )
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_yesno_dimension(boolean_column)
@@ -354,10 +371,12 @@ class TestLookMLDimensionGenerator:
 
     def test_generate_yesno_dimension_numeric(self, sample_config):
         """Test yes/no dimension generation for numeric column."""
-        numeric_column = {
-            'name': 'login_count',
-            'type': 'INTEGER'
-        }
+        from actions.models.metadata import ColumnMetadata
+        numeric_column = ColumnMetadata(
+            name='login_count',
+            type='INTEGER',
+            standardized_type='INTEGER'
+        )
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_yesno_dimension(numeric_column)
@@ -370,10 +389,12 @@ class TestLookMLDimensionGenerator:
 
     def test_generate_yesno_dimension_no_description(self, sample_config):
         """Test yes/no dimension generation without description."""
-        column = {
-            'name': 'has_orders',
-            'type': 'INTEGER'
-        }
+        from actions.models.metadata import ColumnMetadata
+        column = ColumnMetadata(
+            name='has_orders',
+            type='INTEGER',
+            standardized_type='INTEGER'
+        )
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_yesno_dimension(column)

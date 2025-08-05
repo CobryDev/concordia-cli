@@ -6,6 +6,9 @@ import lkml
 from .lookml_base_dict import MetadataExtractor
 from .lookml_module import LookMLViewGenerator
 from .lookml_measure_module import LookMLMeasureGenerator
+from ..models.config import ConcordiaConfig
+from ..models.metadata import MetadataCollection, TableMetadata
+from ..models.lookml import LookMLProject, LookMLView
 
 
 class LookMLGenerator:
@@ -14,89 +17,100 @@ class LookMLGenerator:
     Following the droughty pattern of treating LookML as data structures.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: ConcordiaConfig):
         """
         Initialize the LookML generator.
 
         Args:
-            config: The loaded configuration dictionary
+            config: The loaded ConcordiaConfig object
         """
         self.config = config
-        self.model_rules = config['model_rules']
-        self.looker_config = config['looker']
-        self.connection_name = self.looker_config['connection']
+        self.model_rules = config.model_rules
+        self.looker_config = config.looker
+        self.connection_name = self.looker_config.connection
 
         # Initialize the modular generators
         self.view_generator = LookMLViewGenerator(config)
         self.measure_generator = LookMLMeasureGenerator(config)
 
-    def generate_view_dict_for_table_metadata(self, table_metadata: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_view_for_table_metadata(self, table_metadata: TableMetadata) -> LookMLView:
         """
-        Generate LookML view dictionary for a single table using metadata.
+        Generate LookML view for a single table using metadata.
 
         Args:
-            table_metadata: Table metadata dictionary from MetadataExtractor
+            table_metadata: TableMetadata object from MetadataExtractor
 
         Returns:
-            Dictionary containing the LookML view definition
+            LookMLView object containing the view definition
         """
-        # Generate the base view dictionary
+        # Generate the base view
         view_dict = self.view_generator.generate_view_dict(table_metadata)
+
+        # Convert to LookMLView object (if needed)
+        # For now, we'll create a simple LookMLView from the dict
+        view_name = list(view_dict['view'].keys())[0]
+        view_data = view_dict['view'][view_name]
+
+        lookml_view = LookMLView(
+            name=view_name,
+            sql_table_name=view_data['sql_table_name'],
+            connection=view_data['connection'],
+            description=view_data.get('description')
+        )
 
         # Generate measures and add them to the view
         measures = self.measure_generator.generate_measures_for_view(
             table_metadata)
-        if measures:
-            view_name = list(view_dict['view'].keys())[0]
-            if 'measure' not in view_dict['view'][view_name]:
-                view_dict['view'][view_name]['measure'] = []
 
-            # Convert measure list to the correct format
-            for measure in measures:
-                for measure_name, measure_def in measure.items():
-                    view_dict['view'][view_name]['measure'].append(
-                        {measure_name: measure_def})
+        # Convert measure dictionaries to Measure objects
+        from ..models.lookml import Measure, MeasureType
+        for measure_dict in measures:
+            for measure_name, measure_data in measure_dict.items():
+                measure_obj = Measure(
+                    name=measure_name,
+                    type=MeasureType(measure_data['type']),
+                    sql=measure_data.get('sql'),
+                    description=measure_data.get('description'),
+                    hidden=measure_data.get('hidden') == 'yes'
+                )
+                lookml_view.add_measure(measure_obj)
 
-        return view_dict
+        return lookml_view
 
-    def generate_view_for_table(self, table_metadata: Dict[str, Any]) -> str:
+    def generate_view_for_table(self, table_metadata: TableMetadata) -> str:
         """
         Generate LookML view content for a single table (backward compatibility).
 
         Args:
-            table_metadata: Table metadata dictionary
+            table_metadata: TableMetadata object
 
         Returns:
             String containing the LookML view definition
         """
-        view_dict = self.generate_view_dict_for_table_metadata(table_metadata)
+        lookml_view = self.generate_view_for_table_metadata(table_metadata)
+        view_dict = lookml_view.to_dict()
+
         result = lkml.dump(view_dict)
         return result if result is not None else ""
 
-    def generate_complete_lookml_project(self, tables_metadata: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    def generate_complete_lookml_project(self, tables_metadata: MetadataCollection) -> LookMLProject:
         """
         Generate a complete LookML project with views only.
 
         Args:
-            tables_metadata: Dictionary of table metadata
+            tables_metadata: MetadataCollection containing table metadata
 
         Returns:
-            Dictionary containing the complete LookML project
+            LookMLProject containing the complete project
         """
-        project_dict = {}
+        project = LookMLProject()
 
         # Generate all views
-        views = {}
-        for table_key, table_metadata in tables_metadata.items():
-            view_dict = self.generate_view_dict_for_table_metadata(
-                table_metadata)
-            if 'view' in view_dict:
-                views.update(view_dict['view'])
+        for table_metadata in tables_metadata.get_all_tables():
+            lookml_view = self.generate_view_for_table_metadata(table_metadata)
+            project.add_view(lookml_view)
 
-        if views:
-            project_dict['view'] = views
-
-        return project_dict
+        return project
 
 
 class LookMLFileWriter:
@@ -105,19 +119,19 @@ class LookMLFileWriter:
     Following the droughty pattern of treating LookML as data structures.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: ConcordiaConfig):
         """
         Initialize the file writer.
 
         Args:
-            config: The loaded configuration dictionary
+            config: The loaded ConcordiaConfig object
         """
         self.config = config
-        self.looker_config = config['looker']
+        self.looker_config = config.looker
 
     def write_views_file(self, view_contents: List[str]) -> str:
         """
-        Write a single LookML file containing all generated views (backward compatibility).
+        Write a single LookML file containing all generated views(backward compatibility).
 
         Args:
             view_contents: List of generated LookML view content strings
@@ -125,8 +139,8 @@ class LookMLFileWriter:
         Returns:
             Path to the written file
         """
-        project_path = Path(self.looker_config['project_path'])
-        views_path = self.looker_config['views_path']
+        project_path = Path(self.looker_config.project_path)
+        views_path = self.looker_config.views_path
 
         # views_path is the exact file path relative to project_path
         file_path = project_path / views_path
@@ -149,20 +163,20 @@ class LookMLFileWriter:
 
         Args:
             lookml_dict: Dictionary containing LookML structure
-            file_suffix: Suffix for the file name (e.g., "views")
+            file_suffix: Suffix for the file name(e.g., "views")
 
         Returns:
             Path to the written file
         """
-        project_path = Path(self.looker_config['project_path'])
+        project_path = Path(self.looker_config.project_path)
 
         # Generate file name
         if file_suffix == "views":
-            file_path = project_path / self.looker_config['views_path']
+            file_path = project_path / self.looker_config.views_path
         else:
             # For any other file types, generate a new file name using views_path as base
-            base_name = Path(self.looker_config['views_path']).stem
-            base_dir = Path(self.looker_config['views_path']).parent
+            base_name = Path(self.looker_config.views_path).stem
+            base_dir = Path(self.looker_config.views_path).parent
             file_path = project_path / base_dir / \
                 f"{base_name}_{file_suffix}.view.lkml"
 

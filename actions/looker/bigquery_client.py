@@ -203,13 +203,14 @@ class BigQueryClient:
                 dataset_ids)
 
             # Wrangle the metadata into a usable format
-            tables_metadata = self.metadata_extractor.wrangle_metadata(
+            metadata_collection = self.metadata_extractor.wrangle_metadata(
                 tables_df, columns_df, primary_keys_df
             )
 
             click.echo(
-                f"📊 Successfully processed {len(tables_metadata)} tables")
-            return tables_metadata
+                f"📊 Successfully processed {metadata_collection.table_count()} tables")
+            # Convert TableMetadata objects to dictionaries
+            return {key: table.model_dump() for key, table in metadata_collection.tables.items()}
 
         except Exception as e:
             click.echo(f"❌ Error extracting table metadata: {e}")

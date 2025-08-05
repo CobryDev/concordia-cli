@@ -6,6 +6,9 @@ from typing import Dict, Any, Optional
 import click
 from google.auth import default
 from google.oauth2 import service_account
+from pydantic import ValidationError
+
+from ..models.config import ConcordiaConfig
 
 
 class ConfigurationError(Exception):
@@ -13,7 +16,7 @@ class ConfigurationError(Exception):
     pass
 
 
-def load_config(config_path: str = "concordia.yaml") -> Dict[str, Any]:
+def load_config(config_path: str = "concordia.yaml") -> ConcordiaConfig:
     """
     Load and validate the concordia.yaml configuration file.
 
@@ -21,7 +24,7 @@ def load_config(config_path: str = "concordia.yaml") -> Dict[str, Any]:
         config_path: Path to the configuration file
 
     Returns:
-        Dict containing the parsed configuration
+        ConcordiaConfig object containing the parsed and validated configuration
 
     Raises:
         ConfigurationError: If configuration is missing or invalid
@@ -34,47 +37,37 @@ def load_config(config_path: str = "concordia.yaml") -> Dict[str, Any]:
 
     try:
         with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
+            config_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise ConfigurationError(f"Invalid YAML in configuration file: {e}")
 
-    # Validate required sections
-    _validate_config(config)
+    # Parse and validate using Pydantic model
+    try:
+        config = ConcordiaConfig.from_dict(config_data)
+    except ValidationError as e:
+        error_messages = []
+        for error in e.errors():
+            field_path = '.'.join(str(loc) for loc in error['loc'])
+            error_messages.append(f"{field_path}: {error['msg']}")
+        raise ConfigurationError(
+            f"Configuration validation failed:\n" +
+            "\n".join(f"  - {msg}" for msg in error_messages)
+        )
 
     return config
 
 
-def _validate_config(config: Dict[str, Any]) -> None:
-    """Validate that the configuration contains required sections."""
-    required_sections = ['connection', 'looker', 'model_rules']
-
-    for section in required_sections:
-        if section not in config:
-            raise ConfigurationError(
-                f"Missing required section '{section}' in configuration")
-
-    # Validate connection section
-    connection = config['connection']
-    if 'datasets' not in connection or not connection['datasets']:
-        raise ConfigurationError(
-            "At least one dataset must be specified in connection.datasets")
-
-    # Validate looker section
-    looker = config['looker']
-    required_looker_fields = ['project_path',
-                              'views_path', 'connection']
-    for field in required_looker_fields:
-        if field not in looker:
-            raise ConfigurationError(
-                f"Missing required field 'looker.{field}' in configuration")
+# Note: Configuration validation is now handled by Pydantic models
+# The _validate_config function is no longer needed as validation
+# is performed automatically when creating ConcordiaConfig instances
 
 
-def get_bigquery_credentials(config: Dict[str, Any]) -> tuple:
+def get_bigquery_credentials(config: ConcordiaConfig) -> tuple:
     """
     Get BigQuery credentials from configuration.
 
     Args:
-        config: The loaded configuration dictionary
+        config: The loaded ConcordiaConfig object
 
     Returns:
         Tuple of (credentials, project_id)
@@ -82,19 +75,18 @@ def get_bigquery_credentials(config: Dict[str, Any]) -> tuple:
     Raises:
         ConfigurationError: If credentials cannot be obtained
     """
-    connection = config['connection']
+    connection = config.connection
 
     # Method 1: Try to load from Dataform credentials file
-    if 'dataform_credentials_file' in connection:
-        creds_path = connection['dataform_credentials_file']
+    if connection.dataform_credentials_file:
+        creds_path = connection.dataform_credentials_file
         if os.path.exists(creds_path):
             try:
                 credentials, project_id = _load_dataform_credentials(
                     creds_path)
                 # Use project_id from config if provided, otherwise from credentials
-                config_project_id = connection.get('project_id')
-                if config_project_id and config_project_id != 'your-gcp-project-id':
-                    project_id = config_project_id
+                if connection.project_id:
+                    project_id = connection.project_id
                 return credentials, project_id
             except Exception as e:
                 click.echo(f"⚠️  Failed to load Dataform credentials: {e}")
@@ -104,9 +96,9 @@ def get_bigquery_credentials(config: Dict[str, Any]) -> tuple:
     # Method 2: Use Application Default Credentials
     try:
         credentials, default_project = default()
-        project_id = connection.get('project_id', default_project)
+        project_id = connection.project_id or default_project
 
-        if not project_id or project_id == 'your-gcp-project-id':
+        if not project_id:
             raise ConfigurationError(
                 "No valid project_id found. Please set 'connection.project_id' in your configuration."
             )
@@ -193,22 +185,21 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
         )
 
 
-def get_bigquery_location(config: Dict[str, Any]) -> Optional[str]:
+def get_bigquery_location(config: ConcordiaConfig) -> Optional[str]:
     """
     Get BigQuery location from configuration.
 
     Checks both the configuration file and the credentials file for location.
     """
-    connection = config['connection']
+    connection = config.connection
 
     # First, check the config file
-    location = connection.get('location')
-    if location and location != 'your-region':
-        return location
+    if connection.location:
+        return connection.location
 
     # If not found in config, try to get it from the credentials file
-    if 'dataform_credentials_file' in connection:
-        creds_path = connection['dataform_credentials_file']
+    if connection.dataform_credentials_file:
+        creds_path = connection.dataform_credentials_file
         if os.path.exists(creds_path):
             try:
                 dataform_config = _parse_dataform_config(creds_path)

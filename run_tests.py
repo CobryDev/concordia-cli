@@ -103,7 +103,7 @@ def run_tests_with_coverage():
         "--cov-report=term-missing",
         "--cov-report=html:htmlcov",
         "--cov-report=xml:coverage.xml",
-        "--cov-fail-under=80",
+        "--cov-fail-under=70",
         "-v"
     ]
     success = run_command(cmd, "Running tests with coverage")

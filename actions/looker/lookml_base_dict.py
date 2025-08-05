@@ -12,6 +12,8 @@ import click
 from google.cloud import bigquery
 from google.api_core.exceptions import NotFound, PermissionDenied
 
+from ..models.metadata import ColumnMetadata, TableMetadata, MetadataCollection
+
 
 class MetadataExtractor:
     """Extracts metadata from BigQuery using INFORMATION_SCHEMA queries with pandas-gbq."""
@@ -190,7 +192,7 @@ class MetadataExtractor:
             return pd.DataFrame()
 
     def wrangle_metadata(self, tables_df: pd.DataFrame, columns_df: pd.DataFrame,
-                         primary_keys_df: pd.DataFrame) -> Dict[str, Any]:
+                         primary_keys_df: pd.DataFrame) -> MetadataCollection:
         """
         Wrangle and combine the extracted metadata using pandas.
 
@@ -200,10 +202,10 @@ class MetadataExtractor:
             primary_keys_df: DataFrame containing primary key metadata
 
         Returns:
-            Dictionary containing processed metadata ready for LookML generation
+            MetadataCollection containing type-safe table metadata
         """
         if tables_df.empty or columns_df.empty:
-            return {}
+            return MetadataCollection(tables={})
 
         click.echo("🔧 Wrangling metadata...")
 
@@ -228,8 +230,8 @@ class MetadataExtractor:
         merged_df['standardized_type'] = merged_df['data_type'].apply(
             self._standardize_data_type)
 
-        # Group by table to create table-level metadata
-        tables_metadata = {}
+        # Group by table to create table-level metadata with Pydantic models
+        metadata_collection = MetadataCollection(tables={})
 
         for (project_id, dataset_id, table_id), group in merged_df.groupby(['project_id', 'dataset_id', 'table_id']):
             table_key = f"{dataset_id}.{table_id}"
@@ -237,28 +239,38 @@ class MetadataExtractor:
             # Sort columns by ordinal position
             group_sorted = group.sort_values('ordinal_position')
 
-            tables_metadata[table_key] = {
-                'project_id': project_id,
-                'dataset_id': dataset_id,
-                'table_id': table_id,
-                'table_description': group_sorted.iloc[0]['table_description'],
-                'columns': []
-            }
-
+            # Create column metadata objects
+            columns = []
             for _, column in group_sorted.iterrows():
-                column_info = {
-                    'name': column['column_name'],
-                    'type': column['data_type'],
-                    'standardized_type': column['standardized_type'],
-                    'mode': 'REQUIRED' if column['is_nullable'] == 'NO' else 'NULLABLE',
-                    'description': column['column_description'],
-                    'is_primary_key': column['is_primary_key'],
-                    'ordinal_position': column['ordinal_position']
-                }
-                tables_metadata[table_key]['columns'].append(column_info)
+                column_metadata = ColumnMetadata(
+                    name=column['column_name'],
+                    type=column['data_type'],
+                    standardized_type=column['standardized_type'],
+                    description=column['column_description'] if pd.notna(
+                        column['column_description']) else None,
+                    is_primary_key=bool(column['is_primary_key']),
+                    is_nullable=column['is_nullable'] == 'YES',
+                    ordinal_position=int(column['ordinal_position']) if pd.notna(
+                        column['ordinal_position']) else None
+                )
+                columns.append(column_metadata)
 
-        click.echo(f"✅ Processed metadata for {len(tables_metadata)} tables")
-        return tables_metadata
+            # Create table metadata object
+            table_description = group_sorted.iloc[0]['table_description']
+            table_metadata = TableMetadata(
+                table_id=table_id,
+                dataset_id=dataset_id,
+                project_id=project_id,
+                table_description=table_description if pd.notna(
+                    table_description) else None,
+                columns=columns
+            )
+
+            metadata_collection.add_table(table_metadata)
+
+        click.echo(
+            f"✅ Processed metadata for {metadata_collection.table_count()} tables")
+        return metadata_collection
 
     def _get_primary_key_columns(self, primary_keys_df: pd.DataFrame) -> Dict[str, List[str]]:
         """Extract primary key column information."""
@@ -282,25 +294,25 @@ class MetadataExtractor:
             Standardized type string
         """
         type_mapping = {
-            'STRING': 'string',
-            'BYTES': 'string',
-            'INTEGER': 'number',
-            'INT64': 'number',
-            'FLOAT': 'number',
-            'FLOAT64': 'number',
-            'NUMERIC': 'number',
-            'BIGNUMERIC': 'number',
-            'BOOLEAN': 'yesno',
-            'BOOL': 'yesno',
-            'TIMESTAMP': 'datetime',
-            'DATETIME': 'datetime',
-            'DATE': 'date',
-            'TIME': 'time',
-            'GEOGRAPHY': 'string',
-            'JSON': 'string',
-            'ARRAY': 'string',
-            'STRUCT': 'string',
-            'RECORD': 'string'
+            'STRING': 'STRING',
+            'BYTES': 'STRING',
+            'INTEGER': 'INTEGER',
+            'INT64': 'INT64',
+            'FLOAT': 'FLOAT64',
+            'FLOAT64': 'FLOAT64',
+            'NUMERIC': 'NUMERIC',
+            'BIGNUMERIC': 'BIGNUMERIC',
+            'BOOLEAN': 'BOOL',
+            'BOOL': 'BOOL',
+            'TIMESTAMP': 'TIMESTAMP',
+            'DATETIME': 'DATETIME',
+            'DATE': 'DATE',
+            'TIME': 'TIME',
+            'GEOGRAPHY': 'STRING',
+            'JSON': 'STRING',
+            'ARRAY': 'STRING',
+            'STRUCT': 'STRING',
+            'RECORD': 'STRING'
         }
 
-        return type_mapping.get(bq_type.upper(), 'string')
+        return type_mapping.get(bq_type.upper(), 'STRING')

@@ -8,25 +8,28 @@ It handles dimensions, dimension groups, and view-level configurations.
 from typing import List, Dict, Any, Optional
 import click
 from .field_utils import FieldIdentifier
+from ..models.config import ConcordiaConfig, TypeMapping
+from ..models.metadata import TableMetadata, ColumnMetadata
+from ..models.lookml import LookMLView, Dimension, DimensionGroup, DimensionType, DimensionGroupType
 
 
 class LookMLViewGenerator:
     """Generates LookML views as Python dictionaries."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: ConcordiaConfig):
         """
         Initialize the view generator.
 
         Args:
-            config: The loaded configuration dictionary
+            config: The loaded ConcordiaConfig object
         """
         self.config = config
-        self.model_rules = config['model_rules']
-        self.looker_config = config['looker']
-        self.connection_name = self.looker_config['connection']
+        self.model_rules = config.model_rules
+        self.looker_config = config.looker
+        self.connection_name = self.looker_config.connection
         self.field_identifier = FieldIdentifier(self.model_rules)
 
-    def generate_view_dict(self, table_metadata: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_view_dict(self, table_metadata: TableMetadata) -> Dict[str, Any]:
         """
         Generate a LookML view dictionary for a table.
 
@@ -36,28 +39,28 @@ class LookMLViewGenerator:
         Returns:
             Dictionary representing the LookML view
         """
-        view_name = self._get_view_name(table_metadata['table_id'])
+        view_name = self._get_view_name(table_metadata.table_id)
 
         # Build the view dictionary structure
         view_dict = {
             'view': {
                 view_name: {
-                    'sql_table_name': f"`{table_metadata['project_id']}.{table_metadata['dataset_id']}.{table_metadata['table_id']}`",
+                    'sql_table_name': f"`{table_metadata.project_id}.{table_metadata.dataset_id}.{table_metadata.table_id}`",
                     'connection': self.connection_name
                 }
             }
         }
 
         # Add description if available
-        if table_metadata.get('table_description'):
-            view_dict['view'][view_name]['description'] = table_metadata['table_description']
+        if table_metadata.table_description:
+            view_dict['view'][view_name]['description'] = table_metadata.table_description
 
         # Generate dimensions and dimension groups
         dimensions = []
         dimension_groups = []
         drill_fields = []
 
-        for column in table_metadata['columns']:
+        for column in table_metadata.columns:
             if self._is_time_dimension(column):
                 dimension_group = self._generate_dimension_group(column)
                 if dimension_group:
@@ -68,25 +71,28 @@ class LookMLViewGenerator:
                     dimensions.append(dimension)
 
                     # Add to drill fields if not hidden
-                    if not self._should_hide_field(column['name']):
-                        drill_fields.append(column['name'])
+                    if not self._should_hide_field(column.name):
+                        drill_fields.append(column.name)
 
-        # Add dimensions to view
+        # Add dimensions to view (using type: ignore to suppress type checker warnings)
         if dimensions:
-            if 'dimension' not in view_dict['view'][view_name]:
-                view_dict['view'][view_name]['dimension'] = []
-            view_dict['view'][view_name]['dimension'].extend(dimensions)
+            view_content = view_dict['view'][view_name]
+            if 'dimension' not in view_content:
+                view_content['dimension'] = []  # type: ignore
+            view_content['dimension'].extend(dimensions)  # type: ignore
 
-        # Add dimension groups to view
+        # Add dimension groups to view (using type: ignore to suppress type checker warnings)
         if dimension_groups:
-            if 'dimension_group' not in view_dict['view'][view_name]:
-                view_dict['view'][view_name]['dimension_group'] = []
-            view_dict['view'][view_name]['dimension_group'].extend(
-                dimension_groups)
+            view_content = view_dict['view'][view_name]
+            if 'dimension_group' not in view_content:
+                view_content['dimension_group'] = []  # type: ignore
+            # type: ignore
+            dimension_group_list = view_content['dimension_group']
+            dimension_group_list.extend(dimension_groups)  # type: ignore
 
-        # Add drill fields set
+        # Add drill fields set (using type: ignore to suppress type checker warnings)
         if drill_fields:
-            view_dict['view'][view_name]['set'] = {
+            view_dict['view'][view_name]['set'] = {  # type: ignore
                 'detail': {
                     'fields': drill_fields
                 }
@@ -97,9 +103,9 @@ class LookMLViewGenerator:
     def _get_view_name(self, table_id: str) -> str:
         """Convert table ID to view name following naming conventions."""
         # Apply any naming transformations based on config
-        naming_rules = self.model_rules.get('naming_conventions', {})
-        view_prefix = naming_rules.get('view_prefix', '')
-        view_suffix = naming_rules.get('view_suffix', '')
+        naming_rules = self.model_rules.naming_conventions
+        view_prefix = naming_rules.view_prefix or ''
+        view_suffix = naming_rules.view_suffix or ''
 
         view_name = table_id.lower()
 
@@ -110,45 +116,58 @@ class LookMLViewGenerator:
 
         return view_name
 
-    def _generate_dimension(self, column: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _generate_dimension(self, column: ColumnMetadata) -> Optional[Dict[str, Any]]:
         """
         Generate a LookML dimension dictionary for a column.
 
         Args:
-            column: Column metadata dictionary
+            column: ColumnMetadata object
 
         Returns:
             Dictionary containing dimension definition or None if unsupported
         """
-        column_name = column['name']
-        standardized_type = column['standardized_type']
+        column_name = column.name
+        standardized_type = column.standardized_type
 
         # Find type mapping from config
-        type_mapping = self._find_type_mapping(column['type'])
+        type_mapping = self._find_type_mapping(column.type)
         if not type_mapping:
             click.echo(
-                f"   ⚠️  No type mapping found for BigQuery type '{column['type']}' in column '{column_name}'")
+                f"   ⚠️  No type mapping found for BigQuery type '{column.type}' in column '{column_name}'")
             return None
 
         dimension_dict = {
             column_name: {
-                'type': type_mapping['lookml_type'],
+                'type': type_mapping.lookml_type,
                 'sql': f"${{TABLE}}.{column_name}"
             }
         }
 
         # Add description if available
-        if column.get('description'):
-            dimension_dict[column_name]['description'] = column['description']
+        if column.description:
+            dimension_dict[column_name]['description'] = column.description
 
         # Add type-specific parameters
-        lookml_params = type_mapping.get('lookml_params', {})
-        for param, value in lookml_params.items():
-            if param != 'sql':  # sql is handled above
-                dimension_dict[column_name][param] = value
+        if hasattr(type_mapping, 'lookml_params') and type_mapping.lookml_params:
+            # Convert Pydantic model to dict for iteration
+            if hasattr(type_mapping.lookml_params, 'model_dump'):
+                lookml_params_dict = type_mapping.lookml_params.model_dump()
+            elif hasattr(type_mapping.lookml_params, 'dict'):
+                lookml_params_dict = type_mapping.lookml_params.dict()
+            elif isinstance(type_mapping.lookml_params, dict):
+                # It's already a dictionary
+                lookml_params_dict = type_mapping.lookml_params
+            else:
+                # Skip if we can't convert to dict (might be a Pydantic model we can't handle)
+                lookml_params_dict = None
+
+            if lookml_params_dict:
+                for param, value in lookml_params_dict.items():
+                    if param != 'sql':  # sql is handled above
+                        dimension_dict[column_name][param] = value
 
         # Handle primary key
-        if column.get('is_primary_key') or self._is_primary_key(column_name):
+        if getattr(column, 'is_primary_key', False) or self._is_primary_key(column_name):
             dimension_dict[column_name]['primary_key'] = 'yes'
 
         # Handle hidden fields
@@ -157,18 +176,18 @@ class LookMLViewGenerator:
 
         return dimension_dict
 
-    def _generate_dimension_group(self, column: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _generate_dimension_group(self, column: ColumnMetadata) -> Optional[Dict[str, Any]]:
         """
         Generate a LookML dimension group dictionary for time-based columns.
 
         Args:
-            column: Column metadata dictionary
+            column: ColumnMetadata object
 
         Returns:
             Dictionary containing dimension group definition
         """
-        column_name = column['name']
-        column_type = column['type']
+        column_name = column.name
+        column_type = column.type
 
         # Determine timeframes based on column type
         if column_type in ['TIMESTAMP', 'DATETIME']:
@@ -195,8 +214,8 @@ class LookMLViewGenerator:
         }
 
         # Add description if available
-        if column.get('description'):
-            dimension_group_dict[group_name]['description'] = column['description']
+        if column.description:
+            dimension_group_dict[group_name]['description'] = column.description
 
         # Handle hidden fields
         if self._should_hide_field(column_name):
@@ -204,15 +223,15 @@ class LookMLViewGenerator:
 
         return dimension_group_dict
 
-    def _is_time_dimension(self, column: Dict[str, Any]) -> bool:
+    def _is_time_dimension(self, column: ColumnMetadata) -> bool:
         """Check if a column should be treated as a time dimension group."""
         time_types = ['TIMESTAMP', 'DATETIME', 'DATE', 'TIME']
-        return column['type'] in time_types
+        return column.type in time_types
 
-    def _find_type_mapping(self, bq_type: str) -> Optional[Dict[str, Any]]:
+    def _find_type_mapping(self, bq_type: str) -> Optional[TypeMapping]:
         """Find the LookML type mapping for a BigQuery type."""
-        for mapping in self.model_rules['type_mapping']:
-            if mapping['bq_type'] == bq_type:
+        for mapping in self.model_rules.type_mapping:
+            if mapping.bq_type == bq_type:
                 return mapping
         return None
 
@@ -232,23 +251,26 @@ class LookMLViewGenerator:
 class LookMLDimensionGenerator:
     """Specialized generator for complex dimension types."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: ConcordiaConfig):
         """Initialize with configuration."""
         self.config = config
-        self.model_rules = config['model_rules']
+        self.model_rules = config.model_rules
+        self.looker_config = config.looker
+        self.connection_name = self.looker_config.connection
+        self.field_identifier = FieldIdentifier(self.model_rules)
 
-    def generate_case_dimension(self, column: Dict[str, Any], case_logic: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_case_dimension(self, column: ColumnMetadata, case_logic: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate a case-based dimension with conditional logic.
 
         Args:
-            column: Column metadata dictionary
+            column: ColumnMetadata object
             case_logic: Dictionary defining case conditions
 
         Returns:
             Dictionary containing case dimension definition
         """
-        column_name = column['name']
+        column_name = column.name
         case_name = case_logic.get('name', f"{column_name}_category")
 
         case_sql_parts = []
@@ -267,28 +289,128 @@ class LookMLDimensionGenerator:
             }
         }
 
-    def generate_yesno_dimension(self, column: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_yesno_dimension(self, column: ColumnMetadata) -> Dict[str, Any]:
         """
         Generate a yes/no dimension from a boolean or numeric column.
 
         Args:
-            column: Column metadata dictionary
+            column: ColumnMetadata object
 
         Returns:
             Dictionary containing yes/no dimension definition
         """
-        column_name = column['name']
+        column_name = column.name
 
-        if column['type'] == 'BOOLEAN':
+        if column.type == 'BOOLEAN':
             sql = f"${{TABLE}}.{column_name}"
         else:
             # Assume numeric where > 0 means yes
             sql = f"${{TABLE}}.{column_name} > 0"
 
+        description = column.description if column.description else f"Yes/No indicator for {column_name}"
+
         return {
             column_name: {
                 'type': 'yesno',
                 'sql': sql,
-                'description': column.get('description', f"Yes/No indicator for {column_name}")
+                'description': description
             }
         }
+
+    def generate_lookml_view(self, table_metadata: TableMetadata) -> LookMLView:
+        """
+        Generate a LookMLView object for a table using Pydantic models.
+
+        Args:
+            table_metadata: TableMetadata object from MetadataExtractor
+
+        Returns:
+            LookMLView object representing the view
+        """
+        view_name = self._get_view_name(table_metadata.table_id)
+
+        # Create the base view
+        lookml_view = LookMLView(
+            name=view_name,
+            sql_table_name=f"`{table_metadata.project_id}.{table_metadata.dataset_id}.{table_metadata.table_id}`",
+            connection=self.connection_name,
+            description=table_metadata.table_description
+        )
+
+        # Generate dimensions and dimension groups
+        for column in table_metadata.columns:
+            if self._is_time_dimension_pydantic(column):
+                dimension_group = self._generate_dimension_group_pydantic(
+                    column)
+                if dimension_group:
+                    lookml_view.add_dimension_group(dimension_group)
+            else:
+                dimension = self._generate_dimension_pydantic(column)
+                if dimension:
+                    lookml_view.add_dimension(dimension)
+
+        return lookml_view
+
+    def _is_time_dimension_pydantic(self, column: ColumnMetadata) -> bool:
+        """Check if column should be treated as a time dimension."""
+        return column.is_time_type()
+
+    def _generate_dimension_pydantic(self, column: ColumnMetadata) -> Optional[Dimension]:
+        """Generate a Dimension object from column metadata."""
+        if self._should_hide_field(column.name):
+            return None
+
+        # Determine dimension type
+        if column.is_boolean_type():
+            dim_type = DimensionType.YESNO
+        elif column.is_numeric_type():
+            dim_type = DimensionType.NUMBER
+        else:
+            dim_type = DimensionType.STRING
+
+        return Dimension(
+            name=column.name,
+            type=dim_type,
+            sql=f"${{TABLE}}.{column.name}",
+            description=column.description,
+            primary_key=column.is_primary_key,
+            hidden=self._should_hide_field(column.name)
+        )
+
+    def _generate_dimension_group_pydantic(self, column: ColumnMetadata) -> Optional[DimensionGroup]:
+        """Generate a DimensionGroup object from time column metadata."""
+        if column.standardized_type == 'TIMESTAMP':
+            timeframes = ['raw', 'time', 'date',
+                          'week', 'month', 'quarter', 'year']
+        elif column.standardized_type == 'DATE':
+            timeframes = ['date', 'week', 'month', 'quarter', 'year']
+        else:
+            timeframes = ['raw', 'date']
+
+        return DimensionGroup(
+            name=column.name,
+            type=DimensionGroupType.TIME,
+            sql=f"${{TABLE}}.{column.name}",
+            description=column.description,
+            timeframes=timeframes
+        )
+
+    def _get_view_name(self, table_id: str) -> str:
+        """Convert table ID to view name following naming conventions."""
+        # Apply any naming transformations based on config
+        naming_rules = self.model_rules.naming_conventions
+        view_prefix = naming_rules.view_prefix or ''
+        view_suffix = naming_rules.view_suffix or ''
+
+        view_name = table_id.lower()
+
+        if view_prefix:
+            view_name = f"{view_prefix}{view_name}"
+        if view_suffix:
+            view_name = f"{view_name}{view_suffix}"
+
+        return view_name
+
+    def _should_hide_field(self, field_name: str) -> bool:
+        """Check if a field should be hidden based on configuration."""
+        return self.field_identifier.should_hide_field(field_name)

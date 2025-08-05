@@ -3,6 +3,7 @@ from pathlib import Path
 from .config_loader import load_config, get_bigquery_credentials, get_bigquery_location, ConfigurationError
 from .bigquery_client import BigQueryClient
 from .lookml_generator import LookMLGenerator, LookMLFileWriter
+from ..models.metadata import MetadataCollection
 
 
 def generate_lookml():
@@ -18,10 +19,11 @@ def generate_lookml():
         click.echo("🔐 Setting up BigQuery connection...")
         credentials, project_id = get_bigquery_credentials(config)
         location = get_bigquery_location(config)
-        datasets = config['connection']['datasets']
+        datasets = config.connection.datasets
 
         # Initialize BigQuery client
-        bq_client = BigQueryClient(credentials, project_id, location, config)
+        bq_client = BigQueryClient(
+            credentials, project_id, location, config.to_dict())
 
         # Test connection
         click.echo("🔗 Testing BigQuery connection...")
@@ -49,18 +51,24 @@ def generate_lookml():
         generator = LookMLGenerator(config)
         file_writer = LookMLFileWriter(config)
 
-        # Generate LookML project using dictionary-based approach
+        # Convert tables_metadata dict to MetadataCollection
+        metadata_collection = MetadataCollection.from_dict(tables_metadata)
+
+        # Generate LookML project using object-based approach
         click.echo("⚙️  Generating LookML views...")
-        project_dict = generator.generate_complete_lookml_project(
-            tables_metadata)
+        project = generator.generate_complete_lookml_project(
+            metadata_collection)
+
+        # Convert to dictionary for backward compatibility with file writer
+        project_dict = project.to_dict()
 
         # Show what files will be generated
         if project_dict:
             click.echo("\n📁 Files to be generated:")
-            project_path = Path(config['looker']['project_path'])
+            project_path = Path(config.looker.project_path)
 
             if 'view' in project_dict:
-                views_file = project_path / config['looker']['views_path']
+                views_file = project_path / config.looker.views_path
                 click.echo(f"   Views: {views_file}")
 
         # Write the complete project
