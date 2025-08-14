@@ -78,6 +78,73 @@ def run_command(cmd, description):
         return False
 
 
+def run_black_check():
+    """Run Black in check mode for formatting validation."""
+    cmd = [sys.executable, "-m", "black", "--check", "."]
+    return run_command(cmd, "Black formatting check")
+
+
+def run_isort_check():
+    """Run isort in check mode to verify import sorting."""
+    cmd = [sys.executable, "-m", "isort", "--check", "."]
+    return run_command(cmd, "isort import sorting check")
+
+
+def run_mypy_check():
+    """Run mypy with repo settings to validate typing."""
+    cmd = [
+        sys.executable,
+        "-m",
+        "mypy",
+        "actions/",
+        "--ignore-missing-imports",
+        "--no-strict-optional",
+    ]
+    return run_command(cmd, "mypy type check")
+
+
+def run_bandit_check():
+    """Run Bandit and fail if any findings are present. Writes JSON report."""
+    report_path = "bandit-report.json"
+    cmd = [
+        sys.executable,
+        "-m",
+        "bandit",
+        "-r",
+        "actions/",
+        "-f",
+        "json",
+        "-o",
+        report_path,
+    ]
+    ok = run_command(cmd, "Bandit security scan")
+    if not ok:
+        return False
+
+    try:
+        import json as _json
+
+        with open(report_path, "r", encoding="utf-8") as fh:
+            data = _json.load(fh)
+        results = data.get("results", [])
+        if results:
+            safe_print("❌ Bandit found issues. See bandit-report.json for details")
+            # Summarize by severity
+            sev_counts = {}
+            for r in results:
+                sev = r.get("issue_severity", "UNKNOWN")
+                sev_counts[sev] = sev_counts.get(sev, 0) + 1
+            summary = ", ".join(f"{k}: {v}" for k, v in sorted(sev_counts.items()))
+            print(f"   Findings by severity: {summary}")
+            return False
+        safe_print("✅ Bandit found no issues")
+        return True
+    except Exception as e:
+        safe_print(f"⚠️  Could not parse Bandit report: {e}")
+        # If report can't be parsed, fail safe
+        return False
+
+
 def run_unit_tests():
     """Run unit tests only."""
     cmd = ["pytest", "tests/unit/", "-v"]
@@ -150,7 +217,15 @@ def check_dependencies():
     """Check if test dependencies are installed."""
     safe_print("\n🔍 Checking test dependencies...")
 
-    required_packages = ["pytest", "pytest-cov", "pytest-mock"]
+    required_packages = [
+        "pytest",
+        "pytest-cov",
+        "pytest-mock",
+        "black",
+        "isort",
+        "mypy",
+        "bandit",
+    ]
     missing_packages = []
 
     for package in required_packages:
@@ -167,7 +242,9 @@ def check_dependencies():
 
     if missing_packages:
         safe_print(f"\n⚠️  Missing packages: {', '.join(missing_packages)}")
-        print("   Install with: pip install -r requirements.txt")
+        print(
+            "   Install with: pip install -r requirements.txt && pip install black isort mypy bandit"
+        )
         return False
 
     safe_print("✅ All test dependencies are installed")
@@ -231,9 +308,21 @@ def main():
         success = run_tests_fast()
     elif command == "lint":
         success = lint_tests()
+    elif command == "ci":
+        safe_print("\n📋 Running CI-equivalent checks...")
+        success = True
+        success &= run_black_check()
+        success &= run_isort_check()
+        success &= run_mypy_check()
+        success &= run_bandit_check()
+        success &= run_tests_with_coverage()
     elif command == "all":
         safe_print("\n📋 Running comprehensive test suite...")
         success = True
+        success &= run_black_check()
+        success &= run_isort_check()
+        success &= run_mypy_check()
+        success &= run_bandit_check()
         success &= run_unit_tests()
         success &= run_integration_tests()
         success &= run_tests_with_coverage()
@@ -241,12 +330,17 @@ def main():
     else:
         safe_print(f"❌ Unknown command: {command}")
         print("\nAvailable commands:")
-        print("  all         - Run all tests with coverage and linting")
+        print(
+            "  all         - Run formatting, imports, typing, security, tests, coverage, linting"
+        )
         print("  unit        - Run unit tests only")
         print("  integration - Run integration tests only")
         print("  coverage    - Run tests with coverage report")
         print("  fast        - Run tests with minimal output")
         print("  lint        - Lint test files")
+        print(
+            "  ci          - Run CI-equivalent checks (format, isort, mypy, bandit, coverage)"
+        )
         print("\nExamples:")
         print("  python run_tests.py")
         print("  python run_tests.py unit")

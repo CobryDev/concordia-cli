@@ -47,8 +47,7 @@ class MetadataExtractor:
         for dataset_id in dataset_ids:
             # dataset_id values are controlled via config and not user-provided at runtime.
             # BigQuery client will still validate identifiers. Using f-strings here is safe.
-            # nosec B608
-            union_queries.append(
+            union_queries.append(  # nosec B608
                 f"""
             SELECT 
                 table_catalog as project_id,
@@ -103,8 +102,7 @@ class MetadataExtractor:
         for dataset_id in dataset_ids:
             # dataset_id values are controlled via config and not user-provided at runtime.
             # BigQuery client will still validate identifiers. Using f-strings here is safe.
-            # nosec B608
-            union_queries.append(
+            union_queries.append(  # nosec B608
                 f"""
             SELECT 
                 table_catalog as project_id,
@@ -169,8 +167,7 @@ class MetadataExtractor:
         for dataset_id in dataset_ids:
             # dataset_id values are controlled via config and not user-provided at runtime.
             # BigQuery client will still validate identifiers. Using f-strings here is safe.
-            # nosec B608
-            union_queries.append(
+            union_queries.append(  # nosec B608
                 f"""
             SELECT 
                 constraint_catalog as project_id,
