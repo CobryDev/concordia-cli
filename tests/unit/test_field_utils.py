@@ -218,17 +218,11 @@ class TestFieldIdentifier:
         identifier = FieldIdentifier(model_rules)
 
         # Test with _fk suffix
-        assert (
-            identifier.infer_table_name_from_foreign_key("organization_fk")
-            == "organizations"
-        )
+        assert identifier.infer_table_name_from_foreign_key("organization_fk") == "organizations"
         assert identifier.infer_table_name_from_foreign_key("user_fk") == "users"
 
         # Test with _id suffix (backward compatibility)
-        assert (
-            identifier.infer_table_name_from_foreign_key("organization_id")
-            == "organizations"
-        )
+        assert identifier.infer_table_name_from_foreign_key("organization_id") == "organizations"
         assert identifier.infer_table_name_from_foreign_key("user_id") == "users"
 
         # Test with non-foreign key field
@@ -244,17 +238,11 @@ class TestFieldIdentifier:
         identifier = FieldIdentifier(model_rules)
 
         # Test with custom _ref suffix
-        assert (
-            identifier.infer_table_name_from_foreign_key("organization_ref")
-            == "organizations"
-        )
+        assert identifier.infer_table_name_from_foreign_key("organization_ref") == "organizations"
         assert identifier.infer_table_name_from_foreign_key("user_ref") == "users"
 
         # Test with _id suffix (backward compatibility still works)
-        assert (
-            identifier.infer_table_name_from_foreign_key("organization_id")
-            == "organizations"
-        )
+        assert identifier.infer_table_name_from_foreign_key("organization_id") == "organizations"
 
         # Test that default _fk suffix doesn't work with custom config
         assert identifier.infer_table_name_from_foreign_key("organization_fk") is None
@@ -286,9 +274,7 @@ class TestFieldIdentifier:
         """Test hiding fields with multiple suffix patterns."""
         model_rules = ModelRules(
             naming_conventions=NamingConventions(),
-            defaults=DefaultBehaviors(
-                hide_fields_by_suffix=["_pk", "_fk", "_internal", "_temp"]
-            ),
+            defaults=DefaultBehaviors(hide_fields_by_suffix=["_pk", "_fk", "_internal", "_temp"]),
             type_mapping=[],
         )
         identifier = FieldIdentifier(model_rules)

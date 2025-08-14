@@ -128,8 +128,7 @@ class MetadataExtractor:
             union_queries.append(sql)
 
         query = (
-            " UNION ALL ".join(union_queries)
-            + "\nORDER BY dataset_id, table_id, ordinal_position"
+            " UNION ALL ".join(union_queries) + "\nORDER BY dataset_id, table_id, ordinal_position"
         )
 
         try:
@@ -237,9 +236,7 @@ class MetadataExtractor:
             merged_df["is_primary_key"] = False
 
         # Standardize data types
-        merged_df["standardized_type"] = merged_df["data_type"].apply(
-            self._standardize_data_type
-        )
+        merged_df["standardized_type"] = merged_df["data_type"].apply(self._standardize_data_type)
 
         # Group by table to create table-level metadata with Pydantic models
         metadata_collection = MetadataCollection(tables={})
@@ -280,30 +277,22 @@ class MetadataExtractor:
                 table_id=table_id,
                 dataset_id=dataset_id,
                 project_id=project_id,
-                table_description=(
-                    table_description if pd.notna(table_description) else None
-                ),
+                table_description=(table_description if pd.notna(table_description) else None),
                 columns=columns,
             )
 
             metadata_collection.add_table(table_metadata)
 
-        click.echo(
-            f"✅ Processed metadata for {metadata_collection.table_count()} tables"
-        )
+        click.echo(f"✅ Processed metadata for {metadata_collection.table_count()} tables")
         return metadata_collection
 
-    def _get_primary_key_columns(
-        self, primary_keys_df: pd.DataFrame
-    ) -> Dict[str, List[str]]:
+    def _get_primary_key_columns(self, primary_keys_df: pd.DataFrame) -> Dict[str, List[str]]:
         """Extract primary key column information."""
         # This would need a separate query to get the actual column names for constraints
         # For now, return empty dict - this can be enhanced later
         return {}
 
-    def _is_column_primary_key(
-        self, row: pd.Series, pk_columns: Dict[str, List[str]]
-    ) -> bool:
+    def _is_column_primary_key(self, row: pd.Series, pk_columns: Dict[str, List[str]]) -> bool:
         """Check if a column is part of a primary key."""
         table_key = f"{row['dataset_id']}.{row['table_id']}"
         return row["column_name"] in pk_columns.get(table_key, [])

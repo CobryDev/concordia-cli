@@ -35,9 +35,7 @@ class LookMLGenerator:
         self.view_generator = LookMLViewGenerator(config)
         self.measure_generator = LookMLMeasureGenerator(config)
 
-    def generate_view_for_table_metadata(
-        self, table_metadata: TableMetadata
-    ) -> LookMLView:
+    def generate_view_for_table_metadata(self, table_metadata: TableMetadata) -> LookMLView:
         """
         Generate LookML view for a single table using metadata.
 
@@ -56,9 +54,7 @@ class LookMLGenerator:
         view_data = view_dict["view"][view_name]
 
         # Build LookMLView without connection/description (not included in base views)
-        lookml_view = LookMLView(
-            name=view_name, sql_table_name=view_data["sql_table_name"]
-        )
+        lookml_view = LookMLView(name=view_name, sql_table_name=view_data["sql_table_name"])
 
         # Bring over dimensions from the base view dict
         if "dimension" in view_data:
@@ -259,9 +255,7 @@ class LookMLFileWriter:
 
         # Write views file
         if "view" in project_dict:
-            views_file = self.write_lookml_dict_file(
-                {"view": project_dict["view"]}, "views"
-            )
+            views_file = self.write_lookml_dict_file({"view": project_dict["view"]}, "views")
             written_files.append(views_file)
 
         return written_files

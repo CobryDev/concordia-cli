@@ -10,13 +10,7 @@ from typing import Any, Dict, List, Optional
 import click
 
 from ..models.config import ConcordiaConfig, TypeMapping
-from ..models.lookml import (
-    Dimension,
-    DimensionGroup,
-    DimensionGroupType,
-    DimensionType,
-    LookMLView,
-)
+from ..models.lookml import Dimension, DimensionGroup, DimensionGroupType, DimensionType, LookMLView
 from ..models.metadata import ColumnMetadata, TableMetadata
 from .field_utils import FieldIdentifier
 
@@ -171,9 +165,7 @@ class LookMLViewGenerator:
                         dimension_dict[column_name][param] = value
 
         # Handle primary key
-        if getattr(column, "is_primary_key", False) or self._is_primary_key(
-            column_name
-        ):
+        if getattr(column, "is_primary_key", False) or self._is_primary_key(column_name):
             dimension_dict[column_name]["primary_key"] = "yes"
 
         # Handle hidden fields
@@ -182,9 +174,7 @@ class LookMLViewGenerator:
 
         return dimension_dict
 
-    def _generate_dimension_group(
-        self, column: ColumnMetadata
-    ) -> Optional[Dict[str, Any]]:
+    def _generate_dimension_group(self, column: ColumnMetadata) -> Optional[Dict[str, Any]]:
         """
         Generate a LookML dimension group dictionary for time-based columns.
 
@@ -284,9 +274,7 @@ class LookMLDimensionGenerator:
 
         case_sql_parts = []
         for condition in case_logic["conditions"]:
-            case_sql_parts.append(
-                f"WHEN {condition['condition']} THEN '{condition['value']}'"
-            )
+            case_sql_parts.append(f"WHEN {condition['condition']} THEN '{condition['value']}'")
 
         default_value = case_logic.get("default", "Other")
         sql = f"CASE {' '.join(case_sql_parts)} ELSE '{default_value}' END"
@@ -295,9 +283,7 @@ class LookMLDimensionGenerator:
             case_name: {
                 "type": "string",
                 "sql": sql,
-                "description": case_logic.get(
-                    "description", f"Categorized {column_name}"
-                ),
+                "description": case_logic.get("description", f"Categorized {column_name}"),
             }
         }
 
@@ -320,9 +306,7 @@ class LookMLDimensionGenerator:
             sql = f"${{TABLE}}.{column_name} > 0"
 
         description = (
-            column.description
-            if column.description
-            else f"Yes/No indicator for {column_name}"
+            column.description if column.description else f"Yes/No indicator for {column_name}"
         )
 
         return {column_name: {"type": "yesno", "sql": sql, "description": description}}
@@ -362,9 +346,7 @@ class LookMLDimensionGenerator:
         """Check if column should be treated as a time dimension."""
         return column.is_time_type()
 
-    def _generate_dimension_pydantic(
-        self, column: ColumnMetadata
-    ) -> Optional[Dimension]:
+    def _generate_dimension_pydantic(self, column: ColumnMetadata) -> Optional[Dimension]:
         """Generate a Dimension object from column metadata."""
         if self._should_hide_field(column.name):
             return None

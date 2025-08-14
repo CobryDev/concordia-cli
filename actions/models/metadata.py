@@ -16,18 +16,14 @@ class ColumnMetadata(BaseModel):
     name: str = Field(description="Column name")
     type: str = Field(description="BigQuery column type")
     standardized_type: str = Field(description="Standardized type for processing")
-    description: Optional[str] = Field(
-        default=None, description="Column description from BigQuery"
-    )
+    description: Optional[str] = Field(default=None, description="Column description from BigQuery")
     is_primary_key: bool = Field(
         default=False, description="Whether this column is identified as a primary key"
     )
     is_foreign_key: bool = Field(
         default=False, description="Whether this column is identified as a foreign key"
     )
-    is_nullable: bool = Field(
-        default=True, description="Whether the column allows NULL values"
-    )
+    is_nullable: bool = Field(default=True, description="Whether the column allows NULL values")
     ordinal_position: Optional[int] = Field(
         default=None, description="Position of column in table schema"
     )
@@ -84,9 +80,7 @@ class TableMetadata(BaseModel):
         default="BASE TABLE", description="Type of table (BASE TABLE, VIEW, etc.)"
     )
     columns: List[ColumnMetadata] = Field(description="List of column metadata")
-    creation_ddl: Optional[str] = Field(
-        default=None, description="DDL used to create the table"
-    )
+    creation_ddl: Optional[str] = Field(default=None, description="DDL used to create the table")
 
     @validator("table_id", "dataset_id", "project_id")
     def validate_identifiers(cls, v):
@@ -140,11 +134,7 @@ class TableMetadata(BaseModel):
     def from_dict(cls, data: Dict[str, Any]) -> "TableMetadata":
         """Create instance from dictionary."""
         # Convert columns from dicts to ColumnMetadata objects
-        if (
-            "columns" in data
-            and data["columns"]
-            and isinstance(data["columns"][0], dict)
-        ):
+        if "columns" in data and data["columns"] and isinstance(data["columns"][0], dict):
             data = data.copy()
             data["columns"] = [ColumnMetadata(**col) for col in data["columns"]]
         return cls(**data)
@@ -167,9 +157,7 @@ class MetadataCollection(BaseModel):
 
     def get_tables_by_dataset(self, dataset_id: str) -> List[TableMetadata]:
         """Get all tables from a specific dataset."""
-        return [
-            table for table in self.tables.values() if table.dataset_id == dataset_id
-        ]
+        return [table for table in self.tables.values() if table.dataset_id == dataset_id]
 
     def get_all_tables(self) -> List[TableMetadata]:
         """Get all tables as a list."""

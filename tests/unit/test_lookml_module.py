@@ -33,9 +33,7 @@ class TestLookMLViewGenerator:
         assert generator.connection_name == "test-bigquery-connection"
         assert generator.field_identifier is not None
 
-    def test_generate_view_dict_basic_structure(
-        self, sample_config, sample_table_metadata
-    ):
+    def test_generate_view_dict_basic_structure(self, sample_config, sample_table_metadata):
         """Test basic view dictionary structure generation."""
         generator = LookMLViewGenerator(sample_config)
         result = generator.generate_view_dict(sample_table_metadata)
@@ -70,9 +68,7 @@ class TestLookMLViewGenerator:
         assert "is_active" in dimension_names
         assert "organization_fk" in dimension_names
 
-    def test_generate_view_dict_dimension_groups(
-        self, sample_config, sample_table_metadata
-    ):
+    def test_generate_view_dict_dimension_groups(self, sample_config, sample_table_metadata):
         """Test dimension group generation for time fields."""
         generator = LookMLViewGenerator(sample_config)
         result = generator.generate_view_dict(sample_table_metadata)
@@ -90,9 +86,7 @@ class TestLookMLViewGenerator:
 
         assert "created" in group_names  # '_at' suffix removed
 
-    def test_generate_view_dict_drill_fields(
-        self, sample_config, sample_table_metadata
-    ):
+    def test_generate_view_dict_drill_fields(self, sample_config, sample_table_metadata):
         """Test drill fields generation."""
         generator = LookMLViewGenerator(sample_config)
         result = generator.generate_view_dict(sample_table_metadata)
@@ -146,9 +140,7 @@ class TestLookMLViewGenerator:
         assert dimension["sql"] == "${TABLE}.email"
         assert dimension["description"] == "User email address"
 
-    def test_generate_dimension_primary_key(
-        self, sample_config, sample_column_primary_key
-    ):
+    def test_generate_dimension_primary_key(self, sample_config, sample_column_primary_key):
         """Test dimension generation for primary key column."""
         generator = LookMLViewGenerator(sample_config)
         result = generator._generate_dimension(sample_column_primary_key)
@@ -179,9 +171,7 @@ class TestLookMLViewGenerator:
             mock_echo.assert_called_once()
             assert "No type mapping found" in mock_echo.call_args[0][0]
 
-    def test_generate_dimension_group_timestamp(
-        self, sample_config, sample_column_timestamp
-    ):
+    def test_generate_dimension_group_timestamp(self, sample_config, sample_column_timestamp):
         """Test dimension group generation for timestamp column."""
         generator = LookMLViewGenerator(sample_config)
         result = generator._generate_dimension_group(sample_column_timestamp)
@@ -221,9 +211,7 @@ class TestLookMLViewGenerator:
         # Should not have 'time' timeframe for DATE type
         assert "time" not in dim_group["timeframes"]
 
-    def test_generate_dimension_group_non_time_type(
-        self, sample_config, sample_column_string
-    ):
+    def test_generate_dimension_group_non_time_type(self, sample_config, sample_column_string):
         """Test dimension group generation returns None for non-time types."""
         generator = LookMLViewGenerator(sample_config)
         result = generator._generate_dimension_group(sample_column_string)
@@ -239,17 +227,13 @@ class TestLookMLViewGenerator:
         # Time types
         assert (
             generator._is_time_dimension(
-                ColumnMetadata(
-                    name="test", type="TIMESTAMP", standardized_type="TIMESTAMP"
-                )
+                ColumnMetadata(name="test", type="TIMESTAMP", standardized_type="TIMESTAMP")
             )
             is True
         )
         assert (
             generator._is_time_dimension(
-                ColumnMetadata(
-                    name="test", type="DATETIME", standardized_type="DATETIME"
-                )
+                ColumnMetadata(name="test", type="DATETIME", standardized_type="DATETIME")
             )
             is True
         )
@@ -354,9 +338,7 @@ class TestLookMLDimensionGenerator:
         """Test basic case dimension generation."""
         from actions.models.metadata import ColumnMetadata
 
-        column = ColumnMetadata(
-            name="status", type="STRING", standardized_type="STRING"
-        )
+        column = ColumnMetadata(name="status", type="STRING", standardized_type="STRING")
 
         case_logic = {
             "name": "status_category",
@@ -384,13 +366,9 @@ class TestLookMLDimensionGenerator:
         """Test case dimension generation with default name."""
         from actions.models.metadata import ColumnMetadata
 
-        column = ColumnMetadata(
-            name="priority", type="INTEGER", standardized_type="INTEGER"
-        )
+        column = ColumnMetadata(name="priority", type="INTEGER", standardized_type="INTEGER")
 
-        case_logic = {
-            "conditions": [{"condition": "${TABLE}.priority > 5", "value": "High"}]
-        }
+        case_logic = {"conditions": [{"condition": "${TABLE}.priority > 5", "value": "High"}]}
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_case_dimension(column, case_logic)
@@ -441,9 +419,7 @@ class TestLookMLDimensionGenerator:
         """Test yes/no dimension generation without description."""
         from actions.models.metadata import ColumnMetadata
 
-        column = ColumnMetadata(
-            name="has_orders", type="INTEGER", standardized_type="INTEGER"
-        )
+        column = ColumnMetadata(name="has_orders", type="INTEGER", standardized_type="INTEGER")
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_yesno_dimension(column)

@@ -25,9 +25,7 @@ The path should be relative to this config file.""",
     )
 
     connection["dataform_credentials_file"] = (
-        "./.df-credentials.json"
-        if dataform_path
-        else "path/to/your/.df-credentials.json"
+        "./.df-credentials.json" if dataform_path else "path/to/your/.df-credentials.json"
     )
 
     connection.yaml_set_comment_before_after_key(
@@ -55,9 +53,7 @@ inferred from the credentials file.""",
     connection["datasets"] = datasets
 
     config["connection"] = connection
-    config.yaml_set_comment_before_after_key(
-        "connection", before="BigQuery Connection Details"
-    )
+    config.yaml_set_comment_before_after_key("connection", before="BigQuery Connection Details")
 
     # Looker section
     looker = CommentedMap()
@@ -68,15 +64,11 @@ inferred from the credentials file.""",
     looker["connection"] = "your-bigquery-connection"
 
     # Add inline comments for looker section
-    looker.yaml_add_eol_comment(
-        "File path where generated views will be written", "views_path"
-    )
+    looker.yaml_add_eol_comment("File path where generated views will be written", "views_path")
     looker.yaml_add_eol_comment("This is the Looker connection name", "connection")
 
     config["looker"] = looker
-    config.yaml_set_comment_before_after_key(
-        "looker", before="Looker project configuration"
-    )
+    config.yaml_set_comment_before_after_key("looker", before="Looker project configuration")
 
     # Model rules section
     model_rules = CommentedMap()

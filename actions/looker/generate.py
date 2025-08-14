@@ -34,9 +34,7 @@ def generate_lookml():
         # Test connection
         click.echo("🔗 Testing BigQuery connection...")
         if not bq_client.test_connection(datasets):
-            click.echo(
-                "❌ BigQuery connection test failed. Please check your configuration."
-            )
+            click.echo("❌ BigQuery connection test failed. Please check your configuration.")
             return
 
         # Extract table metadata using INFORMATION_SCHEMA

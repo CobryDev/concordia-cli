@@ -24,16 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install flake8 black isort mypy bandit safety
-
-      - name: Format check with Black
-        run: |
-          black --check --diff actions/ tests/
-
-      - name: Import sort check with isort
-        run: |
-          isort --check-only --diff actions/ tests/
+          pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Lint with flake8
         run: |
@@ -42,17 +33,9 @@ jobs:
           # Treat all other issues as warnings
           flake8 actions/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
-      - name: Type check with mypy
+      - name: Run CI checks (format, isort, mypy, bandit, coverage)
         run: |
-          mypy actions/ --ignore-missing-imports --no-strict-optional
-
-      - name: Run tests with coverage (Python ${{ matrix.python-version }})
-        run: |
-          python run_tests.py coverage --no-deps
-
-      - name: Security check with bandit
-        run: |
-          bandit -r actions/ -f json -o bandit-report.json
+          python run_tests.py ci --no-deps
 
       - name: Upload bandit report
         if: always()

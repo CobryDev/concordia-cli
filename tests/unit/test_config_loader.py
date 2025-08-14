@@ -105,9 +105,7 @@ class TestConfigLoader:
             with pytest.raises(ConfigurationError) as exc_info:
                 load_config(temp_file)
 
-            assert "looker" in str(exc_info.value) or "field required" in str(
-                exc_info.value
-            )
+            assert "looker" in str(exc_info.value) or "field required" in str(exc_info.value)
         finally:
             os.unlink(temp_file)
 
@@ -140,9 +138,7 @@ class TestConfigLoader:
             with pytest.raises(ConfigurationError) as exc_info:
                 load_config(temp_file)
 
-            assert "datasets" in str(exc_info.value) or "field required" in str(
-                exc_info.value
-            )
+            assert "datasets" in str(exc_info.value) or "field required" in str(exc_info.value)
         finally:
             os.unlink(temp_file)
 
@@ -171,9 +167,7 @@ class TestConfigLoader:
             with pytest.raises(ConfigurationError) as exc_info:
                 load_config(temp_file)
 
-            assert "views_path" in str(exc_info.value) or "connection" in str(
-                exc_info.value
-            )
+            assert "views_path" in str(exc_info.value) or "connection" in str(exc_info.value)
         finally:
             os.unlink(temp_file)
 
@@ -186,14 +180,10 @@ class TestConfigLoader:
 
         config = ConcordiaConfig(
             connection=ConnectionConfig(project_id="test-project", datasets=["test"]),
-            looker=LookerConfig(
-                project_path="./test", views_path="test.lkml", connection="test"
-            ),
+            looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
-                defaults=DefaultBehaviors(
-                    measures=["count"], hide_fields_by_suffix=["_pk"]
-                ),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
                 type_mapping=[
                     TypeMapping(
                         bq_type="STRING",
@@ -217,14 +207,10 @@ class TestConfigLoader:
 
         config = ConcordiaConfig(
             connection=ConnectionConfig(project_id=None, datasets=["test"]),
-            looker=LookerConfig(
-                project_path="./test", views_path="test.lkml", connection="test"
-            ),
+            looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
-                defaults=DefaultBehaviors(
-                    measures=["count"], hide_fields_by_suffix=["_pk"]
-                ),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
                 type_mapping=[
                     TypeMapping(
                         bq_type="STRING",
@@ -244,14 +230,10 @@ class TestConfigLoader:
         """Test get_bigquery_location returns None when no location configured."""
         config = ConcordiaConfig(
             connection=ConnectionConfig(datasets=["test"]),
-            looker=LookerConfig(
-                project_path="./test", views_path="test.lkml", connection="test"
-            ),
+            looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
-                defaults=DefaultBehaviors(
-                    measures=["count"], hide_fields_by_suffix=["_pk"]
-                ),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
                 type_mapping=[
                     TypeMapping(
                         bq_type="STRING",
@@ -270,14 +252,10 @@ class TestConfigLoader:
         """Test get_bigquery_location returns configured location."""
         config = ConcordiaConfig(
             connection=ConnectionConfig(location="EU", datasets=["test"]),
-            looker=LookerConfig(
-                project_path="./test", views_path="test.lkml", connection="test"
-            ),
+            looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
-                defaults=DefaultBehaviors(
-                    measures=["count"], hide_fields_by_suffix=["_pk"]
-                ),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
                 type_mapping=[
                     TypeMapping(
                         bq_type="STRING",
@@ -310,12 +288,8 @@ class TestConfigLoader:
                     project_path="./test", views_path="test.lkml", connection="test"
                 ),
                 model_rules=ModelRules(
-                    naming_conventions=NamingConventions(
-                        pk_suffix="_pk", fk_suffix="_fk"
-                    ),
-                    defaults=DefaultBehaviors(
-                        measures=["count"], hide_fields_by_suffix=["_pk"]
-                    ),
+                    naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                    defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
                     type_mapping=[
                         TypeMapping(
                             bq_type="STRING",
@@ -346,15 +320,11 @@ class TestConfigLoader:
             os.unlink(creds_path)
 
     @patch("actions.looker.config_loader.service_account")
-    def test_load_dataform_credentials_service_account_format(
-        self, mock_service_account
-    ):
+    def test_load_dataform_credentials_service_account_format(self, mock_service_account):
         """Test _load_dataform_credentials with service account format."""
         # Mock service account credentials
         mock_credentials = Mock()
-        mock_service_account.Credentials.from_service_account_info.return_value = (
-            mock_credentials
-        )
+        mock_service_account.Credentials.from_service_account_info.return_value = mock_credentials
 
         # Service account format with nested credentials
         creds_data = {
@@ -415,9 +385,7 @@ class TestConfigLoader:
         """Test _load_dataform_credentials raises error when service account missing project_id."""
         # Mock service account credentials creation to avoid key validation
         mock_credentials = Mock()
-        mock_service_account.Credentials.from_service_account_info.return_value = (
-            mock_credentials
-        )
+        mock_service_account.Credentials.from_service_account_info.return_value = mock_credentials
 
         # Service account format missing project_id
         creds_data = {
@@ -441,9 +409,7 @@ class TestConfigLoader:
             with pytest.raises(ConfigurationError) as exc_info:
                 _load_dataform_credentials(creds_path)
 
-            assert "No 'project_id' found in Dataform credentials" in str(
-                exc_info.value
-            )
+            assert "No 'project_id' found in Dataform credentials" in str(exc_info.value)
         finally:
             os.unlink(creds_path)
 
@@ -482,9 +448,7 @@ class TestConfigLoader:
             with pytest.raises(ConfigurationError) as exc_info:
                 _load_dataform_credentials(creds_path)
 
-            assert "Failed to load Application Default Credentials" in str(
-                exc_info.value
-            )
+            assert "Failed to load Application Default Credentials" in str(exc_info.value)
             assert "gcloud auth application-default login" in str(exc_info.value)
         finally:
             os.unlink(creds_path)
@@ -512,12 +476,8 @@ class TestConfigLoader:
                     project_path="./test", views_path="test.lkml", connection="test"
                 ),
                 model_rules=ModelRules(
-                    naming_conventions=NamingConventions(
-                        pk_suffix="_pk", fk_suffix="_fk"
-                    ),
-                    defaults=DefaultBehaviors(
-                        measures=["count"], hide_fields_by_suffix=["_pk"]
-                    ),
+                    naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                    defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
                     type_mapping=[
                         TypeMapping(
                             bq_type="STRING",

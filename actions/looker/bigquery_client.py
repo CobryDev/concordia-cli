@@ -21,9 +21,7 @@ class ErrorTracker:
         self.connection_errors = []
         self.unexpected_errors = []
 
-    def add_dataset_error(
-        self, dataset_id: str, error: Exception, error_type: str = "unexpected"
-    ):
+    def add_dataset_error(self, dataset_id: str, error: Exception, error_type: str = "unexpected"):
         """Add a dataset-level error."""
         error_info = {
             "dataset_id": dataset_id,
@@ -102,11 +100,7 @@ class ErrorTracker:
             total_datasets
             - len(self.dataset_errors)
             - len(
-                [
-                    e
-                    for e in self.not_found_errors + self.permission_errors
-                    if "table_id" not in e
-                ]
+                [e for e in self.not_found_errors + self.permission_errors if "table_id" not in e]
             )
         )
         successful_tables = total_tables_found
@@ -116,9 +110,7 @@ class ErrorTracker:
         )
 
         if self.has_errors():
-            click.echo(
-                f"❌ Errors: {self.get_total_error_count()} total errors encountered"
-            )
+            click.echo(f"❌ Errors: {self.get_total_error_count()} total errors encountered")
 
         # Detailed error breakdown
         if self.permission_errors:
@@ -160,9 +152,7 @@ class ErrorTracker:
 class TableInfo:
     """Represents a BigQuery table with its schema information."""
 
-    def __init__(
-        self, dataset_id: str, table_id: str, description: Optional[str] = None
-    ):
+    def __init__(self, dataset_id: str, table_id: str, description: Optional[str] = None):
         self.dataset_id = dataset_id
         self.table_id = table_id
         self.full_table_id = f"{dataset_id}.{table_id}"
@@ -232,23 +222,16 @@ class BigQueryClient:
             # Extract metadata using INFORMATION_SCHEMA queries
             tables_df = self.metadata_extractor.get_table_metadata(dataset_ids)
             columns_df = self.metadata_extractor.get_column_metadata(dataset_ids)
-            primary_keys_df = self.metadata_extractor.get_primary_key_metadata(
-                dataset_ids
-            )
+            primary_keys_df = self.metadata_extractor.get_primary_key_metadata(dataset_ids)
 
             # Wrangle the metadata into a usable format
             metadata_collection = self.metadata_extractor.wrangle_metadata(
                 tables_df, columns_df, primary_keys_df
             )
 
-            click.echo(
-                f"📊 Successfully processed {metadata_collection.table_count()} tables"
-            )
+            click.echo(f"📊 Successfully processed {metadata_collection.table_count()} tables")
             # Convert TableMetadata objects to dictionaries
-            return {
-                key: table.model_dump()
-                for key, table in metadata_collection.tables.items()
-            }
+            return {key: table.model_dump() for key, table in metadata_collection.tables.items()}
 
         except Exception as e:
             click.echo(f"❌ Error extracting table metadata: {e}")
@@ -357,9 +340,7 @@ class BigQueryClient:
                 # Look for foreign key patterns
                 if self._is_foreign_key(column_name):
                     # Try to find the referenced table
-                    potential_table = self._infer_referenced_table(
-                        column_name, tables_metadata
-                    )
+                    potential_table = self._infer_referenced_table(column_name, tables_metadata)
                     if potential_table:
                         table_relationships.append(
                             {

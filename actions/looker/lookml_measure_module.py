@@ -28,9 +28,7 @@ class LookMLMeasureGenerator:
         self.model_rules = config.model_rules
         self.field_identifier = FieldIdentifier(self.model_rules)
 
-    def generate_measures_for_view(
-        self, table_metadata: TableMetadata
-    ) -> List[Dict[str, Any]]:
+    def generate_measures_for_view(self, table_metadata: TableMetadata) -> List[Dict[str, Any]]:
         """
         Generate all measures for a view based on table metadata.
 
@@ -83,9 +81,7 @@ class LookMLMeasureGenerator:
 
         return measures
 
-    def _generate_automatic_measures(
-        self, column: ColumnMetadata
-    ) -> List[Dict[str, Any]]:
+    def _generate_automatic_measures(self, column: ColumnMetadata) -> List[Dict[str, Any]]:
         """
         Generate automatic measures based on column type and naming conventions.
 
@@ -125,9 +121,7 @@ class LookMLMeasureGenerator:
 
         return measures
 
-    def _generate_numeric_measures(
-        self, column: ColumnMetadata
-    ) -> List[Dict[str, Any]]:
+    def _generate_numeric_measures(self, column: ColumnMetadata) -> List[Dict[str, Any]]:
         """Generate standard numeric measures (sum, average, min, max)."""
         measures: List[Dict[str, Any]] = []
         column_name = column.name

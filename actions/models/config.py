@@ -18,9 +18,7 @@ class ConnectionConfig(BaseModel):
         default=None, description="Path to Dataform credentials JSON file"
     )
     project_id: Optional[str] = Field(default=None, description="GCP project ID")
-    location: Optional[str] = Field(
-        default=None, description="BigQuery location/region"
-    )
+    location: Optional[str] = Field(default=None, description="BigQuery location/region")
     datasets: List[str] = Field(description="List of datasets to scan for tables")
 
     @validator("dataform_credentials_file")
@@ -52,9 +50,7 @@ class LookerConfig(BaseModel):
     """Looker project configuration."""
 
     project_path: str = Field(description="Path to Looker project directory")
-    views_path: str = Field(
-        description="Relative path within project for generated views file"
-    )
+    views_path: str = Field(description="Relative path within project for generated views file")
     connection: str = Field(description="Looker connection name for BigQuery")
 
     @validator("connection")
@@ -70,18 +66,10 @@ class LookerConfig(BaseModel):
 class NamingConventions(BaseModel):
     """Database naming convention rules."""
 
-    pk_suffix: str = Field(
-        default="_pk", description="Suffix used for primary key columns"
-    )
-    fk_suffix: str = Field(
-        default="_fk", description="Suffix used for foreign key columns"
-    )
-    view_prefix: Optional[str] = Field(
-        default="", description="Prefix for generated view names"
-    )
-    view_suffix: Optional[str] = Field(
-        default="", description="Suffix for generated view names"
-    )
+    pk_suffix: str = Field(default="_pk", description="Suffix used for primary key columns")
+    fk_suffix: str = Field(default="_fk", description="Suffix used for foreign key columns")
+    view_prefix: Optional[str] = Field(default="", description="Prefix for generated view names")
+    view_suffix: Optional[str] = Field(default="", description="Suffix for generated view names")
 
 
 class DefaultBehaviors(BaseModel):
@@ -100,9 +88,7 @@ class LookMLParams(BaseModel):
     """LookML parameter configuration."""
 
     type: str = Field(description="LookML field type")
-    timeframes: Optional[str] = Field(
-        default=None, description="Timeframes for dimension groups"
-    )
+    timeframes: Optional[str] = Field(default=None, description="Timeframes for dimension groups")
     sql: Optional[str] = Field(default=None, description="Custom SQL expression")
 
     # Allow additional fields for flexibility
@@ -128,9 +114,7 @@ class ModelRules(BaseModel):
         default_factory=DefaultBehaviors,
         description="Default view generation behaviors",
     )
-    type_mapping: List[TypeMapping] = Field(
-        description="BigQuery to LookML type mappings"
-    )
+    type_mapping: List[TypeMapping] = Field(description="BigQuery to LookML type mappings")
 
     def get_type_mapping_for_bq_type(self, bq_type: str) -> Optional[TypeMapping]:
         """Get the type mapping for a specific BigQuery type."""

@@ -24,9 +24,7 @@ def sample_model_rules() -> ModelRules:
     """Sample model rules configuration for testing."""
     return ModelRules(
         naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
-        defaults=DefaultBehaviors(
-            measures=["count"], hide_fields_by_suffix=["_pk", "_fk"]
-        ),
+        defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk", "_fk"]),
         type_mapping=[
             TypeMapping(
                 bq_type="STRING",

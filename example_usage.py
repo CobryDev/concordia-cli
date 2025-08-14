@@ -6,12 +6,7 @@ This script shows how the refactoring eliminates primitive dictionary usage
 in favor of structured, validated data models.
 """
 
-from actions.models.config import (
-    ConcordiaConfig,
-    ConnectionConfig,
-    LookerConfig,
-    ModelRules,
-)
+from actions.models.config import ConcordiaConfig, ConnectionConfig, LookerConfig, ModelRules
 from actions.models.lookml import (
     Dimension,
     DimensionGroup,

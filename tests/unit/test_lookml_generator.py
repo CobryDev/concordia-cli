@@ -65,9 +65,7 @@ class TestLookMLFileWriter:
             ),
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
-                defaults=DefaultBehaviors(
-                    measures=["count"], hide_fields_by_suffix=["_pk"]
-                ),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
                 type_mapping=[
                     TypeMapping(
                         bq_type="STRING",
@@ -138,9 +136,7 @@ class TestLookMLFileWriter:
         """Test writing complete project with views only."""
         writer = LookMLFileWriter(self.config)
 
-        project_dict = {
-            "view": {"test_view": {"dimension": {"id": {"type": "number"}}}}
-        }
+        project_dict = {"view": {"test_view": {"dimension": {"id": {"type": "number"}}}}}
 
         written_files = writer.write_complete_project(project_dict)
 

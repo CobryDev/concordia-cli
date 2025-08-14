@@ -50,21 +50,13 @@ class Dimension(BaseModel):
     name: str = Field(description="Dimension name")
     type: DimensionType = Field(description="Dimension type")
     sql: Optional[str] = Field(default=None, description="Custom SQL expression")
-    description: Optional[str] = Field(
-        default=None, description="Dimension description"
-    )
+    description: Optional[str] = Field(default=None, description="Dimension description")
     label: Optional[str] = Field(default=None, description="Display label")
     hidden: bool = Field(default=False, description="Whether dimension is hidden")
-    primary_key: bool = Field(
-        default=False, description="Whether this is a primary key"
-    )
-    group_label: Optional[str] = Field(
-        default=None, description="Group label for organization"
-    )
+    primary_key: bool = Field(default=False, description="Whether this is a primary key")
+    group_label: Optional[str] = Field(default=None, description="Group label for organization")
     value_format: Optional[str] = Field(default=None, description="Value formatting")
-    drill_fields: Optional[List[str]] = Field(
-        default=None, description="Fields to drill into"
-    )
+    drill_fields: Optional[List[str]] = Field(default=None, description="Fields to drill into")
 
     # Allow additional LookML parameters
     additional_params: Dict[str, Any] = Field(
@@ -117,16 +109,10 @@ class DimensionGroup(BaseModel):
     sql: Optional[str] = Field(default=None, description="Custom SQL expression")
     description: Optional[str] = Field(default=None, description="Description")
     label: Optional[str] = Field(default=None, description="Display label")
-    timeframes: Optional[List[str]] = Field(
-        default=None, description="Available timeframes"
-    )
+    timeframes: Optional[List[str]] = Field(default=None, description="Available timeframes")
     convert_tz: bool = Field(default=True, description="Whether to convert timezone")
-    datatype: Optional[str] = Field(
-        default=None, description="Data type for time fields"
-    )
-    intervals: Optional[List[str]] = Field(
-        default=None, description="Duration intervals"
-    )
+    datatype: Optional[str] = Field(default=None, description="Data type for time fields")
+    intervals: Optional[List[str]] = Field(default=None, description="Duration intervals")
 
     # Allow additional LookML parameters
     additional_params: Dict[str, Any] = Field(
@@ -178,16 +164,10 @@ class Measure(BaseModel):
     description: Optional[str] = Field(default=None, description="Measure description")
     label: Optional[str] = Field(default=None, description="Display label")
     hidden: bool = Field(default=False, description="Whether measure is hidden")
-    group_label: Optional[str] = Field(
-        default=None, description="Group label for organization"
-    )
+    group_label: Optional[str] = Field(default=None, description="Group label for organization")
     value_format: Optional[str] = Field(default=None, description="Value formatting")
-    drill_fields: Optional[List[str]] = Field(
-        default=None, description="Fields to drill into"
-    )
-    filters: Optional[Dict[str, str]] = Field(
-        default=None, description="Filter conditions"
-    )
+    drill_fields: Optional[List[str]] = Field(default=None, description="Fields to drill into")
+    filters: Optional[Dict[str, str]] = Field(default=None, description="Filter conditions")
 
     # Allow additional LookML parameters
     additional_params: Dict[str, Any] = Field(
@@ -239,16 +219,12 @@ class LookMLView(BaseModel):
     sql_table_name: str = Field(description="SQL table name")
     connection: Optional[str] = Field(default=None, description="Connection name")
     description: Optional[str] = Field(default=None, description="View description")
-    dimensions: List[Dimension] = Field(
-        default_factory=list, description="View dimensions"
-    )
+    dimensions: List[Dimension] = Field(default_factory=list, description="View dimensions")
     dimension_groups: List[DimensionGroup] = Field(
         default_factory=list, description="View dimension groups"
     )
     measures: List[Measure] = Field(default_factory=list, description="View measures")
-    drill_fields: Optional[List[str]] = Field(
-        default=None, description="Default drill fields"
-    )
+    drill_fields: Optional[List[str]] = Field(default=None, description="Default drill fields")
 
     # Allow additional LookML parameters
     additional_params: Dict[str, Any] = Field(
@@ -307,9 +283,7 @@ class LookMLView(BaseModel):
 
         # Add dimension groups
         if self.dimension_groups:
-            view_entry["dimension_group"] = [
-                group.to_dict() for group in self.dimension_groups
-            ]
+            view_entry["dimension_group"] = [group.to_dict() for group in self.dimension_groups]
 
         # Add measures
         if self.measures:

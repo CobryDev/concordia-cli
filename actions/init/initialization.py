@@ -75,9 +75,7 @@ def scan_for_projects():
         dataform_path = "."  # Root directory
         safe_echo(f"✅ Found Dataform project in: {dataform_path}")
     else:
-        safe_echo(
-            "❌ No Dataform project found (workflow_settings.yaml not found in root)"
-        )
+        safe_echo("❌ No Dataform project found (workflow_settings.yaml not found in root)")
 
     # Search for Looker project (manifest.lkml)
     looker_path = find_file_in_tree("manifest.lkml")
@@ -102,9 +100,7 @@ def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) 
         safe_echo("\nAuto-detected projects:")
         if dataform_path:
             safe_echo(f"• Dataform project: {dataform_path}")
-            safe_echo(
-                "  → Will set dataform_credentials_file to './.df-credentials.json'"
-            )
+            safe_echo("  → Will set dataform_credentials_file to './.df-credentials.json'")
         if looker_path:
             safe_echo(f"• Looker project: {looker_path}")
             safe_echo(f"  → Will set project_path to './{looker_path}/'")

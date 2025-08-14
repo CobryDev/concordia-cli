@@ -144,9 +144,7 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_successful_execution(
-        self, mock_location, mock_creds, mock_bq_client
-    ):
+    def test_generate_command_successful_execution(self, mock_location, mock_creds, mock_bq_client):
         """Test successful generate command execution."""
         # Mock BigQuery setup
         mock_creds.return_value = (Mock(), "test-project")
@@ -155,9 +153,7 @@ class TestGenerateCommandIntegration:
         # Mock BigQuery client
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
-        mock_client_instance.get_tables_metadata.return_value = (
-            self.create_mock_bigquery_data()
-        )
+        mock_client_instance.get_tables_metadata.return_value = self.create_mock_bigquery_data()
         mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
@@ -173,9 +169,7 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_creates_output_files(
-        self, mock_location, mock_creds, mock_bq_client
-    ):
+    def test_generate_command_creates_output_files(self, mock_location, mock_creds, mock_bq_client):
         """Test that generate command creates the expected output files."""
         # Mock BigQuery setup
         mock_creds.return_value = (Mock(), "test-project")
@@ -183,9 +177,7 @@ class TestGenerateCommandIntegration:
 
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
-        mock_client_instance.get_tables_metadata.return_value = (
-            self.create_mock_bigquery_data()
-        )
+        mock_client_instance.get_tables_metadata.return_value = self.create_mock_bigquery_data()
         mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
@@ -239,9 +231,7 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_no_tables_found(
-        self, mock_location, mock_creds, mock_bq_client
-    ):
+    def test_generate_command_no_tables_found(self, mock_location, mock_creds, mock_bq_client):
         """Test generate command when no tables are found."""
         mock_creds.return_value = (Mock(), "test-project")
         mock_location.return_value = "US"
@@ -260,18 +250,14 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_file_write_error(
-        self, mock_location, mock_creds, mock_bq_client
-    ):
+    def test_generate_command_file_write_error(self, mock_location, mock_creds, mock_bq_client):
         """Test generate command when file writing fails."""
         mock_creds.return_value = (Mock(), "test-project")
         mock_location.return_value = "US"
 
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
-        mock_client_instance.get_tables_metadata.return_value = (
-            self.create_mock_bigquery_data()
-        )
+        mock_client_instance.get_tables_metadata.return_value = self.create_mock_bigquery_data()
         mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
@@ -301,9 +287,7 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_with_error_details(
-        self, mock_location, mock_creds, mock_bq_client
-    ):
+    def test_generate_command_with_error_details(self, mock_location, mock_creds, mock_bq_client):
         """Test generate command error handling with detailed error reporting."""
         mock_creds.return_value = (Mock(), "test-project")
         mock_location.return_value = "US"
@@ -332,9 +316,7 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_partial_data_success(
-        self, mock_location, mock_creds, mock_bq_client
-    ):
+    def test_generate_command_partial_data_success(self, mock_location, mock_creds, mock_bq_client):
         """Test generate command with partial table data."""
         mock_creds.return_value = (Mock(), "test-project")
         mock_location.return_value = "US"
@@ -509,9 +491,7 @@ class TestGenerateFunctionUnit:
                     connection="test-connection",
                 )
                 mock_project.add_view(mock_view)
-                mock_gen_instance.generate_complete_lookml_project.return_value = (
-                    mock_project
-                )
+                mock_gen_instance.generate_complete_lookml_project.return_value = mock_project
                 mock_generator.return_value = mock_gen_instance
 
                 mock_writer_instance = Mock()
@@ -532,6 +512,4 @@ class TestGenerateFunctionUnit:
 
                 # Check success message was printed
                 args = [call.args[0] for call in mock_echo.call_args_list]
-                assert any(
-                    "Successfully generated LookML project" in arg for arg in args
-                )
+                assert any("Successfully generated LookML project" in arg for arg in args)

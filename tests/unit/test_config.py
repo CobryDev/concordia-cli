@@ -50,10 +50,7 @@ class TestGenerateConcordiaConfig:
         looker = config["looker"]
 
         # Should use default dataform path
-        assert (
-            connection["dataform_credentials_file"]
-            == "path/to/your/.df-credentials.json"
-        )
+        assert connection["dataform_credentials_file"] == "path/to/your/.df-credentials.json"
 
         # Should use provided looker path (note: gets ./ prefix added)
         assert looker["project_path"] == "././looker/"
@@ -66,10 +63,7 @@ class TestGenerateConcordiaConfig:
         looker = config["looker"]
 
         # Should use default paths
-        assert (
-            connection["dataform_credentials_file"]
-            == "path/to/your/.df-credentials.json"
-        )
+        assert connection["dataform_credentials_file"] == "path/to/your/.df-credentials.json"
         assert looker["project_path"] == "./path/to/your/looker_project/"
 
     def test_connection_section_structure(self):
@@ -376,9 +370,7 @@ class TestWriteYamlWithComments:
 
         # Check indentation (find actual indented content, not comments)
         # Look for an indented key after connection
-        connection_line = next(
-            i for i, line in enumerate(lines) if "connection:" in line
-        )
+        connection_line = next(i for i, line in enumerate(lines) if "connection:" in line)
         # Find next line that's not a comment and has content
         for i in range(connection_line + 1, min(connection_line + 10, len(lines))):
             line = lines[i]

@@ -33,8 +33,7 @@ def load_config(config_path: str = "concordia.yaml") -> ConcordiaConfig:
     """
     if not os.path.exists(config_path):
         raise ConfigurationError(
-            f"Configuration file '{config_path}' not found. "
-            "Run 'concordia init' to create it."
+            f"Configuration file '{config_path}' not found. " "Run 'concordia init' to create it."
         )
 
     try:
@@ -217,8 +216,6 @@ def get_bigquery_location(config: ConcordiaConfig) -> Optional[str]:
                     return creds_location
             except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
                 # If we can't parse the credentials file, continue without location (optional)
-                click.echo(
-                    f"⚠️  Unable to read location from credentials at '{creds_path}': {e}"
-                )
+                click.echo(f"⚠️  Unable to read location from credentials at '{creds_path}': {e}")
 
     return None

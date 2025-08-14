@@ -9,11 +9,7 @@ import pytest
 
 from actions.looker.lookml_measure_module import LookMLMeasureGenerator
 from actions.models.metadata import ColumnMetadata
-from tests.fixtures.config_fixtures import (
-    sample_config,
-    sample_model_rules,
-    sample_table_metadata,
-)
+from tests.fixtures.config_fixtures import sample_config, sample_model_rules, sample_table_metadata
 
 
 class TestLookMLMeasureGenerator:
@@ -64,9 +60,7 @@ class TestLookMLMeasureGenerator:
         modified_model_rules = sample_config.model_rules.copy(
             update={"defaults": modified_defaults}
         )
-        modified_config = sample_config.copy(
-            update={"model_rules": modified_model_rules}
-        )
+        modified_config = sample_config.copy(update={"model_rules": modified_model_rules})
 
         generator = LookMLMeasureGenerator(modified_config)
         measures = generator._generate_default_measures()
@@ -85,9 +79,7 @@ class TestLookMLMeasureGenerator:
         generator = LookMLMeasureGenerator(sample_config)
 
         # Test with primary key (should be skipped)
-        pk_column = ColumnMetadata(
-            name="user_pk", type="INTEGER", standardized_type="INTEGER"
-        )
+        pk_column = ColumnMetadata(name="user_pk", type="INTEGER", standardized_type="INTEGER")
 
         measures = generator._generate_automatic_measures(pk_column)
         assert len(measures) == 0
@@ -104,9 +96,7 @@ class TestLookMLMeasureGenerator:
         """Test automatic measure generation for numeric columns."""
         generator = LookMLMeasureGenerator(sample_config)
 
-        numeric_column = ColumnMetadata(
-            name="age", type="INTEGER", standardized_type="INTEGER"
-        )
+        numeric_column = ColumnMetadata(name="age", type="INTEGER", standardized_type="INTEGER")
 
         measures = generator._generate_automatic_measures(numeric_column)
 
@@ -147,9 +137,7 @@ class TestLookMLMeasureGenerator:
         """Test generation of standard numeric measures."""
         generator = LookMLMeasureGenerator(sample_config)
 
-        column = ColumnMetadata(
-            name="score", type="INTEGER", standardized_type="INTEGER"
-        )
+        column = ColumnMetadata(name="score", type="INTEGER", standardized_type="INTEGER")
 
         measures = generator._generate_numeric_measures(column)
 
@@ -177,9 +165,7 @@ class TestLookMLMeasureGenerator:
         """Test generation of amount/currency measures."""
         generator = LookMLMeasureGenerator(sample_config)
 
-        column = ColumnMetadata(
-            name="revenue", type="NUMERIC", standardized_type="NUMERIC"
-        )
+        column = ColumnMetadata(name="revenue", type="NUMERIC", standardized_type="NUMERIC")
 
         measures = generator._generate_amount_measures(column)
 
@@ -199,9 +185,7 @@ class TestLookMLMeasureGenerator:
         """Test generation of count-type measures."""
         generator = LookMLMeasureGenerator(sample_config)
 
-        column = ColumnMetadata(
-            name="order_count", type="INTEGER", standardized_type="INTEGER"
-        )
+        column = ColumnMetadata(name="order_count", type="INTEGER", standardized_type="INTEGER")
 
         measures = generator._generate_count_measures(column)
 
@@ -216,9 +200,7 @@ class TestLookMLMeasureGenerator:
         """Test generation of ratio/percentage measures."""
         generator = LookMLMeasureGenerator(sample_config)
 
-        column = ColumnMetadata(
-            name="conversion_rate", type="FLOAT", standardized_type="FLOAT"
-        )
+        column = ColumnMetadata(name="conversion_rate", type="FLOAT", standardized_type="FLOAT")
 
         measures = generator._generate_ratio_measures(column)
 
@@ -286,9 +268,7 @@ class TestLookMLMeasureGenerator:
         """Test ratio measure generation with custom name."""
         generator = LookMLMeasureGenerator(sample_config)
 
-        result = generator.generate_ratio_measure(
-            "sales", "leads", measure_name="conversion_ratio"
-        )
+        result = generator.generate_ratio_measure("sales", "leads", measure_name="conversion_ratio")
 
         assert "conversion_ratio" in result
         measure = result["conversion_ratio"]
@@ -300,9 +280,7 @@ class TestLookMLMeasureGenerator:
         generator = LookMLMeasureGenerator(sample_config)
 
         cohort_periods = ["month", "quarter"]
-        measures = generator.generate_cohort_measure(
-            "signup_date", "revenue", cohort_periods
-        )
+        measures = generator.generate_cohort_measure("signup_date", "revenue", cohort_periods)
 
         assert len(measures) == 2
 
@@ -352,9 +330,7 @@ class TestLookMLMeasureGenerator:
         )
         assert (
             generator._is_numeric_column(
-                ColumnMetadata(
-                    name="test", type="BIGNUMERIC", standardized_type="BIGNUMERIC"
-                )
+                ColumnMetadata(name="test", type="BIGNUMERIC", standardized_type="BIGNUMERIC")
             )
             is True
         )

@@ -22,9 +22,7 @@ def setup_encoding():
         if sys.platform == "win32":
             import codecs
 
-            if hasattr(sys.stdout, "reconfigure") and hasattr(
-                sys.stderr, "reconfigure"
-            ):
+            if hasattr(sys.stdout, "reconfigure") and hasattr(sys.stderr, "reconfigure"):
                 # type: ignore[attr-defined]
                 sys.stdout.reconfigure(encoding="utf-8")
                 # type: ignore[attr-defined]
@@ -337,17 +335,13 @@ def main():
     else:
         safe_print(f"❌ Unknown command: {command}")
         print("\nAvailable commands:")
-        print(
-            "  all         - Run formatting, imports, typing, security, tests, coverage, linting"
-        )
+        print("  all         - Run formatting, imports, typing, security, tests, coverage, linting")
         print("  unit        - Run unit tests only")
         print("  integration - Run integration tests only")
         print("  coverage    - Run tests with coverage report")
         print("  fast        - Run tests with minimal output")
         print("  lint        - Lint test files")
-        print(
-            "  ci          - Run CI-equivalent checks (format, isort, mypy, bandit, coverage)"
-        )
+        print("  ci          - Run CI-equivalent checks (format, isort, mypy, bandit, coverage)")
         print("\nExamples:")
         print("  python run_tests.py")
         print("  python run_tests.py unit")
