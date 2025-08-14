@@ -44,12 +44,24 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Check dependencies
         run: |
-          python run_tests.py --no-deps
-          python -c "import pytest, pytest_cov, pytest_mock; print('[PASS] All test dependencies installed')"
+          python - <<'PY'
+          import importlib as i
+          modules = [
+              'pytest',
+              'pytest_cov',
+              'pytest_mock',
+              'black',
+              'isort',
+              'bandit',
+          ]
+          for m in modules:
+              i.import_module(m)
+          print('[PASS] All test dependencies installed')
+          PY
 
       - name: Lint code with flake8
         run: |
@@ -59,17 +71,21 @@ jobs:
           # Treat all other issues as warnings
           flake8 actions/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
+      - name: CI-equivalent checks (format, isort, mypy, bandit, coverage)
+        run: |
+          python run_tests.py ci --no-deps
+
       - name: Run unit tests
         run: |
-          python run_tests.py unit
+          python run_tests.py unit --no-deps
 
       - name: Run integration tests
         run: |
-          python run_tests.py integration
+          python run_tests.py integration --no-deps
 
       - name: Run full test suite with coverage
         run: |
-          python run_tests.py coverage
+          python run_tests.py coverage --no-deps
 
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
