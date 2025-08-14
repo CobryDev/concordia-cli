@@ -5,6 +5,7 @@ This module handles metadata extraction from BigQuery using INFORMATION_SCHEMA q
 following the droughty pattern of treating LookML as data structures (dictionaries).
 """
 
+import re
 from typing import Any, Dict, List, Optional
 
 import click
@@ -45,10 +46,8 @@ class MetadataExtractor:
         # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
         union_queries = []
         for dataset_id in dataset_ids:
-            # dataset_id values are controlled via config and not user-provided at runtime.
-            # BigQuery client will still validate identifiers. Using f-strings here is safe.
-            union_queries.append(  # nosec B608
-                f"""
+            safe_dataset_id = self._validate_dataset_id(dataset_id)
+            sql = f"""
             SELECT 
                 table_catalog as project_id,
                 table_schema as dataset_id,
@@ -63,10 +62,10 @@ class MetadataExtractor:
                     THEN REGEXP_EXTRACT(ddl, r"description\\s*=\\s*'([^']*)'")
                     ELSE NULL
                 END as table_description
-            FROM `{dataset_id}.INFORMATION_SCHEMA.TABLES`
+            FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.TABLES
             WHERE table_type = 'BASE TABLE'
-            """
-            )
+            """  # nosec B608 - dataset identifier validated by _validate_dataset_id
+            union_queries.append(sql)
 
         query = " UNION ALL ".join(union_queries) + "\nORDER BY dataset_id, table_id"
 
@@ -100,10 +99,8 @@ class MetadataExtractor:
         # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
         union_queries = []
         for dataset_id in dataset_ids:
-            # dataset_id values are controlled via config and not user-provided at runtime.
-            # BigQuery client will still validate identifiers. Using f-strings here is safe.
-            union_queries.append(  # nosec B608
-                f"""
+            safe_dataset_id = self._validate_dataset_id(dataset_id)
+            sql = f"""
             SELECT 
                 table_catalog as project_id,
                 table_schema as dataset_id,
@@ -126,9 +123,9 @@ class MetadataExtractor:
                 CAST(NULL AS STRING) as column_description,
                 -- Full table identifier for joining
                 CONCAT(table_catalog, '.', table_schema, '.', table_name) as full_table_id
-            FROM `{dataset_id}.INFORMATION_SCHEMA.COLUMNS`
-            """
-            )
+            FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.COLUMNS
+            """  # nosec B608 - dataset identifier validated by _validate_dataset_id
+            union_queries.append(sql)
 
         query = (
             " UNION ALL ".join(union_queries)
@@ -165,10 +162,8 @@ class MetadataExtractor:
         # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
         union_queries = []
         for dataset_id in dataset_ids:
-            # dataset_id values are controlled via config and not user-provided at runtime.
-            # BigQuery client will still validate identifiers. Using f-strings here is safe.
-            union_queries.append(  # nosec B608
-                f"""
+            safe_dataset_id = self._validate_dataset_id(dataset_id)
+            sql = f"""
             SELECT 
                 constraint_catalog as project_id,
                 constraint_schema as dataset_id,
@@ -178,10 +173,10 @@ class MetadataExtractor:
                 is_deferrable,
                 initially_deferred,
                 enforced
-            FROM `{dataset_id}.INFORMATION_SCHEMA.TABLE_CONSTRAINTS`
+            FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.TABLE_CONSTRAINTS
             WHERE constraint_type = 'PRIMARY KEY'
-            """
-            )
+            """  # nosec B608 - dataset identifier validated by _validate_dataset_id
+            union_queries.append(sql)
 
         query = " UNION ALL ".join(union_queries) + "\nORDER BY dataset_id, table_id"
 
@@ -346,3 +341,31 @@ class MetadataExtractor:
         }
 
         return type_mapping.get(bq_type.upper(), "STRING")
+
+    def _validate_dataset_id(self, dataset_id: str) -> str:
+        """
+        Validate a BigQuery dataset identifier to prevent SQL injection through identifiers.
+
+        BigQuery dataset IDs may contain letters, numbers, and underscores.
+        This validator enforces:
+        - Only [A-Za-z0-9_]
+        - Starts with a letter or underscore
+        - Length 1..1024
+        - No dots/backticks or other quoting characters
+        """
+        if not isinstance(dataset_id, str):
+            raise ValueError("Dataset ID must be a string")
+
+        if len(dataset_id) == 0 or len(dataset_id) > 1024:
+            raise ValueError("Dataset ID length must be between 1 and 1024 characters")
+
+        if "`" in dataset_id or "." in dataset_id:
+            raise ValueError("Dataset ID must not contain quotes or dots")
+
+        pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+        if not pattern.match(dataset_id):
+            raise ValueError(
+                "Dataset ID must start with a letter or underscore and contain only letters, numbers, and underscores"
+            )
+
+        return dataset_id

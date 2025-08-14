@@ -22,8 +22,13 @@ def setup_encoding():
         if sys.platform == "win32":
             import codecs
 
-            sys.stdout.reconfigure(encoding="utf-8")
-            sys.stderr.reconfigure(encoding="utf-8")
+            if hasattr(sys.stdout, "reconfigure") and hasattr(
+                sys.stderr, "reconfigure"
+            ):
+                # type: ignore[attr-defined]
+                sys.stdout.reconfigure(encoding="utf-8")
+                # type: ignore[attr-defined]
+                sys.stderr.reconfigure(encoding="utf-8")
     except (AttributeError, UnicodeError):
         # Fallback for older Python versions or encoding issues
         pass
@@ -147,13 +152,15 @@ def run_bandit_check():
 
 def run_unit_tests():
     """Run unit tests only."""
-    cmd = ["pytest", "tests/unit/", "-v"]
+    # Clear addopts from pytest.ini to avoid per-suite coverage gating
+    cmd = ["pytest", "-o", "addopts=", "tests/unit/", "-v"]
     return run_command(cmd, "Running unit tests")
 
 
 def run_integration_tests():
     """Run integration tests only."""
-    cmd = ["pytest", "tests/integration/", "-v"]
+    # Clear addopts from pytest.ini to avoid per-suite coverage gating
+    cmd = ["pytest", "-o", "addopts=", "tests/integration/", "-v"]
     return run_command(cmd, "Running integration tests")
 
 
