@@ -84,14 +84,16 @@ def get_bigquery_credentials(config: ConcordiaConfig) -> tuple:
         creds_path = connection.dataform_credentials_file
         if os.path.exists(creds_path):
             try:
-                credentials, project_id = _load_dataform_credentials(creds_path)
+                credentials, project_id = _load_dataform_credentials(
+                    creds_path)
                 # Use project_id from config if provided, otherwise from credentials
                 if connection.project_id:
                     project_id = connection.project_id
                 return credentials, project_id
             except Exception as e:
                 click.echo(f"⚠️  Failed to load Dataform credentials: {e}")
-                click.echo("Falling back to Application Default Credentials...")
+                click.echo(
+                    "Falling back to Application Default Credentials...")
 
     # Method 2: Use Application Default Credentials
     try:
@@ -161,12 +163,14 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
                 )
 
         # Create service account credentials
-        credentials = service_account.Credentials.from_service_account_info(creds_data)
+        credentials = service_account.Credentials.from_service_account_info(
+            creds_data)
 
         # Extract project ID
         project_id = creds_data.get("project_id")
         if not project_id:
-            raise ConfigurationError("No 'project_id' found in Dataform credentials")
+            raise ConfigurationError(
+                "No 'project_id' found in Dataform credentials")
 
         return credentials, project_id
 
