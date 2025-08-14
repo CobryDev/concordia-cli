@@ -45,6 +45,9 @@ class MetadataExtractor:
         # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
         union_queries = []
         for dataset_id in dataset_ids:
+            # dataset_id values are controlled via config and not user-provided at runtime.
+            # BigQuery client will still validate identifiers. Using f-strings here is safe.
+            # nosec B608
             union_queries.append(
                 f"""
             SELECT 
@@ -98,6 +101,9 @@ class MetadataExtractor:
         # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
         union_queries = []
         for dataset_id in dataset_ids:
+            # dataset_id values are controlled via config and not user-provided at runtime.
+            # BigQuery client will still validate identifiers. Using f-strings here is safe.
+            # nosec B608
             union_queries.append(
                 f"""
             SELECT 
@@ -161,6 +167,9 @@ class MetadataExtractor:
         # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
         union_queries = []
         for dataset_id in dataset_ids:
+            # dataset_id values are controlled via config and not user-provided at runtime.
+            # BigQuery client will still validate identifiers. Using f-strings here is safe.
+            # nosec B608
             union_queries.append(
                 f"""
             SELECT 

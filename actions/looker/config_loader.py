@@ -215,9 +215,10 @@ def get_bigquery_location(config: ConcordiaConfig) -> Optional[str]:
                 creds_location = dataform_config.get("location")
                 if creds_location:
                     return creds_location
-            except Exception:
-                # If we can't parse the credentials file, just continue
-                # without the location (it's optional)
-                pass
+            except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
+                # If we can't parse the credentials file, continue without location (optional)
+                click.echo(
+                    f"⚠️  Unable to read location from credentials at '{creds_path}': {e}"
+                )
 
     return None
