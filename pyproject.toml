@@ -1,15 +1,26 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "concordia-cli"
 version = "0.1.0"
-description = "Concordia CLI - Generate LookML from your data warehouse"
+description = "Concordia CLI - Generate LookML from BigQuery using Looker & Dataform"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "Concordia" }]
+authors = [{ name = "Cobry" }]
+keywords = ["looker", "lookml", "bigquery", "dataform", "cli", "dbt"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Database",
+    "Topic :: Software Development :: Code Generators",
+    "Typing :: Typed",
+]
+
 dependencies = [
   "click",
   "pyyaml",
@@ -23,6 +34,12 @@ dependencies = [
   "ruamel.yaml>=0.17.0",
 ]
 
+# Add links to your repository
+[project.urls]
+Homepage = "https://github.com/CobryDev/concordia-cli"
+Repository = "https://github.com/CobryDev/concordia-cli"
+"Bug Tracker" = "https://github.com/CobryDev/concordia-cli/issues"
+
 [project.scripts]
 concordia = "main:cli"
 
@@ -31,4 +48,3 @@ py-modules = ["main"]
 
 [tool.setuptools.packages.find]
 include = ["actions*"]
-
