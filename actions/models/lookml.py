@@ -73,34 +73,32 @@ class Dimension(BaseModel):
         return v.strip()
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for LookML serialization."""
-        result = {
-            self.name: {
-                'type': self.type.value,
-            }
+        """Convert to dictionary for LookML serialization (flat form)."""
+        result: Dict[str, Any] = {
+            'name': self.name,
+            'type': self.type.value,
         }
 
         # Add optional fields
-        dimension_def = result[self.name]
         if self.sql:
-            dimension_def['sql'] = self.sql
+            result['sql'] = self.sql
         if self.description:
-            dimension_def['description'] = self.description
+            result['description'] = self.description
         if self.label:
-            dimension_def['label'] = self.label
+            result['label'] = self.label
         if self.hidden:
-            dimension_def['hidden'] = 'yes'
+            result['hidden'] = 'yes'
         if self.primary_key:
-            dimension_def['primary_key'] = 'yes'
+            result['primary_key'] = 'yes'
         if self.group_label:
-            dimension_def['group_label'] = self.group_label
+            result['group_label'] = self.group_label
         if self.value_format:
-            dimension_def['value_format'] = self.value_format
+            result['value_format'] = self.value_format
         if self.drill_fields:
-            dimension_def['drill_fields'] = str(self.drill_fields)
+            result['drill_fields'] = str(self.drill_fields)
 
         # Add any additional parameters
-        dimension_def.update(self.additional_params)
+        result.update(self.additional_params)
 
         return result
 
@@ -135,32 +133,30 @@ class DimensionGroup(BaseModel):
         return v.strip()
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for LookML serialization."""
-        result = {
-            self.name: {
-                'type': self.type.value,
-            }
+        """Convert to dictionary for LookML serialization (flat form)."""
+        result: Dict[str, Any] = {
+            'name': self.name,
+            'type': self.type.value,
         }
 
         # Add optional fields
-        group_def = result[self.name]
         if self.sql:
-            group_def['sql'] = self.sql
+            result['sql'] = self.sql
         if self.description:
-            group_def['description'] = self.description
+            result['description'] = self.description
         if self.label:
-            group_def['label'] = self.label
+            result['label'] = self.label
         if self.timeframes:
-            group_def['timeframes'] = str(self.timeframes)
+            result['timeframes'] = str(self.timeframes)
         if not self.convert_tz:
-            group_def['convert_tz'] = 'no'
+            result['convert_tz'] = 'no'
         if self.datatype:
-            group_def['datatype'] = self.datatype
+            result['datatype'] = self.datatype
         if self.intervals:
-            group_def['intervals'] = str(self.intervals)
+            result['intervals'] = str(self.intervals)
 
         # Add any additional parameters
-        group_def.update(self.additional_params)
+        result.update(self.additional_params)
 
         return result
 
@@ -198,34 +194,32 @@ class Measure(BaseModel):
         return v.strip()
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for LookML serialization."""
-        result = {
-            self.name: {
-                'type': self.type.value,
-            }
+        """Convert to dictionary for LookML serialization (flat form)."""
+        result: Dict[str, Any] = {
+            'name': self.name,
+            'type': self.type.value,
         }
 
         # Add optional fields
-        measure_def = result[self.name]
         if self.sql:
-            measure_def['sql'] = self.sql
+            result['sql'] = self.sql
         if self.description:
-            measure_def['description'] = self.description
+            result['description'] = self.description
         if self.label:
-            measure_def['label'] = self.label
+            result['label'] = self.label
         if self.hidden:
-            measure_def['hidden'] = 'yes'
+            result['hidden'] = 'yes'
         if self.group_label:
-            measure_def['group_label'] = self.group_label
+            result['group_label'] = self.group_label
         if self.value_format:
-            measure_def['value_format'] = self.value_format
+            result['value_format'] = self.value_format
         if self.drill_fields:
-            measure_def['drill_fields'] = str(self.drill_fields)
+            result['drill_fields'] = str(self.drill_fields)
         if self.filters:
-            measure_def['filters'] = str(self.filters)
+            result['filters'] = str(self.filters)
 
         # Add any additional parameters
-        measure_def.update(self.additional_params)
+        result.update(self.additional_params)
 
         return result
 
@@ -286,7 +280,7 @@ class LookMLView(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for LookML serialization."""
-        view_def = {
+        view_def: Dict[str, Any] = {
             'sql_table_name': self.sql_table_name,
             'connection': self.connection
         }
@@ -294,7 +288,7 @@ class LookMLView(BaseModel):
         if self.description:
             view_def['description'] = self.description
 
-            # Add dimensions
+        # Add dimensions (flat list form understood by lkml.dump)
         if self.dimensions:
             view_def['dimension'] = [dim.to_dict() for dim in self.dimensions]
 
