@@ -5,7 +5,8 @@ These models provide type safety for metadata structures returned from
 BigQuery INFORMATION_SCHEMA queries, replacing Dict[str, Any] usage.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field, validator
 
 

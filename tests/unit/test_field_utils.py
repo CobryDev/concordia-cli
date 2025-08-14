@@ -6,13 +6,14 @@ based on naming conventions.
 """
 
 import pytest
+
 from actions.looker.field_utils import FieldIdentifier
 from actions.models.config import (
+    DefaultBehaviors,
+    LookMLParams,
     ModelRules,
     NamingConventions,
-    DefaultBehaviors,
     TypeMapping,
-    LookMLParams,
 )
 
 

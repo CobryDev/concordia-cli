@@ -2,8 +2,9 @@
 Safe printing utilities for handling Unicode encoding issues.
 """
 
-import click
 from typing import Any
+
+import click
 
 
 def safe_echo(message: Any, **kwargs) -> None:

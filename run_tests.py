@@ -6,10 +6,10 @@ This script provides convenient commands for running tests with different
 configurations and generating reports.
 """
 
-import os
-import sys
-import subprocess
 import argparse
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 # Handle Windows encoding issues with Unicode emojis

@@ -2,29 +2,31 @@
 Unit tests for the config_loader module.
 """
 
-import pytest
-import tempfile
-import os
-import yaml
 import json
-from unittest.mock import patch, Mock
+import os
+import tempfile
+from unittest.mock import Mock, patch
+
+import pytest
+import yaml
+
 from actions.looker.config_loader import (
-    load_config,
-    get_bigquery_credentials,
-    get_bigquery_location,
     ConfigurationError,
     _load_dataform_credentials,
     _parse_dataform_config,
+    get_bigquery_credentials,
+    get_bigquery_location,
+    load_config,
 )
 from actions.models.config import (
     ConcordiaConfig,
     ConnectionConfig,
+    DefaultBehaviors,
     LookerConfig,
+    LookMLParams,
     ModelRules,
     NamingConventions,
-    DefaultBehaviors,
     TypeMapping,
-    LookMLParams,
 )
 
 

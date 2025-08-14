@@ -5,14 +5,15 @@ This module handles metadata extraction from BigQuery using INFORMATION_SCHEMA q
 following the droughty pattern of treating LookML as data structures (dictionaries).
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
+import click
 import pandas as pd
 import pandas_gbq
-import click
-from google.cloud import bigquery
 from google.api_core.exceptions import NotFound, PermissionDenied
+from google.cloud import bigquery
 
-from ..models.metadata import ColumnMetadata, TableMetadata, MetadataCollection
+from ..models.metadata import ColumnMetadata, MetadataCollection, TableMetadata
 
 
 class MetadataExtractor:

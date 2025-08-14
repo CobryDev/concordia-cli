@@ -2,20 +2,21 @@
 Test fixtures for configuration objects and sample data.
 """
 
+from typing import Any, Dict
+
 import pytest
-from typing import Dict, Any
 
 from actions.models.config import (
     ConcordiaConfig,
-    ModelRules,
-    LookerConfig,
     ConnectionConfig,
-    NamingConventions,
     DefaultBehaviors,
-    TypeMapping,
+    LookerConfig,
     LookMLParams,
+    ModelRules,
+    NamingConventions,
+    TypeMapping,
 )
-from actions.models.metadata import TableMetadata, ColumnMetadata
+from actions.models.metadata import ColumnMetadata, TableMetadata
 
 
 @pytest.fixture

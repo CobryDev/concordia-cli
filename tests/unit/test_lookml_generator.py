@@ -2,22 +2,24 @@
 Unit tests for the lookml_generator module.
 """
 
-import pytest
-import tempfile
 import os
-import lkml
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-from actions.looker.lookml_generator import LookMLGenerator, LookMLFileWriter
+
+import lkml
+import pytest
+
+from actions.looker.lookml_generator import LookMLFileWriter, LookMLGenerator
 from actions.models.config import (
     ConcordiaConfig,
     ConnectionConfig,
+    DefaultBehaviors,
     LookerConfig,
+    LookMLParams,
     ModelRules,
     NamingConventions,
-    DefaultBehaviors,
     TypeMapping,
-    LookMLParams,
 )
 
 

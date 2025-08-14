@@ -1,6 +1,7 @@
+from typing import Any, Dict, Optional
+
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
-from typing import Optional, Dict, Any
 
 
 def generate_concordia_config(

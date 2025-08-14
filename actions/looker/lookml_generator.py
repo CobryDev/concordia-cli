@@ -1,14 +1,16 @@
-from typing import List, Dict, Any, Optional
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import click
 import lkml
-from .lookml_base_dict import MetadataExtractor
-from .lookml_module import LookMLViewGenerator
-from .lookml_measure_module import LookMLMeasureGenerator
+
 from ..models.config import ConcordiaConfig
-from ..models.metadata import MetadataCollection, TableMetadata
 from ..models.lookml import LookMLProject, LookMLView
+from ..models.metadata import MetadataCollection, TableMetadata
+from .lookml_base_dict import MetadataExtractor
+from .lookml_measure_module import LookMLMeasureGenerator
+from .lookml_module import LookMLViewGenerator
 
 
 class LookMLGenerator:

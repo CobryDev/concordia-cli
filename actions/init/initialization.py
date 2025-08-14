@@ -1,10 +1,11 @@
 import os
-import click
 from pathlib import Path
 from typing import Optional
 
-from .config import generate_concordia_config, write_yaml_with_comments
+import click
+
 from ..utils import safe_echo
+from .config import generate_concordia_config, write_yaml_with_comments
 
 
 def find_file_in_tree(filename: str, start_path: str = ".") -> Optional[str]:

@@ -48,3 +48,6 @@ py-modules = ["main"]
 
 [tool.setuptools.packages.find]
 include = ["actions*"]
+
+[tool.isort]
+profile = "black"

@@ -1,7 +1,7 @@
 import click
 
-from actions.init import run_initialization
 from actions.help import show_help
+from actions.init import run_initialization
 from actions.looker import generate_lookml
 
 

@@ -2,8 +2,10 @@
 Unit tests for the help module.
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from actions.help.help import show_help
 
 

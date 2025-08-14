@@ -5,7 +5,8 @@ This module centralizes the logic for identifying primary keys, foreign keys,
 and other field-related operations based on naming conventions defined in model rules.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from actions.models.config import ModelRules
 
 

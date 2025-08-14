@@ -2,8 +2,10 @@
 Tests for utility functions in actions.utils.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from actions.utils import safe_echo
 
 

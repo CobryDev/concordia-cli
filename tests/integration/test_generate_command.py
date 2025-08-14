@@ -6,17 +6,18 @@ file I/O operations, and error handling.
 """
 
 import os
-import pytest
-import tempfile
 import shutil
-import yaml
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock
-from click.testing import CliRunner
-import click
+from unittest.mock import MagicMock, Mock, patch
 
-from main import cli
+import click
+import pytest
+import yaml
+from click.testing import CliRunner
+
 from actions.looker.generate import generate_lookml
+from main import cli
 
 
 class TestGenerateCommandIntegration:
@@ -452,10 +453,10 @@ class TestGenerateFunctionUnit:
         from actions.models.config import (
             ConcordiaConfig,
             ConnectionConfig,
+            DefaultBehaviors,
             LookerConfig,
             ModelRules,
             NamingConventions,
-            DefaultBehaviors,
         )
 
         # Create a proper ConcordiaConfig object

@@ -5,9 +5,10 @@ These models provide type safety and validation for the configuration file,
 replacing the previous Dict[str, Any] approach.
 """
 
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, validator
 import os
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, validator
 
 
 class ConnectionConfig(BaseModel):

@@ -5,10 +5,11 @@ Tests the configuration generation functions that create YAML files
 with proper comments and structure.
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
+
+import pytest
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 

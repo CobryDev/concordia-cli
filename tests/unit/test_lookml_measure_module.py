@@ -6,6 +6,7 @@ including default measures, automatic measures, and custom measures.
 """
 
 import pytest
+
 from actions.looker.lookml_measure_module import LookMLMeasureGenerator
 from actions.models.metadata import ColumnMetadata
 from tests.fixtures.config_fixtures import (

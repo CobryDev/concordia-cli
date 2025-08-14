@@ -5,16 +5,18 @@ Tests the LookMLViewGenerator and LookMLDimensionGenerator classes
 for view generation, dimension creation, and type mapping logic.
 """
 
-import pytest
 from unittest.mock import Mock, patch
-from actions.looker.lookml_module import LookMLViewGenerator, LookMLDimensionGenerator
+
+import pytest
+
+from actions.looker.lookml_module import LookMLDimensionGenerator, LookMLViewGenerator
 from tests.fixtures.config_fixtures import (
+    sample_column_primary_key,
+    sample_column_string,
+    sample_column_timestamp,
     sample_config,
     sample_model_rules,
     sample_table_metadata,
-    sample_column_string,
-    sample_column_timestamp,
-    sample_column_primary_key,
 )
 
 

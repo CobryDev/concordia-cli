@@ -12,14 +12,14 @@ from actions.models.config import (
     LookerConfig,
     ModelRules,
 )
-from actions.models.metadata import TableMetadata, ColumnMetadata, MetadataCollection
 from actions.models.lookml import (
-    LookMLView,
     Dimension,
-    DimensionType,
     DimensionGroup,
     DimensionGroupType,
+    DimensionType,
+    LookMLView,
 )
+from actions.models.metadata import ColumnMetadata, MetadataCollection, TableMetadata
 
 
 def main():

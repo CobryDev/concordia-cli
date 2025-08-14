@@ -5,9 +5,10 @@ These models provide type safety for LookML structures that are currently
 represented as nested dictionaries, enabling better validation and code clarity.
 """
 
-from typing import List, Optional, Dict, Any, Union
-from pydantic import BaseModel, Field, validator
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel, Field, validator
 
 
 class DimensionType(str, Enum):

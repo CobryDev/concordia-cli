@@ -5,18 +5,20 @@ This module creates LookML views as Python dictionaries following the droughty p
 It handles dimensions, dimension groups, and view-level configurations.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import click
-from .field_utils import FieldIdentifier
+
 from ..models.config import ConcordiaConfig, TypeMapping
-from ..models.metadata import TableMetadata, ColumnMetadata
 from ..models.lookml import (
-    LookMLView,
     Dimension,
     DimensionGroup,
-    DimensionType,
     DimensionGroupType,
+    DimensionType,
+    LookMLView,
 )
+from ..models.metadata import ColumnMetadata, TableMetadata
+from .field_utils import FieldIdentifier
 
 
 class LookMLViewGenerator:

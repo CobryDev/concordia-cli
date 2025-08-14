@@ -5,11 +5,13 @@ This module generates LookML measures as Python dictionaries following the droug
 It handles automatic measure generation based on column types and naming conventions.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import click
-from .field_utils import FieldIdentifier
+
 from ..models.config import ConcordiaConfig
-from ..models.metadata import TableMetadata, ColumnMetadata
+from ..models.metadata import ColumnMetadata, TableMetadata
+from .field_utils import FieldIdentifier
 
 
 class LookMLMeasureGenerator:

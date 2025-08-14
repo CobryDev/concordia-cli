@@ -1,11 +1,13 @@
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import click
 import pandas as pd
-from google.cloud import bigquery
 from google.api_core.exceptions import NotFound, PermissionDenied
+from google.cloud import bigquery
+
 from .config_loader import ConfigurationError
-from .lookml_base_dict import MetadataExtractor
 from .field_utils import FieldIdentifier
+from .lookml_base_dict import MetadataExtractor
 
 
 class ErrorTracker:

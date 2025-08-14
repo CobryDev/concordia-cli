@@ -6,21 +6,22 @@ initialization functionality.
 """
 
 import os
-import pytest
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import pytest
 from click.testing import CliRunner
 
-from main import cli
 from actions.init.initialization import (
-    run_initialization,
+    create_configuration_file,
     find_file_in_tree,
     handle_gitignore,
+    run_initialization,
     scan_for_projects,
-    create_configuration_file,
 )
+from main import cli
 
 
 class TestInitCommandIntegration:
