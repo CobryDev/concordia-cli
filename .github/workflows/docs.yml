@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -r requirements-dev.txt
           pip install markdown-link-check
 
       - name: Validate test documentation
@@ -57,7 +57,7 @@ jobs:
           echo "🧪 Testing documentation examples..." >> $GITHUB_STEP_SUMMARY
 
           # Test the run_tests.py script
-          python run_tests.py --no-deps || echo "⚠️ Dependency check needs setup"
+          python run_tests.py ci --no-deps || echo "⚠️ Dependency check needs setup"
 
           # Validate pytest configuration
           if [ -f "pytest.ini" ]; then
