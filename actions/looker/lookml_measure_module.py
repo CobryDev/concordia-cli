@@ -40,7 +40,7 @@ class LookMLMeasureGenerator:
         Returns:
             List of measure dictionaries
         """
-        measures = []
+        measures: List[Dict[str, Any]] = []
 
         # Generate default measures (like count)
         default_measures = self._generate_default_measures()
@@ -55,7 +55,7 @@ class LookMLMeasureGenerator:
 
     def _generate_default_measures(self) -> List[Dict[str, Any]]:
         """Generate default measures based on configuration."""
-        measures = []
+        measures: List[Dict[str, Any]] = []
         default_measures = self.model_rules.defaults.measures
 
         for measure_type in default_measures:
@@ -95,7 +95,7 @@ class LookMLMeasureGenerator:
         Returns:
             List of measure dictionaries
         """
-        measures = []
+        measures: List[Dict[str, Any]] = []
         column_name = column.name
         column_type = column.type
 
@@ -129,7 +129,7 @@ class LookMLMeasureGenerator:
         self, column: ColumnMetadata
     ) -> List[Dict[str, Any]]:
         """Generate standard numeric measures (sum, average, min, max)."""
-        measures = []
+        measures: List[Dict[str, Any]] = []
         column_name = column.name
 
         # Sum measure
@@ -180,7 +180,7 @@ class LookMLMeasureGenerator:
 
     def _generate_amount_measures(self, column: ColumnMetadata) -> List[Dict[str, Any]]:
         """Generate measures for amount/currency columns with proper formatting."""
-        measures = []
+        measures: List[Dict[str, Any]] = []
         column_name = column.name
 
         # Total amount with currency formatting
@@ -211,7 +211,7 @@ class LookMLMeasureGenerator:
 
     def _generate_count_measures(self, column: ColumnMetadata) -> List[Dict[str, Any]]:
         """Generate measures for count-type columns."""
-        measures = []
+        measures: List[Dict[str, Any]] = []
         column_name = column.name
 
         # Total count
@@ -230,7 +230,7 @@ class LookMLMeasureGenerator:
 
     def _generate_ratio_measures(self, column: ColumnMetadata) -> List[Dict[str, Any]]:
         """Generate measures for ratio/percentage columns."""
-        measures = []
+        measures: List[Dict[str, Any]] = []
         column_name = column.name
 
         # Average ratio as percentage
@@ -319,7 +319,7 @@ class LookMLMeasureGenerator:
         Returns:
             List of measure dictionaries for cohort analysis
         """
-        measures = []
+        measures: List[Dict[str, Any]] = []
 
         for period in cohort_periods:
             measure_name = f"{value_column}_cohort_{period}"
