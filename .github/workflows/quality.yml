@@ -8,15 +8,18 @@ on:
 
 jobs:
   quality:
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
@@ -42,6 +45,10 @@ jobs:
       - name: Type check with mypy
         run: |
           mypy actions/ --ignore-missing-imports --no-strict-optional
+
+      - name: Run tests with coverage (Python ${{ matrix.python-version }})
+        run: |
+          python run_tests.py coverage --no-deps
 
       - name: Security check with bandit
         run: |
