@@ -200,8 +200,8 @@ class TestGenerateCommandIntegration:
 
         # Check file contents contain expected LookML
         views_content = views_file.read_text()
-        assert 'users:' in views_content  # Updated for dict format
-        assert 'orders:' in views_content  # Updated for dict format
+        assert 'view: users {' in views_content
+        assert 'view: orders {' in views_content
         assert 'sql_table_name:' in views_content
 
     def test_generate_command_missing_config_file(self):

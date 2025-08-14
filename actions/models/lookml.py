@@ -279,39 +279,39 @@ class LookMLView(BaseModel):
         return None
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for LookML serialization."""
-        view_def: Dict[str, Any] = {
+        """Convert to dictionary for LookML serialization as repeated view blocks."""
+        view_entry: Dict[str, Any] = {
+            'name': self.name,
             'sql_table_name': self.sql_table_name,
             'connection': self.connection
         }
 
         if self.description:
-            view_def['description'] = self.description
+            view_entry['description'] = self.description
 
         # Add dimensions (flat list form understood by lkml.dump)
         if self.dimensions:
-            view_def['dimension'] = [dim.to_dict() for dim in self.dimensions]
+            view_entry['dimension'] = [dim.to_dict()
+                                       for dim in self.dimensions]
 
         # Add dimension groups
         if self.dimension_groups:
-            view_def['dimension_group'] = [group.to_dict()
-                                           for group in self.dimension_groups]
+            view_entry['dimension_group'] = [group.to_dict()
+                                             for group in self.dimension_groups]
 
         # Add measures
         if self.measures:
-            view_def['measure'] = [measure.to_dict()
-                                   for measure in self.measures]
+            view_entry['measure'] = [measure.to_dict()
+                                     for measure in self.measures]
 
         if self.drill_fields:
-            view_def['drill_fields'] = str(self.drill_fields)
+            view_entry['drill_fields'] = str(self.drill_fields)
 
         # Add any additional parameters
-        view_def.update(self.additional_params)
+        view_entry.update(self.additional_params)
 
         return {
-            'view': {
-                self.name: view_def
-            }
+            'view': [view_entry]
         }
 
 
@@ -333,17 +333,15 @@ class LookMLProject(BaseModel):
         return None
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for LookML serialization."""
+        """Convert to dictionary for LookML serialization with repeated view blocks."""
         if not self.views:
             return {}
 
-        # Combine all views into a single dictionary
-        all_views = {}
+        all_view_entries: List[Dict[str, Any]] = []
         for view in self.views:
             view_dict = view.to_dict()
-            if 'view' in view_dict:
-                all_views.update(view_dict['view'])
+            entries = view_dict.get('view')
+            if isinstance(entries, list):
+                all_view_entries.extend(entries)
 
-        return {
-            'view': all_views
-        } if all_views else {}
+        return {'view': all_view_entries} if all_view_entries else {}
