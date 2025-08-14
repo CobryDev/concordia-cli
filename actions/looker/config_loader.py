@@ -150,6 +150,16 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
     if 'credentials' in dataform_config:
         creds_data = dataform_config['credentials']
 
+        # Some Dataform exports store the service account JSON as a string.
+        # If so, parse it into a dict before constructing credentials.
+        if isinstance(creds_data, str):
+            try:
+                creds_data = json.loads(creds_data)
+            except json.JSONDecodeError as e:
+                raise ConfigurationError(
+                    f"Invalid 'credentials' JSON string in Dataform credentials file: {e}"
+                )
+
         # Create service account credentials
         credentials = service_account.Credentials.from_service_account_info(
             creds_data)
