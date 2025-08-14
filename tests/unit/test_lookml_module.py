@@ -87,12 +87,13 @@ class TestLookMLViewGenerator:
 
         view = result['view']['users']
 
-        # Should have drill fields set
+        # Should have drill fields set in explicit-name form
         assert 'set' in view
-        assert 'detail' in view['set']
-        assert 'fields' in view['set']['detail']
+        assert 'name' in view['set']
+        assert view['set']['name'] == 'all_fields'
+        assert 'fields' in view['set']
 
-        drill_fields = view['set']['detail']['fields']
+        drill_fields = view['set']['fields']
 
         # Should include non-hidden fields
         assert 'email' in drill_fields

@@ -87,10 +87,10 @@ class LookMLViewGenerator:
 
         # Add drill fields set (using type: ignore to suppress type checker warnings)
         if drill_fields:
+            # Use explicit name form so lkml serializes as: set: all_fields { ... }
             view_dict['view'][view_name]['set'] = {  # type: ignore
-                'detail': {
-                    'fields': drill_fields
-                }
+                'name': 'all_fields',
+                'fields': drill_fields
             }
 
         return view_dict
