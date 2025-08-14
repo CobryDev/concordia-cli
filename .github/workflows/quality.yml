@@ -56,7 +56,7 @@ jobs:
 
       - name: Check for security vulnerabilities
         run: |
-          safety check --json --output safety-report.json
+          safety check --output json > safety-report.json
 
       - name: Upload safety report
         if: always()
