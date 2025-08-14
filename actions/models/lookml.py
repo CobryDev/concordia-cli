@@ -229,7 +229,8 @@ class LookMLView(BaseModel):
 
     name: str = Field(description="View name")
     sql_table_name: str = Field(description="SQL table name")
-    connection: str = Field(description="Connection name")
+    connection: Optional[str] = Field(
+        default=None, description="Connection name")
     description: Optional[str] = Field(
         default=None, description="View description")
     dimensions: List[Dimension] = Field(
@@ -282,10 +283,12 @@ class LookMLView(BaseModel):
         """Convert to dictionary for LookML serialization as repeated view blocks."""
         view_entry: Dict[str, Any] = {
             'name': self.name,
-            'sql_table_name': self.sql_table_name,
-            'connection': self.connection
+            'sql_table_name': self.sql_table_name
         }
 
+        # Only include optional fields when provided
+        if self.connection:
+            view_entry['connection'] = self.connection
         if self.description:
             view_entry['description'] = self.description
 

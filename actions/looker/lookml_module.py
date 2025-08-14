@@ -41,19 +41,14 @@ class LookMLViewGenerator:
         """
         view_name = self._get_view_name(table_metadata.table_id)
 
-        # Build the view dictionary structure
+        # Build the view dictionary structure (omit connection and view-level description)
         view_dict = {
             'view': {
                 view_name: {
-                    'sql_table_name': f"`{table_metadata.project_id}.{table_metadata.dataset_id}.{table_metadata.table_id}`",
-                    'connection': self.connection_name
+                    'sql_table_name': f"`{table_metadata.project_id}.{table_metadata.dataset_id}.{table_metadata.table_id}`"
                 }
             }
         }
-
-        # Add description if available
-        if table_metadata.table_description:
-            view_dict['view'][view_name]['description'] = table_metadata.table_description
 
         # Generate dimensions and dimension groups
         dimensions = []
@@ -329,12 +324,10 @@ class LookMLDimensionGenerator:
         """
         view_name = self._get_view_name(table_metadata.table_id)
 
-        # Create the base view
+        # Create the base view (omit connection and view-level description)
         lookml_view = LookMLView(
             name=view_name,
-            sql_table_name=f"`{table_metadata.project_id}.{table_metadata.dataset_id}.{table_metadata.table_id}`",
-            connection=self.connection_name,
-            description=table_metadata.table_description
+            sql_table_name=f"`{table_metadata.project_id}.{table_metadata.dataset_id}.{table_metadata.table_id}`"
         )
 
         # Generate dimensions and dimension groups

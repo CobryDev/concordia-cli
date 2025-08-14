@@ -38,8 +38,9 @@ class TestLookMLViewGenerator:
 
         view = result['view']['users']
         assert view['sql_table_name'] == '`test-project.test_dataset.users`'
-        assert view['connection'] == 'test-bigquery-connection'
-        assert view['description'] == 'User information table'
+        # connection and view-level description are intentionally omitted in base views
+        assert 'connection' not in view
+        assert 'description' not in view
 
     def test_generate_view_dict_dimensions(self, sample_config, sample_table_metadata):
         """Test dimension generation in view dictionary."""

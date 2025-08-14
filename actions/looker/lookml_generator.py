@@ -51,11 +51,10 @@ class LookMLGenerator:
         view_name = list(view_dict['view'].keys())[0]
         view_data = view_dict['view'][view_name]
 
+        # Build LookMLView without connection/description (not included in base views)
         lookml_view = LookMLView(
             name=view_name,
-            sql_table_name=view_data['sql_table_name'],
-            connection=view_data['connection'],
-            description=view_data.get('description')
+            sql_table_name=view_data['sql_table_name']
         )
 
         # Bring over dimensions from the base view dict
@@ -80,7 +79,8 @@ class LookMLGenerator:
                 for group_name, group_values in group_dict.items():
                     group_obj = DimensionGroup(
                         name=group_name,
-                        type=DimensionGroupType(group_values.get('type', 'time')),
+                        type=DimensionGroupType(
+                            group_values.get('type', 'time')),
                         sql=group_values.get('sql'),
                         description=group_values.get('description'),
                         timeframes=group_values.get('timeframes')
