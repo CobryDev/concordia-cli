@@ -23,19 +23,19 @@ def safe_echo(message: Any, **kwargs) -> None:
     except UnicodeEncodeError:  # pragma: no cover
         # Replace emojis with ASCII alternatives for compatibility
         emoji_map = {
-            '🔄': '[RUNNING]',
-            '✅': '[PASS]',
-            '❌': '[FAIL]',
-            '📊': '[REPORT]',
-            '🔍': '[SCAN]',
-            '📝': '[NOTE]',
-            '⚠️': '[WARN]',
-            '🔧': '[SETUP]',
-            '🧪': '[TEST]',
-            '📋': '[INIT]',
-            '🎉': '[SUCCESS]',
-            '💥': '[ERROR]',
-            '🚀': '[COMPLETE]'
+            "🔄": "[RUNNING]",
+            "✅": "[PASS]",
+            "❌": "[FAIL]",
+            "📊": "[REPORT]",
+            "🔍": "[SCAN]",
+            "📝": "[NOTE]",
+            "⚠️": "[WARN]",
+            "🔧": "[SETUP]",
+            "🧪": "[TEST]",
+            "📋": "[INIT]",
+            "🎉": "[SUCCESS]",
+            "💥": "[ERROR]",
+            "🚀": "[COMPLETE]",
         }
 
         safe_message = str(message)

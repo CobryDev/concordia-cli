@@ -19,10 +19,11 @@ def setup_encoding():
     """Set up proper encoding for cross-platform compatibility."""
     try:
         # Try to set UTF-8 encoding on Windows
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             import codecs
-            sys.stdout.reconfigure(encoding='utf-8')
-            sys.stderr.reconfigure(encoding='utf-8')
+
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
     except (AttributeError, UnicodeError):
         # Fallback for older Python versions or encoding issues
         pass
@@ -35,18 +36,18 @@ def safe_print(message):
     except UnicodeEncodeError:
         # Replace emojis with ASCII alternatives for Windows compatibility
         emoji_map = {
-            '🔄': '[RUNNING]',
-            '✅': '[PASS]',
-            '❌': '[FAIL]',
-            '📊': '[REPORT]',
-            '🔍': '[CHECK]',
-            '📝': '[NOTE]',
-            '⚠️': '[WARN]',
-            '🔧': '[SETUP]',
-            '🧪': '[TEST]',
-            '📋': '[SUITE]',
-            '🎉': '[SUCCESS]',
-            '💥': '[ERROR]'
+            "🔄": "[RUNNING]",
+            "✅": "[PASS]",
+            "❌": "[FAIL]",
+            "📊": "[REPORT]",
+            "🔍": "[CHECK]",
+            "📝": "[NOTE]",
+            "⚠️": "[WARN]",
+            "🔧": "[SETUP]",
+            "🧪": "[TEST]",
+            "📋": "[SUITE]",
+            "🎉": "[SUCCESS]",
+            "💥": "[ERROR]",
         }
         safe_message = message
         for emoji, replacement in emoji_map.items():
@@ -72,7 +73,8 @@ def run_command(cmd, description):
         return False
     except FileNotFoundError:
         safe_print(
-            f"❌ Command not found. Make sure pytest is installed: pip install -r requirements.txt")
+            f"❌ Command not found. Make sure pytest is installed: pip install -r requirements.txt"
+        )
         return False
 
 
@@ -104,7 +106,7 @@ def run_tests_with_coverage():
         "--cov-report=html:htmlcov",
         "--cov-report=xml:coverage.xml",
         "--cov-fail-under=70",
-        "-v"
+        "-v",
     ]
     success = run_command(cmd, "Running tests with coverage")
 
@@ -135,8 +137,7 @@ def lint_tests():
 
     # Check if flake8 is available
     try:
-        subprocess.run(["flake8", "--version"],
-                       check=True, capture_output=True)
+        subprocess.run(["flake8", "--version"], check=True, capture_output=True)
         cmd = ["flake8", "tests/", "--max-line-length=100", "--ignore=E501,W503"]
         return run_command(cmd, "Linting test files")
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -154,8 +155,11 @@ def check_dependencies():
 
     for package in required_packages:
         try:
-            subprocess.run([sys.executable, "-c", f"import {package.replace('-', '_')}"],
-                           check=True, capture_output=True)
+            subprocess.run(
+                [sys.executable, "-c", f"import {package.replace('-', '_')}"],
+                check=True,
+                capture_output=True,
+            )
             safe_print(f"  ✅ {package}")
         except subprocess.CalledProcessError:
             safe_print(f"  ❌ {package}")
@@ -192,12 +196,9 @@ def setup_test_environment():
 def main():
     """Main test runner function."""
     parser = argparse.ArgumentParser(description="Concordia CLI Test Runner")
-    parser.add_argument("command", nargs="?", default="all",
-                        help="Test command to run")
-    parser.add_argument(
-        "--test", "-t", help="Specific test file or test to run")
-    parser.add_argument("--no-deps", action="store_true",
-                        help="Skip dependency check")
+    parser.add_argument("command", nargs="?", default="all", help="Test command to run")
+    parser.add_argument("--test", "-t", help="Specific test file or test to run")
+    parser.add_argument("--no-deps", action="store_true", help="Skip dependency check")
 
     args = parser.parse_args()
 

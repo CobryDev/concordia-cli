@@ -1,6 +1,11 @@
 import click
 from pathlib import Path
-from .config_loader import load_config, get_bigquery_credentials, get_bigquery_location, ConfigurationError
+from .config_loader import (
+    load_config,
+    get_bigquery_credentials,
+    get_bigquery_location,
+    ConfigurationError,
+)
 from .bigquery_client import BigQueryClient
 from .lookml_generator import LookMLGenerator, LookMLFileWriter
 from ..models.metadata import MetadataCollection
@@ -22,14 +27,14 @@ def generate_lookml():
         datasets = config.connection.datasets
 
         # Initialize BigQuery client
-        bq_client = BigQueryClient(
-            credentials, project_id, location, config.to_dict())
+        bq_client = BigQueryClient(credentials, project_id, location, config.to_dict())
 
         # Test connection
         click.echo("🔗 Testing BigQuery connection...")
         if not bq_client.test_connection(datasets):
             click.echo(
-                "❌ BigQuery connection test failed. Please check your configuration.")
+                "❌ BigQuery connection test failed. Please check your configuration."
+            )
             return
 
         # Extract table metadata using INFORMATION_SCHEMA
@@ -56,8 +61,7 @@ def generate_lookml():
 
         # Generate LookML project using object-based approach
         click.echo("⚙️  Generating LookML views...")
-        project = generator.generate_complete_lookml_project(
-            metadata_collection)
+        project = generator.generate_complete_lookml_project(metadata_collection)
 
         # Convert to dictionary for backward compatibility with file writer
         project_dict = project.to_dict()
@@ -67,7 +71,7 @@ def generate_lookml():
             click.echo("\n📁 Files to be generated:")
             project_path = Path(config.looker.project_path)
 
-            if 'view' in project_dict:
+            if "view" in project_dict:
                 views_file = project_path / config.looker.views_path
                 click.echo(f"   Views: {views_file}")
 
@@ -80,7 +84,7 @@ def generate_lookml():
                 click.echo(f"   {output_file}")
 
             # Summary
-            view_count = len(project_dict.get('view', {}))
+            view_count = len(project_dict.get("view", {}))
 
             click.echo(f"\n🎉 Successfully generated LookML project!")
             click.echo(f"   Views: {view_count}")
@@ -96,8 +100,7 @@ def generate_lookml():
         click.echo("   1. Review the generated LookML view files")
         click.echo("   2. Include the files in your Looker project")
         click.echo("   3. Test the views in Looker")
-        click.echo(
-            "   4. Customize field names, descriptions, or types as needed")
+        click.echo("   4. Customize field names, descriptions, or types as needed")
         click.echo("   5. Set up explores for your views as needed")
 
     except ConfigurationError as e:
@@ -107,5 +110,6 @@ def generate_lookml():
         click.echo(f"❌ Unexpected error: {e}")
         if click.confirm("Would you like to see the full error details?"):
             import traceback
+
             click.echo(traceback.format_exc())
         raise click.ClickException(f"Unexpected error: {e}")

@@ -12,7 +12,7 @@ def cli():
 
 
 @cli.command()
-@click.option('--force', is_flag=True, help='Overwrite existing concordia.yaml file')
+@click.option("--force", is_flag=True, help="Overwrite existing concordia.yaml file")
 def init(force):
     """Initialize a new concordia.yaml configuration file."""
     run_initialization(force)
@@ -36,5 +36,5 @@ def generate():
     generate_lookml()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

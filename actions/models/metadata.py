@@ -14,60 +14,60 @@ class ColumnMetadata(BaseModel):
 
     name: str = Field(description="Column name")
     type: str = Field(description="BigQuery column type")
-    standardized_type: str = Field(
-        description="Standardized type for processing")
+    standardized_type: str = Field(description="Standardized type for processing")
     description: Optional[str] = Field(
-        default=None,
-        description="Column description from BigQuery"
+        default=None, description="Column description from BigQuery"
     )
     is_primary_key: bool = Field(
-        default=False,
-        description="Whether this column is identified as a primary key"
+        default=False, description="Whether this column is identified as a primary key"
     )
     is_foreign_key: bool = Field(
-        default=False,
-        description="Whether this column is identified as a foreign key"
+        default=False, description="Whether this column is identified as a foreign key"
     )
     is_nullable: bool = Field(
-        default=True,
-        description="Whether the column allows NULL values"
+        default=True, description="Whether the column allows NULL values"
     )
     ordinal_position: Optional[int] = Field(
-        default=None,
-        description="Position of column in table schema"
+        default=None, description="Position of column in table schema"
     )
 
-    @validator('name')
+    @validator("name")
     def validate_name(cls, v):
         """Ensure column name is not empty."""
         if not v or not v.strip():
             raise ValueError("Column name cannot be empty")
         return v.strip()
 
-    @validator('type', 'standardized_type')
+    @validator("type", "standardized_type")
     def validate_types(cls, v):
         """Ensure types are uppercase."""
         return v.upper() if v else v
 
     def is_time_type(self) -> bool:
         """Check if this is a time-based column type."""
-        time_types = {'TIMESTAMP', 'DATETIME', 'DATE', 'TIME'}
+        time_types = {"TIMESTAMP", "DATETIME", "DATE", "TIME"}
         return self.standardized_type in time_types
 
     def is_numeric_type(self) -> bool:
         """Check if this is a numeric column type."""
-        numeric_types = {'INTEGER', 'INT64', 'FLOAT64',
-                         'NUMERIC', 'DECIMAL', 'BIGNUMERIC'}
+        numeric_types = {
+            "INTEGER",
+            "INT64",
+            "FLOAT64",
+            "NUMERIC",
+            "DECIMAL",
+            "BIGNUMERIC",
+        }
         return self.standardized_type in numeric_types
 
     def is_string_type(self) -> bool:
         """Check if this is a string column type."""
-        string_types = {'STRING', 'TEXT'}
+        string_types = {"STRING", "TEXT"}
         return self.standardized_type in string_types
 
     def is_boolean_type(self) -> bool:
         """Check if this is a boolean column type."""
-        return self.standardized_type == 'BOOL'
+        return self.standardized_type == "BOOL"
 
 
 class TableMetadata(BaseModel):
@@ -77,22 +77,17 @@ class TableMetadata(BaseModel):
     dataset_id: str = Field(description="Dataset ID containing the table")
     project_id: str = Field(description="GCP project ID")
     table_description: Optional[str] = Field(
-        default=None,
-        description="Table description from BigQuery"
+        default=None, description="Table description from BigQuery"
     )
     table_type: str = Field(
-        default='BASE TABLE',
-        description="Type of table (BASE TABLE, VIEW, etc.)"
+        default="BASE TABLE", description="Type of table (BASE TABLE, VIEW, etc.)"
     )
-    columns: List[ColumnMetadata] = Field(
-        description="List of column metadata"
-    )
+    columns: List[ColumnMetadata] = Field(description="List of column metadata")
     creation_ddl: Optional[str] = Field(
-        default=None,
-        description="DDL used to create the table"
+        default=None, description="DDL used to create the table"
     )
 
-    @validator('table_id', 'dataset_id', 'project_id')
+    @validator("table_id", "dataset_id", "project_id")
     def validate_identifiers(cls, v):
         """Ensure identifiers are not empty."""
         if not v or not v.strip():
@@ -131,23 +126,26 @@ class TableMetadata(BaseModel):
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for backward compatibility."""
         return {
-            'table_id': self.table_id,
-            'dataset_id': self.dataset_id,
-            'project_id': self.project_id,
-            'table_description': self.table_description,
-            'table_type': self.table_type,
-            'columns': [col.dict() for col in self.columns],
-            'creation_ddl': self.creation_ddl
+            "table_id": self.table_id,
+            "dataset_id": self.dataset_id,
+            "project_id": self.project_id,
+            "table_description": self.table_description,
+            "table_type": self.table_type,
+            "columns": [col.dict() for col in self.columns],
+            "creation_ddl": self.creation_ddl,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TableMetadata':
+    def from_dict(cls, data: Dict[str, Any]) -> "TableMetadata":
         """Create instance from dictionary."""
         # Convert columns from dicts to ColumnMetadata objects
-        if 'columns' in data and data['columns'] and isinstance(data['columns'][0], dict):
+        if (
+            "columns" in data
+            and data["columns"]
+            and isinstance(data["columns"][0], dict)
+        ):
             data = data.copy()
-            data['columns'] = [ColumnMetadata(**col)
-                               for col in data['columns']]
+            data["columns"] = [ColumnMetadata(**col) for col in data["columns"]]
         return cls(**data)
 
 
@@ -168,7 +166,9 @@ class MetadataCollection(BaseModel):
 
     def get_tables_by_dataset(self, dataset_id: str) -> List[TableMetadata]:
         """Get all tables from a specific dataset."""
-        return [table for table in self.tables.values() if table.dataset_id == dataset_id]
+        return [
+            table for table in self.tables.values() if table.dataset_id == dataset_id
+        ]
 
     def get_all_tables(self) -> List[TableMetadata]:
         """Get all tables as a list."""
@@ -183,7 +183,7 @@ class MetadataCollection(BaseModel):
         return {key: table.to_dict() for key, table in self.tables.items()}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Dict[str, Any]]) -> 'MetadataCollection':
+    def from_dict(cls, data: Dict[str, Dict[str, Any]]) -> "MetadataCollection":
         """Create instance from dictionary."""
         tables = {}
         for key, table_data in data.items():

@@ -37,7 +37,7 @@ class FieldIdentifier:
             True if the field is identified as a primary key
         """
         pk_suffix = self.model_rules.naming_conventions.pk_suffix
-        return field_name.endswith(pk_suffix) or field_name == 'id'
+        return field_name.endswith(pk_suffix) or field_name == "id"
 
     def is_foreign_key(self, field_name: str) -> bool:
         """
@@ -97,9 +97,9 @@ class FieldIdentifier:
 
         if fk_name.endswith(fk_suffix):
             # Remove fk_suffix and add s for pluralization
-            return fk_name[:-len(fk_suffix)] + 's'
-        elif fk_name.endswith('_id'):
+            return fk_name[: -len(fk_suffix)] + "s"
+        elif fk_name.endswith("_id"):
             # Keep backward compatibility with _id suffix
-            return fk_name[:-3] + 's'  # Remove _id and add s
+            return fk_name[:-3] + "s"  # Remove _id and add s
 
         return None

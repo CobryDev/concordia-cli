@@ -2,4 +2,4 @@
 
 from .initialization import run_initialization
 
-__all__ = ['run_initialization']
+__all__ = ["run_initialization"]

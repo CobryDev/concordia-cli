@@ -6,9 +6,20 @@ This script shows how the refactoring eliminates primitive dictionary usage
 in favor of structured, validated data models.
 """
 
-from actions.models.config import ConcordiaConfig, ConnectionConfig, LookerConfig, ModelRules
+from actions.models.config import (
+    ConcordiaConfig,
+    ConnectionConfig,
+    LookerConfig,
+    ModelRules,
+)
 from actions.models.metadata import TableMetadata, ColumnMetadata, MetadataCollection
-from actions.models.lookml import LookMLView, Dimension, DimensionType, DimensionGroup, DimensionGroupType
+from actions.models.lookml import (
+    LookMLView,
+    Dimension,
+    DimensionType,
+    DimensionGroup,
+    DimensionGroupType,
+)
 
 
 def main():
@@ -21,32 +32,29 @@ def main():
 
     config = ConcordiaConfig(
         connection=ConnectionConfig(
-            project_id="my-project",
-            location="US",
-            datasets=["analytics", "staging"]
+            project_id="my-project", location="US", datasets=["analytics", "staging"]
         ),
         looker=LookerConfig(
             project_path="./looker_project/",
             views_path="views/generated.view.lkml",
-            connection="bigquery_connection"
+            connection="bigquery_connection",
         ),
-        model_rules=ModelRules.from_dict({
-            'naming_conventions': {
-                'pk_suffix': '_pk',
-                'fk_suffix': '_fk'
-            },
-            'defaults': {
-                'measures': ['count'],
-                'hide_fields_by_suffix': ['_pk', '_fk']
-            },
-            'type_mapping': [
-                {
-                    'bq_type': 'STRING',
-                    'lookml_type': 'dimension',
-                    'lookml_params': {'type': 'string'}
-                }
-            ]
-        })
+        model_rules=ModelRules.from_dict(
+            {
+                "naming_conventions": {"pk_suffix": "_pk", "fk_suffix": "_fk"},
+                "defaults": {
+                    "measures": ["count"],
+                    "hide_fields_by_suffix": ["_pk", "_fk"],
+                },
+                "type_mapping": [
+                    {
+                        "bq_type": "STRING",
+                        "lookml_type": "dimension",
+                        "lookml_params": {"type": "string"},
+                    }
+                ],
+            }
+        ),
     )
 
     print(f"✅ Configuration created: {config.connection.project_id}")
@@ -68,27 +76,27 @@ def main():
                 type="INTEGER",
                 standardized_type="INTEGER",
                 description="Primary key for users",
-                is_primary_key=True
+                is_primary_key=True,
             ),
             ColumnMetadata(
                 name="email",
                 type="STRING",
                 standardized_type="STRING",
-                description="User email address"
+                description="User email address",
             ),
             ColumnMetadata(
                 name="created_at",
                 type="TIMESTAMP",
                 standardized_type="TIMESTAMP",
-                description="Account creation timestamp"
+                description="Account creation timestamp",
             ),
             ColumnMetadata(
                 name="is_active",
                 type="BOOL",
                 standardized_type="BOOL",
-                description="Whether user is active"
-            )
-        ]
+                description="Whether user is active",
+            ),
+        ],
     )
 
     print(f"✅ Table metadata created: {table_metadata.full_table_name}")
@@ -104,7 +112,7 @@ def main():
         name="email",
         type=DimensionType.STRING,
         sql="${TABLE}.email",
-        description="User email address"
+        description="User email address",
     )
 
     created_at_group = DimensionGroup(
@@ -112,7 +120,7 @@ def main():
         type=DimensionGroupType.TIME,
         sql="${TABLE}.created_at",
         description="Account creation timestamp",
-        timeframes=['raw', 'time', 'date', 'week', 'month', 'quarter', 'year']
+        timeframes=["raw", "time", "date", "week", "month", "quarter", "year"],
     )
 
     # Create LookML view
@@ -120,7 +128,7 @@ def main():
         name="users",
         sql_table_name="`my-project.analytics.users`",
         connection="bigquery_connection",
-        description="User information view"
+        description="User information view",
     )
 
     lookml_view.add_dimension(email_dimension)
@@ -146,7 +154,7 @@ def main():
         invalid_column = ColumnMetadata(
             name="",  # This will fail validation
             type="STRING",
-            standardized_type="STRING"
+            standardized_type="STRING",
         )
     except Exception as e:
         print(f"✅ Validation caught error: {str(e)[:60]}...")
@@ -157,13 +165,11 @@ def main():
 
     # Convert to dict for YAML/JSON output
     config_dict = config.to_dict()
-    print(
-        f"✅ Config serialized to dict with {len(config_dict)} top-level keys")
+    print(f"✅ Config serialized to dict with {len(config_dict)} top-level keys")
 
     # Create from dict (e.g., from YAML file)
     config_from_dict = ConcordiaConfig.from_dict(config_dict)
-    print(
-        f"✅ Config recreated from dict: {config_from_dict.connection.project_id}")
+    print(f"✅ Config recreated from dict: {config_from_dict.connection.project_id}")
 
     print("\n🎉 Type-safe refactoring complete!")
     print("   No more Dict[str, Any] - everything is properly typed!")

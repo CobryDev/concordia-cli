@@ -13,6 +13,7 @@ from ..models.config import ConcordiaConfig
 
 class ConfigurationError(Exception):
     """Raised when configuration is invalid or missing."""
+
     pass
 
 
@@ -36,7 +37,7 @@ def load_config(config_path: str = "concordia.yaml") -> ConcordiaConfig:
         )
 
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise ConfigurationError(f"Invalid YAML in configuration file: {e}")
@@ -47,11 +48,11 @@ def load_config(config_path: str = "concordia.yaml") -> ConcordiaConfig:
     except ValidationError as e:
         error_messages = []
         for error in e.errors():
-            field_path = '.'.join(str(loc) for loc in error['loc'])
+            field_path = ".".join(str(loc) for loc in error["loc"])
             error_messages.append(f"{field_path}: {error['msg']}")
         raise ConfigurationError(
-            f"Configuration validation failed:\n" +
-            "\n".join(f"  - {msg}" for msg in error_messages)
+            f"Configuration validation failed:\n"
+            + "\n".join(f"  - {msg}" for msg in error_messages)
         )
 
     return config
@@ -82,16 +83,14 @@ def get_bigquery_credentials(config: ConcordiaConfig) -> tuple:
         creds_path = connection.dataform_credentials_file
         if os.path.exists(creds_path):
             try:
-                credentials, project_id = _load_dataform_credentials(
-                    creds_path)
+                credentials, project_id = _load_dataform_credentials(creds_path)
                 # Use project_id from config if provided, otherwise from credentials
                 if connection.project_id:
                     project_id = connection.project_id
                 return credentials, project_id
             except Exception as e:
                 click.echo(f"⚠️  Failed to load Dataform credentials: {e}")
-                click.echo(
-                    "Falling back to Application Default Credentials...")
+                click.echo("Falling back to Application Default Credentials...")
 
     # Method 2: Use Application Default Credentials
     try:
@@ -124,7 +123,7 @@ def _parse_dataform_config(creds_path: str) -> Dict[str, Any]:
     Raises:
         ConfigurationError: If file cannot be parsed
     """
-    with open(creds_path, 'r') as f:
+    with open(creds_path, "r") as f:
         dataform_config = json.load(f)
 
     return dataform_config
@@ -147,8 +146,8 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
     dataform_config = _parse_dataform_config(creds_path)
 
     # Format 1: Service account credentials with nested 'credentials' key
-    if 'credentials' in dataform_config:
-        creds_data = dataform_config['credentials']
+    if "credentials" in dataform_config:
+        creds_data = dataform_config["credentials"]
 
         # Some Dataform exports store the service account JSON as a string.
         # If so, parse it into a dict before constructing credentials.
@@ -161,22 +160,20 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
                 )
 
         # Create service account credentials
-        credentials = service_account.Credentials.from_service_account_info(
-            creds_data)
+        credentials = service_account.Credentials.from_service_account_info(creds_data)
 
         # Extract project ID
-        project_id = creds_data.get('project_id')
+        project_id = creds_data.get("project_id")
         if not project_id:
-            raise ConfigurationError(
-                "No 'project_id' found in Dataform credentials")
+            raise ConfigurationError("No 'project_id' found in Dataform credentials")
 
         return credentials, project_id
 
     # Format 2: Simple format with projectId and location at root level
-    elif 'projectId' in dataform_config:
+    elif "projectId" in dataform_config:
         # For simple format, we need to use Application Default Credentials
         # but extract the project ID from the file
-        project_id = dataform_config['projectId']
+        project_id = dataform_config["projectId"]
 
         try:
             # Use Application Default Credentials
@@ -214,7 +211,7 @@ def get_bigquery_location(config: ConcordiaConfig) -> Optional[str]:
             try:
                 dataform_config = _parse_dataform_config(creds_path)
                 # Check for location in the credentials file
-                creds_location = dataform_config.get('location')
+                creds_location = dataform_config.get("location")
                 if creds_location:
                     return creds_location
             except Exception:

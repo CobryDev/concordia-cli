@@ -10,7 +10,7 @@ from actions.help.help import show_help
 class TestHelp:
     """Test help functionality."""
 
-    @patch('actions.help.help.click.echo')
+    @patch("actions.help.help.click.echo")
     def test_show_help(self, mock_echo):
         """Test show_help displays the correct help text."""
         show_help()

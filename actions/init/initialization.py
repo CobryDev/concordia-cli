@@ -23,25 +23,25 @@ def find_file_in_tree(filename: str, start_path: str = ".") -> Optional[str]:
             try:
                 relative_path = root_path.relative_to(start_path_obj.resolve())
                 # If it's the same directory, return just the directory name
-                if relative_path == Path('.'):
-                    return start_path_obj.name if start_path_obj.name != '.' else '.'
+                if relative_path == Path("."):
+                    return start_path_obj.name if start_path_obj.name != "." else "."
                 # Normalize to forward slashes
-                return str(relative_path).replace('\\', '/')
+                return str(relative_path).replace("\\", "/")
             except ValueError:
                 # Fallback to relative path from current working directory
-                return os.path.relpath(root).replace('\\', '/')
+                return os.path.relpath(root).replace("\\", "/")
 
     return None
 
 
 def handle_gitignore():
     """Create or update .gitignore to include Dataform credentials file."""
-    gitignore_path = '.gitignore'
-    gitignore_entry = '.df-credentials.json'
+    gitignore_path = ".gitignore"
+    gitignore_entry = ".df-credentials.json"
 
     if os.path.exists(gitignore_path):
         # Read existing .gitignore
-        with open(gitignore_path, 'r') as f:
+        with open(gitignore_path, "r") as f:
             content = f.read()
 
         # Check if entry already exists
@@ -50,16 +50,16 @@ def handle_gitignore():
             return
 
         # Add entry to existing .gitignore
-        with open(gitignore_path, 'a') as f:
-            if not content.endswith('\n'):
-                f.write('\n')
-            f.write(f'{gitignore_entry}\n')
+        with open(gitignore_path, "a") as f:
+            if not content.endswith("\n"):
+                f.write("\n")
+            f.write(f"{gitignore_entry}\n")
 
         safe_echo(f"✅ Added {gitignore_entry} to existing .gitignore")
     else:
         # Create new .gitignore
-        with open(gitignore_path, 'w') as f:
-            f.write(f'# Dataform credentials\n{gitignore_entry}\n')
+        with open(gitignore_path, "w") as f:
+            f.write(f"# Dataform credentials\n{gitignore_entry}\n")
 
         safe_echo(f"✅ Created .gitignore with {gitignore_entry}")
 
@@ -70,15 +70,16 @@ def scan_for_projects():
 
     # Search for Dataform project (workflow_settings.yaml) in root directory only
     dataform_path = None
-    if os.path.exists('workflow_settings.yaml'):
-        dataform_path = '.'  # Root directory
+    if os.path.exists("workflow_settings.yaml"):
+        dataform_path = "."  # Root directory
         safe_echo(f"✅ Found Dataform project in: {dataform_path}")
     else:
         safe_echo(
-            "❌ No Dataform project found (workflow_settings.yaml not found in root)")
+            "❌ No Dataform project found (workflow_settings.yaml not found in root)"
+        )
 
     # Search for Looker project (manifest.lkml)
-    looker_path = find_file_in_tree('manifest.lkml')
+    looker_path = find_file_in_tree("manifest.lkml")
     if looker_path:
         safe_echo(f"✅ Found Looker project in: {looker_path}")
     else:
@@ -101,7 +102,8 @@ def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) 
         if dataform_path:
             safe_echo(f"• Dataform project: {dataform_path}")
             safe_echo(
-                "  → Will set dataform_credentials_file to './.df-credentials.json'")
+                "  → Will set dataform_credentials_file to './.df-credentials.json'"
+            )
         if looker_path:
             safe_echo(f"• Looker project: {looker_path}")
             safe_echo(f"  → Will set project_path to './{looker_path}/'")
@@ -120,7 +122,9 @@ def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) 
     return click.confirm("Do you want to proceed with initialization?")
 
 
-def create_configuration_file(dataform_path: Optional[str], looker_path: Optional[str], config_file: str):
+def create_configuration_file(
+    dataform_path: Optional[str], looker_path: Optional[str], config_file: str
+):
     """Generate and write the concordia.yaml configuration file."""
     config = generate_concordia_config(dataform_path, looker_path)
     write_yaml_with_comments(config, config_file)
@@ -131,8 +135,7 @@ def show_next_steps(dataform_path: Optional[str], looker_path: Optional[str]):
     if not dataform_path or not looker_path:
         safe_echo("\n⚠️  Manual configuration required:")
         if not dataform_path:
-            safe_echo(
-                "   • Update dataform_credentials_file path in concordia.yaml")
+            safe_echo("   • Update dataform_credentials_file path in concordia.yaml")
             safe_echo("   • Set your GCP project_id and location")
             safe_echo("   • Configure your BigQuery datasets")
         if not looker_path:
@@ -153,12 +156,11 @@ def run_initialization(force: bool = False):
     Args:
         force: Whether to overwrite existing concordia.yaml file
     """
-    config_file = 'concordia.yaml'
+    config_file = "concordia.yaml"
 
     # Check if config file already exists
     if os.path.exists(config_file) and not force:
-        safe_echo(
-            f"Error: {config_file} already exists. Use --force to overwrite.")
+        safe_echo(f"Error: {config_file} already exists. Use --force to overwrite.")
         return
 
     # Scan for projects

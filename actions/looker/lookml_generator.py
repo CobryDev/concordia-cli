@@ -33,7 +33,9 @@ class LookMLGenerator:
         self.view_generator = LookMLViewGenerator(config)
         self.measure_generator = LookMLMeasureGenerator(config)
 
-    def generate_view_for_table_metadata(self, table_metadata: TableMetadata) -> LookMLView:
+    def generate_view_for_table_metadata(
+        self, table_metadata: TableMetadata
+    ) -> LookMLView:
         """
         Generate LookML view for a single table using metadata.
 
@@ -48,64 +50,64 @@ class LookMLGenerator:
 
         # Convert to LookMLView object (if needed)
         # For now, we'll create a simple LookMLView from the dict
-        view_name = list(view_dict['view'].keys())[0]
-        view_data = view_dict['view'][view_name]
+        view_name = list(view_dict["view"].keys())[0]
+        view_data = view_dict["view"][view_name]
 
         # Build LookMLView without connection/description (not included in base views)
         lookml_view = LookMLView(
-            name=view_name,
-            sql_table_name=view_data['sql_table_name']
+            name=view_name, sql_table_name=view_data["sql_table_name"]
         )
 
         # Bring over dimensions from the base view dict
-        if 'dimension' in view_data:
+        if "dimension" in view_data:
             from ..models.lookml import Dimension, DimensionType
-            for dim_dict in view_data['dimension']:
+
+            for dim_dict in view_data["dimension"]:
                 for dim_name, dim_values in dim_dict.items():
                     dim_obj = Dimension(
                         name=dim_name,
-                        type=DimensionType(dim_values.get('type', 'string')),
-                        sql=dim_values.get('sql'),
-                        description=dim_values.get('description'),
-                        hidden=dim_values.get('hidden') == 'yes',
-                        primary_key=dim_values.get('primary_key') == 'yes'
+                        type=DimensionType(dim_values.get("type", "string")),
+                        sql=dim_values.get("sql"),
+                        description=dim_values.get("description"),
+                        hidden=dim_values.get("hidden") == "yes",
+                        primary_key=dim_values.get("primary_key") == "yes",
                     )
                     lookml_view.add_dimension(dim_obj)
 
         # Bring over dimension groups from the base view dict
-        if 'dimension_group' in view_data:
+        if "dimension_group" in view_data:
             from ..models.lookml import DimensionGroup, DimensionGroupType
-            for group_dict in view_data['dimension_group']:
+
+            for group_dict in view_data["dimension_group"]:
                 for group_name, group_values in group_dict.items():
                     group_obj = DimensionGroup(
                         name=group_name,
-                        type=DimensionGroupType(
-                            group_values.get('type', 'time')),
-                        sql=group_values.get('sql'),
-                        description=group_values.get('description'),
-                        timeframes=group_values.get('timeframes')
+                        type=DimensionGroupType(group_values.get("type", "time")),
+                        sql=group_values.get("sql"),
+                        description=group_values.get("description"),
+                        timeframes=group_values.get("timeframes"),
                     )
                     lookml_view.add_dimension_group(group_obj)
 
         # Bring over drill field set definition if present
-        if 'set' in view_data:
+        if "set" in view_data:
             # Preserve the exact structure to be serialized by lkml
-            lookml_view.additional_params.update({'set': view_data['set']})
+            lookml_view.additional_params.update({"set": view_data["set"]})
 
         # Generate measures and add them to the view
-        measures = self.measure_generator.generate_measures_for_view(
-            table_metadata)
+        measures = self.measure_generator.generate_measures_for_view(table_metadata)
 
         # Convert measure dictionaries to Measure objects
         from ..models.lookml import Measure, MeasureType
+
         for measure_dict in measures:
             for measure_name, measure_data in measure_dict.items():
                 measure_obj = Measure(
                     name=measure_name,
-                    type=MeasureType(measure_data['type']),
-                    sql=measure_data.get('sql'),
-                    description=measure_data.get('description'),
-                    hidden=measure_data.get('hidden') == 'yes'
+                    type=MeasureType(measure_data["type"]),
+                    sql=measure_data.get("sql"),
+                    description=measure_data.get("description"),
+                    hidden=measure_data.get("hidden") == "yes",
                 )
                 lookml_view.add_measure(measure_obj)
 
@@ -127,7 +129,9 @@ class LookMLGenerator:
         result = lkml.dump(view_dict)
         return result if result is not None else ""
 
-    def generate_complete_lookml_project(self, tables_metadata: MetadataCollection) -> LookMLProject:
+    def generate_complete_lookml_project(
+        self, tables_metadata: MetadataCollection
+    ) -> LookMLProject:
         """
         Generate a complete LookML project with views only.
 
@@ -186,12 +190,14 @@ class LookMLFileWriter:
         combined_content = "\n\n".join(view_contents)
 
         # Write the file
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             f.write(combined_content)
 
         return str(file_path)
 
-    def write_lookml_dict_file(self, lookml_dict: Dict[str, Any], file_suffix: str = "views") -> str:
+    def write_lookml_dict_file(
+        self, lookml_dict: Dict[str, Any], file_suffix: str = "views"
+    ) -> str:
         """
         Write a LookML file from a dictionary using the lkml library.
 
@@ -211,8 +217,7 @@ class LookMLFileWriter:
             # For any other file types, generate a new file name using views_path as base
             base_name = Path(self.looker_config.views_path).stem
             base_dir = Path(self.looker_config.views_path).parent
-            file_path = project_path / base_dir / \
-                f"{base_name}_{file_suffix}.view.lkml"
+            file_path = project_path / base_dir / f"{base_name}_{file_suffix}.view.lkml"
 
         # Create the directory structure if it doesn't exist
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -221,7 +226,7 @@ class LookMLFileWriter:
         lookml_content = lkml.dump(lookml_dict)
 
         # Write the file
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             f.write(lookml_content if lookml_content is not None else "")
 
         return str(file_path)
@@ -251,9 +256,10 @@ class LookMLFileWriter:
         written_files = []
 
         # Write views file
-        if 'view' in project_dict:
+        if "view" in project_dict:
             views_file = self.write_lookml_dict_file(
-                {'view': project_dict['view']}, "views")
+                {"view": project_dict["view"]}, "views"
+            )
             written_files.append(views_file)
 
         return written_files
