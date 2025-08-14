@@ -48,20 +48,7 @@ jobs:
 
       - name: Check dependencies
         run: |
-          python - <<'PY'
-          import importlib as i
-          modules = [
-              'pytest',
-              'pytest_cov',
-              'pytest_mock',
-              'black',
-              'isort',
-              'bandit',
-          ]
-          for m in modules:
-              i.import_module(m)
-          print('[PASS] All test dependencies installed')
-          PY
+          python -c "import pytest, pytest_cov, pytest_mock, black, isort, bandit; print('[PASS] All test dependencies installed')"
 
       - name: Lint code with flake8
         run: |
