@@ -58,6 +58,40 @@ class LookMLGenerator:
             description=view_data.get('description')
         )
 
+        # Bring over dimensions from the base view dict
+        if 'dimension' in view_data:
+            from ..models.lookml import Dimension, DimensionType
+            for dim_dict in view_data['dimension']:
+                for dim_name, dim_values in dim_dict.items():
+                    dim_obj = Dimension(
+                        name=dim_name,
+                        type=DimensionType(dim_values.get('type', 'string')),
+                        sql=dim_values.get('sql'),
+                        description=dim_values.get('description'),
+                        hidden=dim_values.get('hidden') == 'yes',
+                        primary_key=dim_values.get('primary_key') == 'yes'
+                    )
+                    lookml_view.add_dimension(dim_obj)
+
+        # Bring over dimension groups from the base view dict
+        if 'dimension_group' in view_data:
+            from ..models.lookml import DimensionGroup, DimensionGroupType
+            for group_dict in view_data['dimension_group']:
+                for group_name, group_values in group_dict.items():
+                    group_obj = DimensionGroup(
+                        name=group_name,
+                        type=DimensionGroupType(group_values.get('type', 'time')),
+                        sql=group_values.get('sql'),
+                        description=group_values.get('description'),
+                        timeframes=group_values.get('timeframes')
+                    )
+                    lookml_view.add_dimension_group(group_obj)
+
+        # Bring over drill field set definition if present
+        if 'set' in view_data:
+            # Preserve the exact structure to be serialized by lkml
+            lookml_view.additional_params.update({'set': view_data['set']})
+
         # Generate measures and add them to the view
         measures = self.measure_generator.generate_measures_for_view(
             table_metadata)
