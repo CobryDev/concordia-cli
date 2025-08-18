@@ -1,8 +1,6 @@
-black==24.4.2
-isort==5.13.2
-flake8==7.0.0
-bandit==1.7.9
+ruff==0.12.9
 mypy==1.10.0
 safety==3.2.3
+nox==2024.4.15
 marshmallow<4
 

@@ -32,6 +32,13 @@ dependencies = [
   "pandas-gbq>=0.19.0",
   "pydantic>=2.0.0",
   "ruamel.yaml>=0.17.0",
+  "mypy>=1.17.1",
+  "pytest>=8.4.1",
+  "pytest-cov>=6.2.1",
+  "pytest-mock>=3.14.1",
+  "pandas-stubs>=2.2.2.240807",
+  "nox>=2025.5.1",
+  "types-pyopenssl>=24.1.0.20240722",
 ]
 
 # Add links to your repository
@@ -49,18 +56,43 @@ py-modules = ["main"]
 [tool.setuptools.packages.find]
 include = ["actions*"]
 
-[tool.isort]
-profile = "black"
-line_length = 100
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = ["htmlcov", "concordia_cli.egg-info", "dist"]
 
-[tool.black]
-line-length = 100
-target-version = ["py39", "py310", "py311", "py312", "py313"]
-extend-exclude = '(^(htmlcov|concordia_cli\.egg-info)/)'
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "N",      # pep8-naming
+    "S",      # flake8-bandit (security)
+]
+ignore = [
+    "E203",   # whitespace before ':'
+    "S101",   # assert usage (common in tests)
+]
 
-[tool.bandit]
-exclude_dirs = ["tests", "htmlcov", "concordia_cli.egg-info"]
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",   # assert usage in tests is fine
+    "S105",   # hardcoded password strings in tests
+    "S106",   # hardcoded password function arguments in tests
+]
 
-[tool.flake8]
-max-line-length = 100
-extend-ignore = ["E203", "W503"]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.9",
+]
