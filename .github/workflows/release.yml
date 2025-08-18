@@ -17,32 +17,20 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # Add uv to the PATH
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip sync requirements.txt requirements-dev.txt
 
       - name: Run comprehensive test suite
         run: |
-          python run_tests.py all
+          export PATH="$HOME/.cargo/bin:$PATH"
+          nox -s all
 
-      - name: Generate test report
-        run: |
-          echo "## Release Test Results 🚀" > test-report.md
-          echo "" >> test-report.md
-          echo "All tests passed for release ${{ github.ref_name }}" >> test-report.md
-          echo "" >> test-report.md
-          echo "### Test Coverage" >> test-report.md
-          echo "- Unit tests: ✅ Passed" >> test-report.md
-          echo "- Integration tests: ✅ Passed" >> test-report.md
-          echo "- Coverage requirement: ✅ ≥80%" >> test-report.md
-          echo "- Code quality checks: ✅ Passed" >> test-report.md
-
-      - name: Upload test report
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-test-report
-          path: test-report.md
 
   release:
     needs: test
@@ -58,30 +46,13 @@ jobs:
           body: |
             ## Concordia CLI ${{ github.ref_name }}
 
-            🎉 **New release with comprehensive testing framework!**
-
-            ### Features
-            - Complete LookML generation from BigQuery
-            - Automated project initialization
-            - Comprehensive testing suite (154 tests)
-            - CI/CD pipeline with quality checks
-
-            ### Quality Assurance
-            - ✅ All 154 automated tests passing
-            - ✅ Code coverage ≥80%
-            - ✅ Cross-platform compatibility
-            - ✅ Security and quality checks
+            🎉 **New release ready!** All tests passed and quality checks completed.
 
             ### Installation
             ```bash
-            pip install -r requirements.txt
+            pip install -r requirements.txt -r requirements-dev.txt
             python main.py init
             python main.py looker generate
-            ```
-
-            ### Testing
-            ```bash
-            python run_tests.py
             ```
           draft: false
           prerelease: false
