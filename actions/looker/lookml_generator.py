@@ -1,14 +1,11 @@
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import click
 import lkml
 
 from ..models.config import ConcordiaConfig
 from ..models.lookml import LookMLProject, LookMLView
 from ..models.metadata import MetadataCollection, TableMetadata
-from .lookml_base_dict import MetadataExtractor
 from .lookml_measure_module import LookMLMeasureGenerator
 from .lookml_module import LookMLViewGenerator
 
@@ -127,9 +124,7 @@ class LookMLGenerator:
         result = lkml.dump(view_dict)
         return result if result is not None else ""
 
-    def generate_complete_lookml_project(
-        self, tables_metadata: MetadataCollection
-    ) -> LookMLProject:
+    def generate_complete_lookml_project(self, tables_metadata: MetadataCollection) -> LookMLProject:
         """
         Generate a complete LookML project with views only.
 
@@ -165,7 +160,7 @@ class LookMLFileWriter:
         self.config = config
         self.looker_config = config.looker
 
-    def write_views_file(self, view_contents: List[str]) -> str:
+    def write_views_file(self, view_contents: list[str]) -> str:
         """
         Write a single LookML file containing all generated views(backward compatibility).
 
@@ -193,9 +188,7 @@ class LookMLFileWriter:
 
         return str(file_path)
 
-    def write_lookml_dict_file(
-        self, lookml_dict: Dict[str, Any], file_suffix: str = "views"
-    ) -> str:
+    def write_lookml_dict_file(self, lookml_dict: dict[str, Any], file_suffix: str = "views") -> str:
         """
         Write a LookML file from a dictionary using the lkml library.
 
@@ -229,7 +222,7 @@ class LookMLFileWriter:
 
         return str(file_path)
 
-    def write_views_dict_file(self, views_dict: Dict[str, Any]) -> str:
+    def write_views_dict_file(self, views_dict: dict[str, Any]) -> str:
         """
         Write views from dictionary to file.
 
@@ -241,7 +234,7 @@ class LookMLFileWriter:
         """
         return self.write_lookml_dict_file(views_dict, "views")
 
-    def write_complete_project(self, project_dict: Dict[str, Any]) -> List[str]:
+    def write_complete_project(self, project_dict: dict[str, Any]) -> list[str]:
         """
         Write a complete LookML project with views only.
 

@@ -5,7 +5,7 @@ This module creates LookML views as Python dictionaries following the droughty p
 It handles dimensions, dimension groups, and view-level configurations.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 
@@ -31,7 +31,7 @@ class LookMLViewGenerator:
         self.connection_name = self.looker_config.connection
         self.field_identifier = FieldIdentifier(self.model_rules)
 
-    def generate_view_dict(self, table_metadata: TableMetadata) -> Dict[str, Any]:
+    def generate_view_dict(self, table_metadata: TableMetadata) -> dict[str, Any]:
         """
         Generate a LookML view dictionary for a table.
 
@@ -47,7 +47,8 @@ class LookMLViewGenerator:
         view_dict = {
             "view": {
                 view_name: {
-                    "sql_table_name": f"`{table_metadata.project_id}.{table_metadata.dataset_id}.{table_metadata.table_id}`"
+                    "sql_table_name": f"`{table_metadata.project_id}."
+                    f"{table_metadata.dataset_id}.{table_metadata.table_id}`"
                 }
             }
         }
@@ -113,7 +114,7 @@ class LookMLViewGenerator:
 
         return view_name
 
-    def _generate_dimension(self, column: ColumnMetadata) -> Optional[Dict[str, Any]]:
+    def _generate_dimension(self, column: ColumnMetadata) -> Optional[dict[str, Any]]:
         """
         Generate a LookML dimension dictionary for a column.
 
@@ -124,14 +125,11 @@ class LookMLViewGenerator:
             Dictionary containing dimension definition or None if unsupported
         """
         column_name = column.name
-        standardized_type = column.standardized_type
 
         # Find type mapping from config
         type_mapping = self._find_type_mapping(column.type)
         if not type_mapping:
-            click.echo(
-                f"   ⚠️  No type mapping found for BigQuery type '{column.type}' in column '{column_name}'"
-            )
+            click.echo(f"   ⚠️  No type mapping found for BigQuery type '{column.type}' in column '{column_name}'")
             return None
 
         dimension_dict = {
@@ -174,7 +172,7 @@ class LookMLViewGenerator:
 
         return dimension_dict
 
-    def _generate_dimension_group(self, column: ColumnMetadata) -> Optional[Dict[str, Any]]:
+    def _generate_dimension_group(self, column: ColumnMetadata) -> Optional[dict[str, Any]]:
         """
         Generate a LookML dimension group dictionary for time-based columns.
 
@@ -256,9 +254,7 @@ class LookMLDimensionGenerator:
         self.connection_name = self.looker_config.connection
         self.field_identifier = FieldIdentifier(self.model_rules)
 
-    def generate_case_dimension(
-        self, column: ColumnMetadata, case_logic: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def generate_case_dimension(self, column: ColumnMetadata, case_logic: dict[str, Any]) -> dict[str, Any]:
         """
         Generate a case-based dimension with conditional logic.
 
@@ -287,7 +283,7 @@ class LookMLDimensionGenerator:
             }
         }
 
-    def generate_yesno_dimension(self, column: ColumnMetadata) -> Dict[str, Any]:
+    def generate_yesno_dimension(self, column: ColumnMetadata) -> dict[str, Any]:
         """
         Generate a yes/no dimension from a boolean or numeric column.
 
@@ -305,9 +301,7 @@ class LookMLDimensionGenerator:
             # Assume numeric where > 0 means yes
             sql = f"${{TABLE}}.{column_name} > 0"
 
-        description = (
-            column.description if column.description else f"Yes/No indicator for {column_name}"
-        )
+        description = column.description if column.description else f"Yes/No indicator for {column_name}"
 
         return {column_name: {"type": "yesno", "sql": sql, "description": description}}
 
@@ -368,9 +362,7 @@ class LookMLDimensionGenerator:
             hidden=self._should_hide_field(column.name),
         )
 
-    def _generate_dimension_group_pydantic(
-        self, column: ColumnMetadata
-    ) -> Optional[DimensionGroup]:
+    def _generate_dimension_group_pydantic(self, column: ColumnMetadata) -> Optional[DimensionGroup]:
         """Generate a DimensionGroup object from time column metadata."""
         if column.standardized_type == "TIMESTAMP":
             timeframes = ["raw", "time", "date", "week", "month", "quarter", "year"]

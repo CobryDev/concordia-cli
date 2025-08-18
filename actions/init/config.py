@@ -1,12 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 
-def generate_concordia_config(
-    dataform_path: Optional[str], looker_path: Optional[str]
-) -> CommentedMap:
+def generate_concordia_config(dataform_path: Optional[str], looker_path: Optional[str]) -> CommentedMap:
     """Generate the concordia.yaml configuration with comments using ruamel.yaml."""
 
     # Create the main configuration object
@@ -46,9 +44,7 @@ inferred from the credentials file.""",
     )
     connection["location"] = "your-region"  # e.g., 'europe-west2'
 
-    connection.yaml_set_comment_before_after_key(
-        "datasets", before="The datasets to scan for tables."
-    )
+    connection.yaml_set_comment_before_after_key("datasets", before="The datasets to scan for tables.")
     datasets = CommentedSeq(["dataset1", "dataset2"])
     connection["datasets"] = datasets
 
@@ -57,9 +53,7 @@ inferred from the credentials file.""",
 
     # Looker section
     looker = CommentedMap()
-    looker["project_path"] = (
-        f"./{looker_path}/" if looker_path else "./path/to/your/looker_project/"
-    )
+    looker["project_path"] = f"./{looker_path}/" if looker_path else "./path/to/your/looker_project/"
     looker["views_path"] = "views/generated_views.view.lkml"
     looker["connection"] = "your-bigquery-connection"
 
@@ -93,9 +87,7 @@ inferred from the credentials file.""",
     defaults["hide_fields_by_suffix"] = hide_fields
 
     model_rules["defaults"] = defaults
-    model_rules.yaml_set_comment_before_after_key(
-        "defaults", before="Define default behaviors for generated views"
-    )
+    model_rules.yaml_set_comment_before_after_key("defaults", before="Define default behaviors for generated views")
 
     # Type mappings
     type_mapping = CommentedSeq()
@@ -192,9 +184,7 @@ inferred from the credentials file.""",
     )
 
     config["model_rules"] = model_rules
-    config.yaml_set_comment_before_after_key(
-        "model_rules", before="Rules for how models and fields are generated"
-    )
+    config.yaml_set_comment_before_after_key("model_rules", before="Rules for how models and fields are generated")
 
     return config
 

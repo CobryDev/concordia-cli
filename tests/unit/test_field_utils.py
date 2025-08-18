@@ -5,15 +5,11 @@ Tests the FieldIdentifier class which handles field type identification
 based on naming conventions.
 """
 
-import pytest
-
 from actions.looker.field_utils import FieldIdentifier
 from actions.models.config import (
     DefaultBehaviors,
-    LookMLParams,
     ModelRules,
     NamingConventions,
-    TypeMapping,
 )
 
 
@@ -265,10 +261,7 @@ class TestFieldIdentifier:
         assert identifier.infer_table_name_from_foreign_key("_id") == "s"
 
         # Test complex names
-        assert (
-            identifier.infer_table_name_from_foreign_key("parent_organization_fk")
-            == "parent_organizations"
-        )
+        assert identifier.infer_table_name_from_foreign_key("parent_organization_fk") == "parent_organizations"
 
     def test_multiple_suffixes_in_hide_fields(self):
         """Test hiding fields with multiple suffix patterns."""

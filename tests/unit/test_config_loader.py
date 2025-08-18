@@ -95,7 +95,8 @@ class TestConfigLoader:
             os.unlink(temp_path)
 
     def test_load_config_validation_missing_sections(self):
-        """Test load_config raises error for missing required sections through Pydantic validation."""
+        """Test load_config raises error for missing required sections
+        through Pydantic validation."""
         # Create a temporary file with invalid config
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump({"connection": {"datasets": ["test"]}}, f)
@@ -281,12 +282,8 @@ class TestConfigLoader:
 
         try:
             config = ConcordiaConfig(
-                connection=ConnectionConfig(
-                    dataform_credentials_file=creds_path, datasets=["test"]
-                ),
-                looker=LookerConfig(
-                    project_path="./test", views_path="test.lkml", connection="test"
-                ),
+                connection=ConnectionConfig(dataform_credentials_file=creds_path, datasets=["test"]),
+                looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
                 model_rules=ModelRules(
                     naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
                     defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
@@ -379,9 +376,7 @@ class TestConfigLoader:
             os.unlink(creds_path)
 
     @patch("actions.looker.config_loader.service_account")
-    def test_load_dataform_credentials_service_account_missing_project_id(
-        self, mock_service_account
-    ):
+    def test_load_dataform_credentials_service_account_missing_project_id(self, mock_service_account):
         """Test _load_dataform_credentials raises error when service account missing project_id."""
         # Mock service account credentials creation to avoid key validation
         mock_credentials = Mock()
@@ -472,9 +467,7 @@ class TestConfigLoader:
                     project_id="config-project",
                     datasets=["test"],
                 ),
-                looker=LookerConfig(
-                    project_path="./test", views_path="test.lkml", connection="test"
-                ),
+                looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
                 model_rules=ModelRules(
                     naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
                     defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),

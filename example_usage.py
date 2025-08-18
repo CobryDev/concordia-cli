@@ -14,7 +14,7 @@ from actions.models.lookml import (
     DimensionType,
     LookMLView,
 )
-from actions.models.metadata import ColumnMetadata, MetadataCollection, TableMetadata
+from actions.models.metadata import ColumnMetadata, TableMetadata
 
 
 def main():
@@ -26,9 +26,7 @@ def main():
     print("-" * 55)
 
     config = ConcordiaConfig(
-        connection=ConnectionConfig(
-            project_id="my-project", location="US", datasets=["analytics", "staging"]
-        ),
+        connection=ConnectionConfig(project_id="my-project", location="US", datasets=["analytics", "staging"]),
         looker=LookerConfig(
             project_path="./looker_project/",
             views_path="views/generated.view.lkml",
@@ -146,7 +144,7 @@ def main():
     # Example of validation
     try:
         # This would fail validation due to empty name
-        invalid_column = ColumnMetadata(
+        ColumnMetadata(
             name="",  # This will fail validation
             type="STRING",
             standardized_type="STRING",

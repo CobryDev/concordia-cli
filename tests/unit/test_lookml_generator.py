@@ -4,13 +4,8 @@ Unit tests for the lookml_generator module.
 
 import os
 import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch
 
-import lkml
-import pytest
-
-from actions.looker.lookml_generator import LookMLFileWriter, LookMLGenerator
+from actions.looker.lookml_generator import LookMLFileWriter
 from actions.models.config import (
     ConcordiaConfig,
     ConnectionConfig,
@@ -49,12 +44,6 @@ class TestLookMLFileWriter:
     def setup_method(self):
         """Set up test fixtures."""
         self.temp_dir = tempfile.mkdtemp()
-        from actions.models.config import (
-            ConcordiaConfig,
-            ConnectionConfig,
-            LookerConfig,
-            ModelRules,
-        )
 
         self.config = ConcordiaConfig(
             connection=ConnectionConfig(project_id="test-project", datasets=["test"]),
@@ -97,7 +86,7 @@ class TestLookMLFileWriter:
         assert os.path.exists(file_path)
 
         # Verify content
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         assert "test_view1" in content
@@ -116,7 +105,7 @@ class TestLookMLFileWriter:
         assert os.path.exists(file_path)
 
         # Verify it's a valid LookML file
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         assert "view:" in content

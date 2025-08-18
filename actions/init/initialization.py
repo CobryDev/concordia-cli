@@ -16,7 +16,7 @@ def find_file_in_tree(filename: str, start_path: str = ".") -> Optional[str]:
     start_path_obj = Path(start_path)
 
     # Search in current directory and all subdirectories
-    for root, dirs, files in os.walk(start_path):
+    for root, _dirs, files in os.walk(start_path):
         if filename in files:
             # Convert to Path for better cross-platform handling
             root_path = Path(root)
@@ -42,7 +42,7 @@ def handle_gitignore():
 
     if os.path.exists(gitignore_path):
         # Read existing .gitignore
-        with open(gitignore_path, "r") as f:
+        with open(gitignore_path) as f:
             content = f.read()
 
         # Check if entry already exists
@@ -119,9 +119,7 @@ def show_init_summary(dataform_path: Optional[str], looker_path: Optional[str]) 
     return click.confirm("Do you want to proceed with initialization?")
 
 
-def create_configuration_file(
-    dataform_path: Optional[str], looker_path: Optional[str], config_file: str
-):
+def create_configuration_file(dataform_path: Optional[str], looker_path: Optional[str], config_file: str):
     """Generate and write the concordia.yaml configuration file."""
     config = generate_concordia_config(dataform_path, looker_path)
     write_yaml_with_comments(config, config_file)
@@ -179,8 +177,8 @@ def run_initialization(force: bool = False):
         # Show next steps
         show_next_steps(dataform_path, looker_path)
 
-        safe_echo(f"\n🚀 Concordia initialization complete!")
+        safe_echo("\n🚀 Concordia initialization complete!")
 
     except Exception as e:
         safe_echo(f"Error during initialization: {e}")
-        raise click.ClickException(f"Initialization failed: {e}")
+        raise click.ClickException(f"Initialization failed: {e}") from e

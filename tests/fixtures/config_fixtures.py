@@ -2,8 +2,6 @@
 Test fixtures for configuration objects and sample data.
 """
 
-from typing import Any, Dict
-
 import pytest
 
 from actions.models.config import (
@@ -47,9 +45,7 @@ def sample_model_rules() -> ModelRules:
             TypeMapping(
                 bq_type="DATE",
                 lookml_type="dimension_group",
-                lookml_params=LookMLParams(
-                    type="time", timeframes="[date, week, month, quarter, year]"
-                ),
+                lookml_params=LookMLParams(type="time", timeframes="[date, week, month, quarter, year]"),
             ),
             TypeMapping(
                 bq_type="BOOL",
@@ -64,9 +60,7 @@ def sample_model_rules() -> ModelRules:
 def sample_config(sample_model_rules) -> ConcordiaConfig:
     """Sample complete configuration for testing."""
     return ConcordiaConfig(
-        connection=ConnectionConfig(
-            project_id="test-project", location="US", datasets=["test_dataset"]
-        ),
+        connection=ConnectionConfig(project_id="test-project", location="US", datasets=["test_dataset"]),
         looker=LookerConfig(
             project_path="./test_looker_project/",
             views_path="views/test_views.view.lkml",
@@ -121,7 +115,7 @@ def sample_table_metadata() -> TableMetadata:
 
 
 @pytest.fixture
-def sample_multiple_tables_metadata(sample_table_metadata) -> Dict[str, TableMetadata]:
+def sample_multiple_tables_metadata(sample_table_metadata) -> dict[str, TableMetadata]:
     """Sample metadata for multiple tables for testing joins."""
     organizations_metadata = TableMetadata(
         table_id="organizations",

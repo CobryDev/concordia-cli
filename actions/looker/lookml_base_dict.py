@@ -6,13 +6,11 @@ following the droughty pattern of treating LookML as data structures (dictionari
 """
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import click
 import pandas as pd
 import pandas_gbq
-from google.api_core.exceptions import NotFound, PermissionDenied
-from google.cloud import bigquery
 
 from ..models.metadata import ColumnMetadata, MetadataCollection, TableMetadata
 
@@ -33,7 +31,7 @@ class MetadataExtractor:
         self.location = location
         self.credentials = credentials
 
-    def get_table_metadata(self, dataset_ids: List[str]) -> pd.DataFrame:
+    def get_table_metadata(self, dataset_ids: list[str]) -> pd.DataFrame:
         """
         Extract table metadata from BigQuery INFORMATION_SCHEMA.
 
@@ -48,14 +46,14 @@ class MetadataExtractor:
         for dataset_id in dataset_ids:
             safe_dataset_id = self._validate_dataset_id(dataset_id)
             sql = f"""
-            SELECT 
+            SELECT
                 table_catalog as project_id,
                 table_schema as dataset_id,
                 table_name as table_id,
                 table_type,
                 ddl as creation_ddl,
                 -- Try to extract table comment from DDL or use NULL
-                CASE 
+                CASE
                     WHEN REGEXP_CONTAINS(ddl, r'description\\s*=\\s*"[^"]*"')
                     THEN REGEXP_EXTRACT(ddl, r'description\\s*=\\s*"([^"]*)"')
                     WHEN REGEXP_CONTAINS(ddl, r"description\\s*=\\s*'[^']*'")
@@ -64,7 +62,7 @@ class MetadataExtractor:
                 END as table_description
             FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.TABLES
             WHERE table_type = 'BASE TABLE'
-            """  # nosec B608 - dataset identifier validated by _validate_dataset_id
+            """  # noqa: S608 - dataset identifier validated by _validate_dataset_id
             union_queries.append(sql)
 
         query = " UNION ALL ".join(union_queries) + "\nORDER BY dataset_id, table_id"
@@ -80,13 +78,16 @@ class MetadataExtractor:
             # Ensure we have a DataFrame
             if df is None:
                 return pd.DataFrame()
+            # Convert to DataFrame if it's a Series
+            if isinstance(df, pd.Series):
+                df = df.to_frame().T
             click.echo(f"✅ Found {len(df)} tables")
             return df
         except Exception as e:
             click.echo(f"❌ Error extracting table metadata: {e}")
             return pd.DataFrame()
 
-    def get_column_metadata(self, dataset_ids: List[str]) -> pd.DataFrame:
+    def get_column_metadata(self, dataset_ids: list[str]) -> pd.DataFrame:
         """
         Extract column metadata from BigQuery INFORMATION_SCHEMA.
 
@@ -101,7 +102,7 @@ class MetadataExtractor:
         for dataset_id in dataset_ids:
             safe_dataset_id = self._validate_dataset_id(dataset_id)
             sql = f"""
-            SELECT 
+            SELECT
                 table_catalog as project_id,
                 table_schema as dataset_id,
                 table_name as table_id,
@@ -124,12 +125,10 @@ class MetadataExtractor:
                 -- Full table identifier for joining
                 CONCAT(table_catalog, '.', table_schema, '.', table_name) as full_table_id
             FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.COLUMNS
-            """  # nosec B608 - dataset identifier validated by _validate_dataset_id
+            """  # noqa: S608 - dataset identifier validated by _validate_dataset_id
             union_queries.append(sql)
 
-        query = (
-            " UNION ALL ".join(union_queries) + "\nORDER BY dataset_id, table_id, ordinal_position"
-        )
+        query = " UNION ALL ".join(union_queries) + "\nORDER BY dataset_id, table_id, ordinal_position"
 
         try:
             click.echo("🔍 Extracting column metadata from INFORMATION_SCHEMA...")
@@ -142,13 +141,16 @@ class MetadataExtractor:
             # Ensure we have a DataFrame
             if df is None:
                 return pd.DataFrame()
+            # Convert to DataFrame if it's a Series
+            if isinstance(df, pd.Series):
+                df = df.to_frame().T
             click.echo(f"✅ Found {len(df)} columns")
             return df
         except Exception as e:
             click.echo(f"❌ Error extracting column metadata: {e}")
             return pd.DataFrame()
 
-    def get_primary_key_metadata(self, dataset_ids: List[str]) -> pd.DataFrame:
+    def get_primary_key_metadata(self, dataset_ids: list[str]) -> pd.DataFrame:
         """
         Extract primary key metadata from BigQuery INFORMATION_SCHEMA.
 
@@ -163,7 +165,7 @@ class MetadataExtractor:
         for dataset_id in dataset_ids:
             safe_dataset_id = self._validate_dataset_id(dataset_id)
             sql = f"""
-            SELECT 
+            SELECT
                 constraint_catalog as project_id,
                 constraint_schema as dataset_id,
                 table_name as table_id,
@@ -174,7 +176,7 @@ class MetadataExtractor:
                 enforced
             FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.TABLE_CONSTRAINTS
             WHERE constraint_type = 'PRIMARY KEY'
-            """  # nosec B608 - dataset identifier validated by _validate_dataset_id
+            """  # noqa: S608 - dataset identifier validated by _validate_dataset_id
             union_queries.append(sql)
 
         query = " UNION ALL ".join(union_queries) + "\nORDER BY dataset_id, table_id"
@@ -190,6 +192,9 @@ class MetadataExtractor:
             # Ensure we have a DataFrame
             if df is None:
                 return pd.DataFrame()
+            # Convert to DataFrame if it's a Series
+            if isinstance(df, pd.Series):
+                df = df.to_frame().T
             click.echo(f"✅ Found {len(df)} primary key constraints")
             return df
         except Exception as e:
@@ -241,11 +246,7 @@ class MetadataExtractor:
         # Group by table to create table-level metadata with Pydantic models
         metadata_collection = MetadataCollection(tables={})
 
-        for (project_id, dataset_id, table_id), group in merged_df.groupby(
-            ["project_id", "dataset_id", "table_id"]
-        ):
-            table_key = f"{dataset_id}.{table_id}"
-
+        for (project_id, dataset_id, table_id), group in merged_df.groupby(["project_id", "dataset_id", "table_id"]):
             # Sort columns by ordinal position
             group_sorted = group.sort_values("ordinal_position")
 
@@ -253,20 +254,14 @@ class MetadataExtractor:
             columns = []
             for _, column in group_sorted.iterrows():
                 column_metadata = ColumnMetadata(
-                    name=column["column_name"],
-                    type=column["data_type"],
-                    standardized_type=column["standardized_type"],
-                    description=(
-                        column["column_description"]
-                        if pd.notna(column["column_description"])
-                        else None
-                    ),
+                    name=str(column["column_name"]),
+                    type=str(column["data_type"]),
+                    standardized_type=str(column["standardized_type"]),
+                    description=(str(column["column_description"]) if pd.notna(column["column_description"]) else None),
                     is_primary_key=bool(column["is_primary_key"]),
                     is_nullable=column["is_nullable"] == "YES",
                     ordinal_position=(
-                        int(column["ordinal_position"])
-                        if pd.notna(column["ordinal_position"])
-                        else None
+                        int(column["ordinal_position"]) if pd.notna(column["ordinal_position"]) else None
                     ),
                 )
                 columns.append(column_metadata)
@@ -277,7 +272,7 @@ class MetadataExtractor:
                 table_id=table_id,
                 dataset_id=dataset_id,
                 project_id=project_id,
-                table_description=(table_description if pd.notna(table_description) else None),
+                table_description=(str(table_description) if pd.notna(table_description) else None),
                 columns=columns,
             )
 
@@ -286,13 +281,13 @@ class MetadataExtractor:
         click.echo(f"✅ Processed metadata for {metadata_collection.table_count()} tables")
         return metadata_collection
 
-    def _get_primary_key_columns(self, primary_keys_df: pd.DataFrame) -> Dict[str, List[str]]:
+    def _get_primary_key_columns(self, primary_keys_df: pd.DataFrame) -> dict[str, list[str]]:
         """Extract primary key column information."""
         # This would need a separate query to get the actual column names for constraints
         # For now, return empty dict - this can be enhanced later
         return {}
 
-    def _is_column_primary_key(self, row: pd.Series, pk_columns: Dict[str, List[str]]) -> bool:
+    def _is_column_primary_key(self, row: pd.Series, pk_columns: dict[str, list[str]]) -> bool:
         """Check if a column is part of a primary key."""
         table_key = f"{row['dataset_id']}.{row['table_id']}"
         return row["column_name"] in pk_columns.get(table_key, [])
@@ -354,7 +349,7 @@ class MetadataExtractor:
         pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
         if not pattern.match(dataset_id):
             raise ValueError(
-                "Dataset ID must start with a letter or underscore and contain only letters, numbers, and underscores"
+                "Dataset ID must start with a letter or underscore, and contain only letters, numbers, and underscores"
             )
 
         return dataset_id

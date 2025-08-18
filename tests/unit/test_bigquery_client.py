@@ -2,9 +2,7 @@
 Unit tests for the BigQuery client module.
 """
 
-from unittest.mock import MagicMock, Mock, patch
-
-import pytest
+from unittest.mock import Mock, patch
 
 from actions.looker.bigquery_client import BigQueryClient, ErrorTracker, TableInfo
 
@@ -81,9 +79,7 @@ class TestTableInfo:
 
     def test_table_info_init(self):
         """Test TableInfo initialization."""
-        table_info = TableInfo(
-            dataset_id="test_dataset", table_id="users", description="User table"
-        )
+        table_info = TableInfo(dataset_id="test_dataset", table_id="users", description="User table")
 
         assert table_info.dataset_id == "test_dataset"
         assert table_info.table_id == "users"
@@ -132,9 +128,7 @@ class TestBigQueryClient:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
 
-        client = BigQueryClient(
-            credentials=mock_credentials, project_id="test_project", location="US"
-        )
+        client = BigQueryClient(credentials=mock_credentials, project_id="test_project", location="US")
 
         assert client.project_id == "test_project"
         assert client.location == "US"
@@ -160,9 +154,7 @@ class TestBigQueryClient:
         mock_client_class.return_value = mock_client
         config = {"model_rules": {"naming_conventions": {"primary_key_suffix": "_pk"}}}
 
-        client = BigQueryClient(
-            credentials=mock_credentials, project_id="test_project", config=config
-        )
+        client = BigQueryClient(credentials=mock_credentials, project_id="test_project", config=config)
 
         assert client.project_id == "test_project"
         assert client.config == config

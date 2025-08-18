@@ -9,7 +9,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import click
 import pytest
@@ -211,9 +211,7 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_bigquery_connection_failure(
-        self, mock_location, mock_creds, mock_bq_client
-    ):
+    def test_generate_command_bigquery_connection_failure(self, mock_location, mock_creds, mock_bq_client):
         """Test generate command when BigQuery connection fails."""
         mock_creds.return_value = (Mock(), "test-project")
         mock_location.return_value = "US"
@@ -275,7 +273,7 @@ class TestGenerateCommandIntegration:
             assert "❌ Unexpected error" in result.output
 
             # Restore permissions for cleanup
-            os.chmod(looker_dir, 0o755)
+            os.chmod(looker_dir, 0o755)  # noqa: S103 this is a cleanup action for a test
         else:
             # On Windows, just verify the command runs without the permission restriction
             result = self.runner.invoke(cli, ["looker", "generate"])
@@ -377,7 +375,7 @@ class TestGenerateFunctionUnit:
         # Capture output using click testing
         from click.testing import CliRunner
 
-        runner = CliRunner()
+        CliRunner()
 
         with patch("actions.looker.generate.click.echo") as mock_echo:
             with pytest.raises(click.ClickException) as exc_info:
@@ -427,9 +425,7 @@ class TestGenerateFunctionUnit:
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
     @patch("actions.looker.generate.BigQueryClient")
-    def test_generate_lookml_complete_workflow(
-        self, mock_bq_client, mock_location, mock_creds, mock_load_config
-    ):
+    def test_generate_lookml_complete_workflow(self, mock_bq_client, mock_location, mock_creds, mock_load_config):
         """Test complete generate_lookml workflow."""
         # Import required models
         from actions.models.config import (

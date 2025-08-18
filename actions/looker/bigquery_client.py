@@ -1,11 +1,9 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
-import pandas as pd
 from google.api_core.exceptions import NotFound, PermissionDenied
 from google.cloud import bigquery
 
-from .config_loader import ConfigurationError
 from .field_utils import FieldIdentifier
 from .lookml_base_dict import MetadataExtractor
 
@@ -99,9 +97,7 @@ class ErrorTracker:
         successful_datasets = (
             total_datasets
             - len(self.dataset_errors)
-            - len(
-                [e for e in self.not_found_errors + self.permission_errors if "table_id" not in e]
-            )
+            - len([e for e in self.not_found_errors + self.permission_errors if "table_id" not in e])
         )
         successful_tables = total_tables_found
 
@@ -157,7 +153,7 @@ class TableInfo:
         self.table_id = table_id
         self.full_table_id = f"{dataset_id}.{table_id}"
         self.description = description
-        self.columns: List[Dict[str, Any]] = []
+        self.columns: list[dict[str, Any]] = []
 
     def add_column(
         self,
@@ -167,9 +163,7 @@ class TableInfo:
         description: Optional[str] = None,
     ):
         """Add a column to the table schema."""
-        self.columns.append(
-            {"name": name, "type": data_type, "mode": mode, "description": description}
-        )
+        self.columns.append({"name": name, "type": data_type, "mode": mode, "description": description})
 
 
 class BigQueryClient:
@@ -183,7 +177,7 @@ class BigQueryClient:
         credentials,
         project_id: str,
         location: Optional[str] = None,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
     ):
         """
         Initialize BigQuery client.
@@ -200,15 +194,13 @@ class BigQueryClient:
         self.config = config or {}
         self.model_rules = self.config.get("model_rules", {})
         self.field_identifier = FieldIdentifier(self.model_rules)
-        self.client = bigquery.Client(
-            credentials=credentials, project=project_id, location=location
-        )
+        self.client = bigquery.Client(credentials=credentials, project=project_id, location=location)
         self.error_tracker = ErrorTracker()
 
         # Initialize the metadata extractor
         self.metadata_extractor = MetadataExtractor(credentials, project_id, location)
 
-    def get_tables_metadata(self, dataset_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    def get_tables_metadata(self, dataset_ids: list[str]) -> dict[str, dict[str, Any]]:
         """
         Get metadata for all tables from the specified datasets using INFORMATION_SCHEMA.
 
@@ -225,9 +217,7 @@ class BigQueryClient:
             primary_keys_df = self.metadata_extractor.get_primary_key_metadata(dataset_ids)
 
             # Wrangle the metadata into a usable format
-            metadata_collection = self.metadata_extractor.wrangle_metadata(
-                tables_df, columns_df, primary_keys_df
-            )
+            metadata_collection = self.metadata_extractor.wrangle_metadata(tables_df, columns_df, primary_keys_df)
 
             click.echo(f"📊 Successfully processed {metadata_collection.table_count()} tables")
             # Convert TableMetadata objects to dictionaries
@@ -238,7 +228,7 @@ class BigQueryClient:
             self.error_tracker.add_dataset_error("all", e, "metadata_extraction")
             return {}
 
-    def get_tables_in_datasets(self, dataset_ids: List[str]) -> List[TableInfo]:
+    def get_tables_in_datasets(self, dataset_ids: list[str]) -> list[TableInfo]:
         """
         Get all tables from the specified datasets (backward compatibility).
 
@@ -252,7 +242,7 @@ class BigQueryClient:
         tables_metadata = self.get_tables_metadata(dataset_ids)
         table_info_list = []
 
-        for table_key, table_data in tables_metadata.items():
+        for _table_key, table_data in tables_metadata.items():
             table_info = TableInfo(
                 dataset_id=table_data["dataset_id"],
                 table_id=table_data["table_id"],
@@ -272,7 +262,7 @@ class BigQueryClient:
 
         return table_info_list
 
-    def get_dataset_info(self, dataset_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    def get_dataset_info(self, dataset_ids: list[str]) -> dict[str, dict[str, Any]]:
         """
         Get detailed information about datasets using pandas-gbq.
 
@@ -318,8 +308,8 @@ class BigQueryClient:
         return dataset_info
 
     def analyze_table_relationships(
-        self, tables_metadata: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        self, tables_metadata: dict[str, dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
         """
         Analyze relationships between tables based on foreign key patterns.
 
@@ -355,9 +345,7 @@ class BigQueryClient:
 
         return relationships
 
-    def _infer_referenced_table(
-        self, column_name: str, tables_metadata: Dict[str, Dict[str, Any]]
-    ) -> Optional[str]:
+    def _infer_referenced_table(self, column_name: str, tables_metadata: dict[str, dict[str, Any]]) -> Optional[str]:
         """Infer the referenced table from a foreign key column name."""
         # Remove configured suffixes
         base_name = column_name
@@ -389,7 +377,7 @@ class BigQueryClient:
         """Get the error tracker instance."""
         return self.error_tracker
 
-    def test_connection(self, dataset_ids: List[str]) -> bool:
+    def test_connection(self, dataset_ids: list[str]) -> bool:
         """
         Test the BigQuery connection and dataset access.
 
@@ -408,7 +396,7 @@ class BigQueryClient:
             accessible_datasets = []
             for dataset_id in dataset_ids:
                 try:
-                    dataset = self.client.get_dataset(dataset_id)
+                    self.client.get_dataset(dataset_id)
                     accessible_datasets.append(dataset_id)
                     click.echo(f"✅ Dataset '{dataset_id}' accessible")
                 except NotFound:

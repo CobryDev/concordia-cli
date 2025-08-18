@@ -1,7 +1,6 @@
 import json
 import os
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import click
 import yaml
@@ -32,15 +31,13 @@ def load_config(config_path: str = "concordia.yaml") -> ConcordiaConfig:
         ConfigurationError: If configuration is missing or invalid
     """
     if not os.path.exists(config_path):
-        raise ConfigurationError(
-            f"Configuration file '{config_path}' not found. " "Run 'concordia init' to create it."
-        )
+        raise ConfigurationError(f"Configuration file '{config_path}' not found. Run 'concordia init' to create it.")
 
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             config_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        raise ConfigurationError(f"Invalid YAML in configuration file: {e}")
+        raise ConfigurationError(f"Invalid YAML in configuration file: {e}") from e
 
     # Parse and validate using Pydantic model
     try:
@@ -51,9 +48,8 @@ def load_config(config_path: str = "concordia.yaml") -> ConcordiaConfig:
             field_path = ".".join(str(loc) for loc in error["loc"])
             error_messages.append(f"{field_path}: {error['msg']}")
         raise ConfigurationError(
-            f"Configuration validation failed:\n"
-            + "\n".join(f"  - {msg}" for msg in error_messages)
-        )
+            "Configuration validation failed:\n" + "\n".join(f"  - {msg}" for msg in error_messages)
+        ) from e
 
     return config
 
@@ -106,11 +102,12 @@ def get_bigquery_credentials(config: ConcordiaConfig) -> tuple:
     except Exception as e:
         raise ConfigurationError(
             f"Failed to obtain Google credentials: {e}. "
-            "Ensure you have valid Dataform credentials or have run 'gcloud auth application-default login'."
-        )
+            "Ensure you have valid Dataform credentials or have run "
+            "'gcloud auth application-default login'."
+        ) from e
 
 
-def _parse_dataform_config(creds_path: str) -> Dict[str, Any]:
+def _parse_dataform_config(creds_path: str) -> dict[str, Any]:
     """
     Parse a Dataform credentials file and extract configuration.
 
@@ -123,7 +120,7 @@ def _parse_dataform_config(creds_path: str) -> Dict[str, Any]:
     Raises:
         ConfigurationError: If file cannot be parsed
     """
-    with open(creds_path, "r") as f:
+    with open(creds_path) as f:
         dataform_config = json.load(f)
 
     return dataform_config
@@ -155,9 +152,7 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
             try:
                 creds_data = json.loads(creds_data)
             except json.JSONDecodeError as e:
-                raise ConfigurationError(
-                    f"Invalid 'credentials' JSON string in Dataform credentials file: {e}"
-                )
+                raise ConfigurationError(f"Invalid 'credentials' JSON string in Dataform credentials file: {e}") from e
 
         # Create service account credentials
         credentials = service_account.Credentials.from_service_account_info(creds_data)
@@ -183,7 +178,7 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
             raise ConfigurationError(
                 f"Failed to load Application Default Credentials: {e}. "
                 "Please run 'gcloud auth application-default login'."
-            )
+            ) from e
 
     else:
         raise ConfigurationError(

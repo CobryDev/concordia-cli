@@ -9,7 +9,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -18,7 +18,6 @@ from actions.init.initialization import (
     create_configuration_file,
     find_file_in_tree,
     handle_gitignore,
-    run_initialization,
     scan_for_projects,
 )
 from main import cli
@@ -63,7 +62,7 @@ class TestInitCommandIntegration:
         assert os.path.exists("concordia.yaml")
 
         # Check that file was overwritten
-        with open("concordia.yaml", "r") as f:
+        with open("concordia.yaml") as f:
             content = f.read()
             assert "existing: config" not in content
             assert "connection:" in content
@@ -80,7 +79,7 @@ class TestInitCommandIntegration:
         assert "already exists" in result.output
 
         # Check that file was not overwritten
-        with open("concordia.yaml", "r") as f:
+        with open("concordia.yaml") as f:
             content = f.read()
             assert "existing: config" in content
 
@@ -107,7 +106,7 @@ class TestInitCommandIntegration:
         assert os.path.exists("concordia.yaml")
 
         # Check config contains correct dataform path
-        with open("concordia.yaml", "r") as f:
+        with open("concordia.yaml") as f:
             content = f.read()
             assert ".df-credentials.json" in content
 
@@ -126,7 +125,7 @@ class TestInitCommandIntegration:
         assert os.path.exists("concordia.yaml")
 
         # Check config contains correct looker path (normalize path separators)
-        with open("concordia.yaml", "r") as f:
+        with open("concordia.yaml") as f:
             content = f.read()
             # Check that looker_project is mentioned in the path, regardless of path format
             assert "looker_project" in content
@@ -149,7 +148,7 @@ class TestInitCommandIntegration:
         assert "Found Looker project" in result.output
 
         # Check config contains both paths
-        with open("concordia.yaml", "r") as f:
+        with open("concordia.yaml") as f:
             content = f.read()
             assert ".df-credentials.json" in content
             # Check that looker directory is mentioned in the path, regardless of path format
@@ -170,7 +169,7 @@ class TestInitCommandIntegration:
         handle_gitignore()
 
         assert os.path.exists(".gitignore")
-        with open(".gitignore", "r") as f:
+        with open(".gitignore") as f:
             content = f.read()
             assert ".df-credentials.json" in content
             assert "Dataform credentials" in content
@@ -183,7 +182,7 @@ class TestInitCommandIntegration:
 
         handle_gitignore()
 
-        with open(".gitignore", "r") as f:
+        with open(".gitignore") as f:
             content = f.read()
             assert "*.log" in content
             assert "__pycache__/" in content
@@ -197,7 +196,7 @@ class TestInitCommandIntegration:
 
         handle_gitignore()
 
-        with open(".gitignore", "r") as f:
+        with open(".gitignore") as f:
             content = f.read()
             assert content.count(".df-credentials.json") == 1
 
@@ -292,7 +291,7 @@ class TestInitHelperFunctions:
 
         assert os.path.exists("test_config.yaml")
 
-        with open("test_config.yaml", "r") as f:
+        with open("test_config.yaml") as f:
             content = f.read()
             assert "connection:" in content
             assert "looker:" in content
@@ -306,7 +305,7 @@ class TestInitHelperFunctions:
 
         assert os.path.exists("test_config.yaml")
 
-        with open("test_config.yaml", "r") as f:
+        with open("test_config.yaml") as f:
             content = f.read()
             assert "path/to/your/.df-credentials.json" in content
             assert "path/to/your/looker_project" in content
@@ -376,10 +375,7 @@ class TestInitCommandErrorScenarios:
             # Should handle permission error gracefully by reporting failure
             assert result.exit_code != 0
             # The permission error might manifest differently depending on when it occurs
-            assert (
-                "No Dataform project found" in result.output
-                or "Error during initialization" in result.output
-            )
+            assert "No Dataform project found" in result.output or "Error during initialization" in result.output
 
             # Restore permissions for cleanup
-            os.chmod(self.test_dir, 0o755)
+            os.chmod(self.test_dir, 0o755)  # noqa: S103 this is a cleanup action for a test

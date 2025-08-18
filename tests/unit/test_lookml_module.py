@@ -5,19 +5,9 @@ Tests the LookMLViewGenerator and LookMLDimensionGenerator classes
 for view generation, dimension creation, and type mapping logic.
 """
 
-from unittest.mock import Mock, patch
-
-import pytest
+from unittest.mock import patch
 
 from actions.looker.lookml_module import LookMLDimensionGenerator, LookMLViewGenerator
-from tests.fixtures.config_fixtures import (
-    sample_column_primary_key,
-    sample_column_string,
-    sample_column_timestamp,
-    sample_config,
-    sample_model_rules,
-    sample_table_metadata,
-)
 
 
 class TestLookMLViewGenerator:
@@ -226,49 +216,26 @@ class TestLookMLViewGenerator:
 
         # Time types
         assert (
-            generator._is_time_dimension(
-                ColumnMetadata(name="test", type="TIMESTAMP", standardized_type="TIMESTAMP")
-            )
+            generator._is_time_dimension(ColumnMetadata(name="test", type="TIMESTAMP", standardized_type="TIMESTAMP"))
             is True
         )
         assert (
-            generator._is_time_dimension(
-                ColumnMetadata(name="test", type="DATETIME", standardized_type="DATETIME")
-            )
+            generator._is_time_dimension(ColumnMetadata(name="test", type="DATETIME", standardized_type="DATETIME"))
             is True
         )
-        assert (
-            generator._is_time_dimension(
-                ColumnMetadata(name="test", type="DATE", standardized_type="DATE")
-            )
-            is True
-        )
-        assert (
-            generator._is_time_dimension(
-                ColumnMetadata(name="test", type="TIME", standardized_type="TIME")
-            )
-            is True
-        )
+        assert generator._is_time_dimension(ColumnMetadata(name="test", type="DATE", standardized_type="DATE")) is True
+        assert generator._is_time_dimension(ColumnMetadata(name="test", type="TIME", standardized_type="TIME")) is True
 
         # Non-time types
         assert (
-            generator._is_time_dimension(
-                ColumnMetadata(name="test", type="STRING", standardized_type="STRING")
-            )
+            generator._is_time_dimension(ColumnMetadata(name="test", type="STRING", standardized_type="STRING"))
             is False
         )
         assert (
-            generator._is_time_dimension(
-                ColumnMetadata(name="test", type="INTEGER", standardized_type="INTEGER")
-            )
+            generator._is_time_dimension(ColumnMetadata(name="test", type="INTEGER", standardized_type="INTEGER"))
             is False
         )
-        assert (
-            generator._is_time_dimension(
-                ColumnMetadata(name="test", type="BOOL", standardized_type="BOOL")
-            )
-            is False
-        )
+        assert generator._is_time_dimension(ColumnMetadata(name="test", type="BOOL", standardized_type="BOOL")) is False
 
     def test_find_type_mapping(self, sample_config):
         """Test type mapping lookup."""
@@ -402,9 +369,7 @@ class TestLookMLDimensionGenerator:
         """Test yes/no dimension generation for numeric column."""
         from actions.models.metadata import ColumnMetadata
 
-        numeric_column = ColumnMetadata(
-            name="login_count", type="INTEGER", standardized_type="INTEGER"
-        )
+        numeric_column = ColumnMetadata(name="login_count", type="INTEGER", standardized_type="INTEGER")
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_yesno_dimension(numeric_column)

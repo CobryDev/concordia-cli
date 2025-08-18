@@ -7,7 +7,6 @@ with proper comments and structure.
 
 import os
 import tempfile
-from pathlib import Path
 
 import pytest
 from ruamel.yaml import YAML
@@ -258,7 +257,7 @@ class TestWriteYamlWithComments:
         assert os.path.exists(self.test_file)
 
         # Check file is readable
-        with open(self.test_file, "r") as f:
+        with open(self.test_file) as f:
             content = f.read()
             assert len(content) > 0
 
@@ -270,7 +269,7 @@ class TestWriteYamlWithComments:
 
         # Read back and parse
         yaml = YAML()
-        with open(self.test_file, "r") as f:
+        with open(self.test_file) as f:
             loaded_config = yaml.load(f)
 
         # Check main sections exist
@@ -289,7 +288,7 @@ class TestWriteYamlWithComments:
 
         write_yaml_with_comments(config, self.test_file)
 
-        with open(self.test_file, "r") as f:
+        with open(self.test_file) as f:
             content = f.read()
 
         # Check for presence of comment indicators
@@ -308,7 +307,7 @@ class TestWriteYamlWithComments:
 
         # Read back and check type mapping preservation
         yaml = YAML()
-        with open(self.test_file, "r") as f:
+        with open(self.test_file) as f:
             loaded_config = yaml.load(f)
 
         type_mapping = loaded_config["model_rules"]["type_mapping"]
@@ -340,7 +339,7 @@ class TestWriteYamlWithComments:
         write_yaml_with_comments(config, self.test_file)
 
         # Check old content is gone
-        with open(self.test_file, "r") as f:
+        with open(self.test_file) as f:
             content = f.read()
             assert "old content" not in content
             assert "connection:" in content
@@ -362,7 +361,7 @@ class TestWriteYamlWithComments:
 
         write_yaml_with_comments(config, self.test_file)
 
-        with open(self.test_file, "r") as f:
+        with open(self.test_file) as f:
             lines = f.readlines()
 
         # Check basic formatting standards

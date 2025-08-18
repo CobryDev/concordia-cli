@@ -5,11 +5,8 @@ Tests the LookMLMeasureGenerator class for measure generation logic,
 including default measures, automatic measures, and custom measures.
 """
 
-import pytest
-
 from actions.looker.lookml_measure_module import LookMLMeasureGenerator
 from actions.models.metadata import ColumnMetadata
-from tests.fixtures.config_fixtures import sample_config, sample_model_rules, sample_table_metadata
 
 
 class TestLookMLMeasureGenerator:
@@ -54,12 +51,8 @@ class TestLookMLMeasureGenerator:
     def test_generate_default_measures_count_distinct(self, sample_config):
         """Test generation of default count_distinct measure."""
         # Create a new config with count_distinct added to defaults
-        modified_defaults = sample_config.model_rules.defaults.copy(
-            update={"measures": ["count", "count_distinct"]}
-        )
-        modified_model_rules = sample_config.model_rules.copy(
-            update={"defaults": modified_defaults}
-        )
+        modified_defaults = sample_config.model_rules.defaults.copy(update={"measures": ["count", "count_distinct"]})
+        modified_model_rules = sample_config.model_rules.copy(update={"defaults": modified_defaults})
         modified_config = sample_config.copy(update={"model_rules": modified_model_rules})
 
         generator = LookMLMeasureGenerator(modified_config)
@@ -85,9 +78,7 @@ class TestLookMLMeasureGenerator:
         assert len(measures) == 0
 
         # Test with foreign key (should be skipped)
-        fk_column = ColumnMetadata(
-            name="organization_fk", type="INTEGER", standardized_type="INTEGER"
-        )
+        fk_column = ColumnMetadata(name="organization_fk", type="INTEGER", standardized_type="INTEGER")
 
         measures = generator._generate_automatic_measures(fk_column)
         assert len(measures) == 0
@@ -116,9 +107,7 @@ class TestLookMLMeasureGenerator:
         """Test automatic measure generation for amount columns."""
         generator = LookMLMeasureGenerator(sample_config)
 
-        amount_column = ColumnMetadata(
-            name="order_amount", type="NUMERIC", standardized_type="NUMERIC"
-        )
+        amount_column = ColumnMetadata(name="order_amount", type="NUMERIC", standardized_type="NUMERIC")
 
         measures = generator._generate_automatic_measures(amount_column)
 
@@ -299,61 +288,37 @@ class TestLookMLMeasureGenerator:
 
         # Test numeric types
         assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="INTEGER", standardized_type="INTEGER")
-            )
+            generator._is_numeric_column(ColumnMetadata(name="test", type="INTEGER", standardized_type="INTEGER"))
             is True
         )
         assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="INT64", standardized_type="INT64")
-            )
+            generator._is_numeric_column(ColumnMetadata(name="test", type="INT64", standardized_type="INT64")) is True
+        )
+        assert (
+            generator._is_numeric_column(ColumnMetadata(name="test", type="FLOAT", standardized_type="FLOAT64")) is True
+        )
+        assert (
+            generator._is_numeric_column(ColumnMetadata(name="test", type="FLOAT64", standardized_type="FLOAT64"))
             is True
         )
         assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="FLOAT", standardized_type="FLOAT64")
-            )
+            generator._is_numeric_column(ColumnMetadata(name="test", type="NUMERIC", standardized_type="NUMERIC"))
             is True
         )
         assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="FLOAT64", standardized_type="FLOAT64")
-            )
-            is True
-        )
-        assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="NUMERIC", standardized_type="NUMERIC")
-            )
-            is True
-        )
-        assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="BIGNUMERIC", standardized_type="BIGNUMERIC")
-            )
+            generator._is_numeric_column(ColumnMetadata(name="test", type="BIGNUMERIC", standardized_type="BIGNUMERIC"))
             is True
         )
 
         # Test non-numeric types
         assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="STRING", standardized_type="STRING")
-            )
+            generator._is_numeric_column(ColumnMetadata(name="test", type="STRING", standardized_type="STRING"))
             is False
         )
         assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="BOOLEAN", standardized_type="BOOL")
-            )
-            is False
+            generator._is_numeric_column(ColumnMetadata(name="test", type="BOOLEAN", standardized_type="BOOL")) is False
         )
-        assert (
-            generator._is_numeric_column(
-                ColumnMetadata(name="test", type="DATE", standardized_type="DATE")
-            )
-            is False
-        )
+        assert generator._is_numeric_column(ColumnMetadata(name="test", type="DATE", standardized_type="DATE")) is False
 
     def test_is_amount_column(self, sample_config):
         """Test amount column identification."""

@@ -86,7 +86,7 @@ def generate_lookml():
             # Summary
             view_count = len(project_dict.get("view", {}))
 
-            click.echo(f"\n🎉 Successfully generated LookML project!")
+            click.echo("\n🎉 Successfully generated LookML project!")
             click.echo(f"   Views: {view_count}")
             click.echo(f"   Files: {len(output_files)}")
         else:
@@ -105,11 +105,11 @@ def generate_lookml():
 
     except ConfigurationError as e:
         click.echo(f"❌ Configuration error: {e}")
-        raise click.ClickException(f"Configuration error: {e}")
+        raise click.ClickException(f"Configuration error: {e}") from e
     except Exception as e:
         click.echo(f"❌ Unexpected error: {e}")
         if click.confirm("Would you like to see the full error details?"):
             import traceback
 
             click.echo(traceback.format_exc())
-        raise click.ClickException(f"Unexpected error: {e}")
+        raise click.ClickException(f"Unexpected error: {e}") from e

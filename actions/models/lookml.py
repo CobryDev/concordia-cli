@@ -6,9 +6,9 @@ represented as nested dictionaries, enabling better validation and code clarity.
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class DimensionType(str, Enum):
@@ -56,23 +56,22 @@ class Dimension(BaseModel):
     primary_key: bool = Field(default=False, description="Whether this is a primary key")
     group_label: Optional[str] = Field(default=None, description="Group label for organization")
     value_format: Optional[str] = Field(default=None, description="Value formatting")
-    drill_fields: Optional[List[str]] = Field(default=None, description="Fields to drill into")
+    drill_fields: Optional[list[str]] = Field(default=None, description="Fields to drill into")
 
     # Allow additional LookML parameters
-    additional_params: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional LookML parameters"
-    )
+    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         """Ensure name is valid."""
         if not v or not v.strip():
             raise ValueError("Dimension name cannot be empty")
         return v.strip()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization (flat form)."""
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "name": self.name,
             "type": self.type.value,
         }
@@ -109,26 +108,25 @@ class DimensionGroup(BaseModel):
     sql: Optional[str] = Field(default=None, description="Custom SQL expression")
     description: Optional[str] = Field(default=None, description="Description")
     label: Optional[str] = Field(default=None, description="Display label")
-    timeframes: Optional[List[str]] = Field(default=None, description="Available timeframes")
+    timeframes: Optional[list[str]] = Field(default=None, description="Available timeframes")
     convert_tz: bool = Field(default=True, description="Whether to convert timezone")
     datatype: Optional[str] = Field(default=None, description="Data type for time fields")
-    intervals: Optional[List[str]] = Field(default=None, description="Duration intervals")
+    intervals: Optional[list[str]] = Field(default=None, description="Duration intervals")
 
     # Allow additional LookML parameters
-    additional_params: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional LookML parameters"
-    )
+    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         """Ensure name is valid."""
         if not v or not v.strip():
             raise ValueError("Dimension group name cannot be empty")
         return v.strip()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization (flat form)."""
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "name": self.name,
             "type": self.type.value,
         }
@@ -166,24 +164,23 @@ class Measure(BaseModel):
     hidden: bool = Field(default=False, description="Whether measure is hidden")
     group_label: Optional[str] = Field(default=None, description="Group label for organization")
     value_format: Optional[str] = Field(default=None, description="Value formatting")
-    drill_fields: Optional[List[str]] = Field(default=None, description="Fields to drill into")
-    filters: Optional[Dict[str, str]] = Field(default=None, description="Filter conditions")
+    drill_fields: Optional[list[str]] = Field(default=None, description="Fields to drill into")
+    filters: Optional[dict[str, str]] = Field(default=None, description="Filter conditions")
 
     # Allow additional LookML parameters
-    additional_params: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional LookML parameters"
-    )
+    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         """Ensure name is valid."""
         if not v or not v.strip():
             raise ValueError("Measure name cannot be empty")
         return v.strip()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization (flat form)."""
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "name": self.name,
             "type": self.type.value,
         }
@@ -219,19 +216,16 @@ class LookMLView(BaseModel):
     sql_table_name: str = Field(description="SQL table name")
     connection: Optional[str] = Field(default=None, description="Connection name")
     description: Optional[str] = Field(default=None, description="View description")
-    dimensions: List[Dimension] = Field(default_factory=list, description="View dimensions")
-    dimension_groups: List[DimensionGroup] = Field(
-        default_factory=list, description="View dimension groups"
-    )
-    measures: List[Measure] = Field(default_factory=list, description="View measures")
-    drill_fields: Optional[List[str]] = Field(default=None, description="Default drill fields")
+    dimensions: list[Dimension] = Field(default_factory=list, description="View dimensions")
+    dimension_groups: list[DimensionGroup] = Field(default_factory=list, description="View dimension groups")
+    measures: list[Measure] = Field(default_factory=list, description="View measures")
+    drill_fields: Optional[list[str]] = Field(default=None, description="Default drill fields")
 
     # Allow additional LookML parameters
-    additional_params: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional LookML parameters"
-    )
+    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         """Ensure name is valid."""
         if not v or not v.strip():
@@ -264,9 +258,9 @@ class LookMLView(BaseModel):
                 return measure
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization as repeated view blocks."""
-        view_entry: Dict[str, Any] = {
+        view_entry: dict[str, Any] = {
             "name": self.name,
             "sql_table_name": self.sql_table_name,
         }
@@ -301,7 +295,7 @@ class LookMLView(BaseModel):
 class LookMLProject(BaseModel):
     """Complete LookML project definition."""
 
-    views: List[LookMLView] = Field(default_factory=list, description="Project views")
+    views: list[LookMLView] = Field(default_factory=list, description="Project views")
 
     def add_view(self, view: LookMLView) -> None:
         """Add a view to the project."""
@@ -314,12 +308,12 @@ class LookMLProject(BaseModel):
                 return view
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization with repeated view blocks."""
         if not self.views:
             return {}
 
-        all_view_entries: List[Dict[str, Any]] = []
+        all_view_entries: list[dict[str, Any]] = []
         for view in self.views:
             view_dict = view.to_dict()
             entries = view_dict.get("view")
