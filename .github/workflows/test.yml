@@ -48,7 +48,7 @@ jobs:
         run: |
           # Add uv to the PATH
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip sync requirements.txt requirements-dev.txt
+          uv pip sync --system requirements.txt requirements-dev.txt
 
       - name: Check dependencies
         run: |
