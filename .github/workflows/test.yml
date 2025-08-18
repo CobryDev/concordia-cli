@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/*.lock') }}
           restore-keys: |
             ${{ runner.os }}-uv-
 
@@ -48,7 +48,7 @@ jobs:
         run: |
           # Add uv to the PATH
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip sync --system requirements.txt requirements-dev.txt
+          uv pip sync --system requirements.lock requirements-dev.lock
 
       - name: Check dependencies
         run: |
