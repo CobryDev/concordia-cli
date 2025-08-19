@@ -103,28 +103,34 @@ class MetadataExtractor:
             safe_dataset_id = self._validate_dataset_id(dataset_id)
             sql = f"""
             SELECT
-                table_catalog as project_id,
-                table_schema as dataset_id,
-                table_name as table_id,
-                column_name,
-                ordinal_position,
-                is_nullable,
-                data_type,
-                is_generated,
-                generation_expression,
-                is_stored,
-                is_hidden,
-                is_updatable,
-                is_system_defined,
-                is_partitioning_column,
-                clustering_ordinal_position,
-                collation_name,
-                column_default,
-                -- Column description/comment (not available in INFORMATION_SCHEMA.COLUMNS)
-                CAST(NULL AS STRING) as column_description,
+                c.table_catalog as project_id,
+                c.table_schema as dataset_id,
+                c.table_name as table_id,
+                c.column_name,
+                c.ordinal_position,
+                c.is_nullable,
+                c.data_type,
+                c.is_generated,
+                c.generation_expression,
+                c.is_stored,
+                c.is_hidden,
+                c.is_updatable,
+                c.is_system_defined,
+                c.is_partitioning_column,
+                c.clustering_ordinal_position,
+                c.collation_name,
+                c.column_default,
+                -- Column description from COLUMN_FIELD_PATHS view
+                cfp.description as column_description,
                 -- Full table identifier for joining
-                CONCAT(table_catalog, '.', table_schema, '.', table_name) as full_table_id
-            FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.COLUMNS
+                CONCAT(c.table_catalog, '.', c.table_schema, '.', c.table_name) as full_table_id
+            FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.COLUMNS c
+            LEFT JOIN `{safe_dataset_id}`.INFORMATION_SCHEMA.COLUMN_FIELD_PATHS cfp
+                ON c.table_catalog = cfp.table_catalog
+                AND c.table_schema = cfp.table_schema
+                AND c.table_name = cfp.table_name
+                AND c.column_name = cfp.column_name
+                AND cfp.field_path = cfp.column_name  -- Only get top-level column descriptions
             """  # noqa: S608 - dataset identifier validated by _validate_dataset_id
             union_queries.append(sql)
 
