@@ -106,21 +106,21 @@ def coverage(session):
     )
 
 
-@nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
+@nox.session(venv_backend=VENV_BACKEND)
 def fast(session):
     """Run tests with minimal output for quick feedback."""
     session.install("-r", "requirements.txt", "-r", "requirements-dev.txt")
     session.run("pytest", "tests/", "-q", "--tb=short")
 
 
-@nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
+@nox.session(venv_backend=VENV_BACKEND)
 def security(session):
     """Run security checks with safety."""
     session.install("safety")
     session.run("safety", "check", "--output", "json", "--continue-on-error")
 
 
-@nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
+@nox.session(venv_backend=VENV_BACKEND)
 def ci(session):
     """Run CI-equivalent checks (format, lint, type check, coverage)."""
     session.install("-r", "requirements.txt", "-r", "requirements-dev.txt")
@@ -151,7 +151,7 @@ def ci(session):
     )
 
 
-@nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
+@nox.session(venv_backend=VENV_BACKEND)
 def all(session):
     """Run comprehensive test suite (format, lint, type check, unit, integration, coverage, security)."""
     session.install("-r", "requirements.txt", "-r", "requirements-dev.txt", "safety")
@@ -192,14 +192,14 @@ def all(session):
     session.run("safety", "check", "--output", "json", "--continue-on-error")
 
 
-@nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
+@nox.session(venv_backend=VENV_BACKEND)
 def lint_tests(session):
     """Run linting on test files."""
     session.install("ruff")
     session.run("ruff", "check", "tests/")
 
 
-@nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
+@nox.session(venv_backend=VENV_BACKEND)
 def docs(session):
     """Build documentation (placeholder for future docs)."""
     session.log("Documentation build not yet implemented")
