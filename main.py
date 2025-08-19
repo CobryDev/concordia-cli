@@ -30,8 +30,7 @@ def get_version_info():
 
         # Get last modified date of the project root
         mtime = os.path.getmtime(project_root)
-        last_modified = datetime.fromtimestamp(
-            mtime).strftime("%Y-%m-%d %H:%M:%S")
+        last_modified = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
 
         return version, last_modified
     except Exception:
