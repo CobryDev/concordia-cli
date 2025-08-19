@@ -154,8 +154,7 @@ def ci(session):
 @nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
 def all(session):
     """Run comprehensive test suite (format, lint, type check, unit, integration, coverage, security)."""
-    session.install("-r", "requirements.txt", "-r",
-                    "requirements-dev.txt", "safety")
+    session.install("-r", "requirements.txt", "-r", "requirements-dev.txt", "safety")
 
     # Format check
     session.run("ruff", "format", "--check", ".")
