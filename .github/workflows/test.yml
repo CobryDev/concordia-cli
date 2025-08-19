@@ -37,22 +37,26 @@ jobs:
             ${{ runner.os }}-uv-
 
       - name: Install dependencies with uv
+        shell: bash
         run: |
           # Add uv to the PATH
           export PATH="$HOME/.cargo/bin:$PATH"
           uv pip sync --system requirements-combined.lock
 
       - name: Check dependencies
+        shell: bash
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
           python -c "import pytest, pytest_cov, pytest_mock, ruff, nox; print('[PASS] All test dependencies installed')"
 
       - name: Run checks and tests with coverage
+        shell: bash
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
           nox -s ci
 
       - name: Check for security vulnerabilities
+        shell: bash
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
           nox -s security
