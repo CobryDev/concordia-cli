@@ -10,7 +10,7 @@ import nox
 # Configure nox to use uv as the backend for faster installs
 VENV_BACKEND = "uv"
 # Supported Python versions
-PYTHON_VERSIONS = ["3.9", "3.10", "3.11", "3.12"]
+PYTHON_VERSIONS = ["3.11", "3.12", "3.13"]
 DEFAULT_PYTHON = "3.11"
 
 # Common pytest arguments
@@ -154,7 +154,8 @@ def ci(session):
 @nox.session(python=DEFAULT_PYTHON, venv_backend=VENV_BACKEND)
 def all(session):
     """Run comprehensive test suite (format, lint, type check, unit, integration, coverage, security)."""
-    session.install("-r", "requirements.txt", "-r", "requirements-dev.txt", "safety")
+    session.install("-r", "requirements.txt", "-r",
+                    "requirements-dev.txt", "safety")
 
     # Format check
     session.run("ruff", "format", "--check", ".")
