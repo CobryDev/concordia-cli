@@ -49,17 +49,25 @@ class Dimension(BaseModel):
 
     name: str = Field(description="Dimension name")
     type: DimensionType = Field(description="Dimension type")
-    sql: Optional[str] = Field(default=None, description="Custom SQL expression")
-    description: Optional[str] = Field(default=None, description="Dimension description")
+    sql: Optional[str] = Field(
+        default=None, description="Custom SQL expression")
+    description: Optional[str] = Field(
+        default=None, description="Dimension description")
     label: Optional[str] = Field(default=None, description="Display label")
-    hidden: bool = Field(default=False, description="Whether dimension is hidden")
-    primary_key: bool = Field(default=False, description="Whether this is a primary key")
-    group_label: Optional[str] = Field(default=None, description="Group label for organization")
-    value_format: Optional[str] = Field(default=None, description="Value formatting")
-    drill_fields: Optional[list[str]] = Field(default=None, description="Fields to drill into")
+    hidden: bool = Field(
+        default=False, description="Whether dimension is hidden")
+    primary_key: bool = Field(
+        default=False, description="Whether this is a primary key")
+    group_label: Optional[str] = Field(
+        default=None, description="Group label for organization")
+    value_format: Optional[str] = Field(
+        default=None, description="Value formatting")
+    drill_fields: Optional[list[str]] = Field(
+        default=None, description="Fields to drill into")
 
     # Allow additional LookML parameters
-    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
+    additional_params: dict[str, Any] = Field(
+        default_factory=dict, description="Additional LookML parameters")
 
     @field_validator("name")
     @classmethod
@@ -105,16 +113,22 @@ class DimensionGroup(BaseModel):
 
     name: str = Field(description="Dimension group name")
     type: DimensionGroupType = Field(description="Dimension group type")
-    sql: Optional[str] = Field(default=None, description="Custom SQL expression")
+    sql: Optional[str] = Field(
+        default=None, description="Custom SQL expression")
     description: Optional[str] = Field(default=None, description="Description")
     label: Optional[str] = Field(default=None, description="Display label")
-    timeframes: Optional[list[str]] = Field(default=None, description="Available timeframes")
-    convert_tz: bool = Field(default=True, description="Whether to convert timezone")
-    datatype: Optional[str] = Field(default=None, description="Data type for time fields")
-    intervals: Optional[list[str]] = Field(default=None, description="Duration intervals")
+    timeframes: Optional[list[str]] = Field(
+        default=None, description="Available timeframes")
+    convert_tz: bool = Field(
+        default=True, description="Whether to convert timezone")
+    datatype: Optional[str] = Field(
+        default=None, description="Data type for time fields")
+    intervals: Optional[list[str]] = Field(
+        default=None, description="Duration intervals")
 
     # Allow additional LookML parameters
-    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
+    additional_params: dict[str, Any] = Field(
+        default_factory=dict, description="Additional LookML parameters")
 
     @field_validator("name")
     @classmethod
@@ -139,13 +153,13 @@ class DimensionGroup(BaseModel):
         if self.label:
             result["label"] = self.label
         if self.timeframes:
-            result["timeframes"] = str(self.timeframes)
+            result["timeframes"] = self.timeframes
         if not self.convert_tz:
             result["convert_tz"] = "no"
         if self.datatype:
             result["datatype"] = self.datatype
         if self.intervals:
-            result["intervals"] = str(self.intervals)
+            result["intervals"] = self.intervals
 
         # Add any additional parameters
         result.update(self.additional_params)
@@ -158,17 +172,25 @@ class Measure(BaseModel):
 
     name: str = Field(description="Measure name")
     type: MeasureType = Field(description="Measure type")
-    sql: Optional[str] = Field(default=None, description="Custom SQL expression")
-    description: Optional[str] = Field(default=None, description="Measure description")
+    sql: Optional[str] = Field(
+        default=None, description="Custom SQL expression")
+    description: Optional[str] = Field(
+        default=None, description="Measure description")
     label: Optional[str] = Field(default=None, description="Display label")
-    hidden: bool = Field(default=False, description="Whether measure is hidden")
-    group_label: Optional[str] = Field(default=None, description="Group label for organization")
-    value_format: Optional[str] = Field(default=None, description="Value formatting")
-    drill_fields: Optional[list[str]] = Field(default=None, description="Fields to drill into")
-    filters: Optional[dict[str, str]] = Field(default=None, description="Filter conditions")
+    hidden: bool = Field(
+        default=False, description="Whether measure is hidden")
+    group_label: Optional[str] = Field(
+        default=None, description="Group label for organization")
+    value_format: Optional[str] = Field(
+        default=None, description="Value formatting")
+    drill_fields: Optional[list[str]] = Field(
+        default=None, description="Fields to drill into")
+    filters: Optional[dict[str, str]] = Field(
+        default=None, description="Filter conditions")
 
     # Allow additional LookML parameters
-    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
+    additional_params: dict[str, Any] = Field(
+        default_factory=dict, description="Additional LookML parameters")
 
     @field_validator("name")
     @classmethod
@@ -214,15 +236,22 @@ class LookMLView(BaseModel):
 
     name: str = Field(description="View name")
     sql_table_name: str = Field(description="SQL table name")
-    connection: Optional[str] = Field(default=None, description="Connection name")
-    description: Optional[str] = Field(default=None, description="View description")
-    dimensions: list[Dimension] = Field(default_factory=list, description="View dimensions")
-    dimension_groups: list[DimensionGroup] = Field(default_factory=list, description="View dimension groups")
-    measures: list[Measure] = Field(default_factory=list, description="View measures")
-    drill_fields: Optional[list[str]] = Field(default=None, description="Default drill fields")
+    connection: Optional[str] = Field(
+        default=None, description="Connection name")
+    description: Optional[str] = Field(
+        default=None, description="View description")
+    dimensions: list[Dimension] = Field(
+        default_factory=list, description="View dimensions")
+    dimension_groups: list[DimensionGroup] = Field(
+        default_factory=list, description="View dimension groups")
+    measures: list[Measure] = Field(
+        default_factory=list, description="View measures")
+    drill_fields: Optional[list[str]] = Field(
+        default=None, description="Default drill fields")
 
     # Allow additional LookML parameters
-    additional_params: dict[str, Any] = Field(default_factory=dict, description="Additional LookML parameters")
+    additional_params: dict[str, Any] = Field(
+        default_factory=dict, description="Additional LookML parameters")
 
     @field_validator("name")
     @classmethod
@@ -273,15 +302,18 @@ class LookMLView(BaseModel):
 
         # Add dimensions (flat list form understood by lkml.dump)
         if self.dimensions:
-            view_entry["dimension"] = [dim.to_dict() for dim in self.dimensions]
+            view_entry["dimension"] = [dim.to_dict()
+                                       for dim in self.dimensions]
 
         # Add dimension groups
         if self.dimension_groups:
-            view_entry["dimension_group"] = [group.to_dict() for group in self.dimension_groups]
+            view_entry["dimension_group"] = [group.to_dict()
+                                             for group in self.dimension_groups]
 
         # Add measures
         if self.measures:
-            view_entry["measure"] = [measure.to_dict() for measure in self.measures]
+            view_entry["measure"] = [measure.to_dict()
+                                     for measure in self.measures]
 
         if self.drill_fields:
             view_entry["drill_fields"] = str(self.drill_fields)
@@ -295,7 +327,8 @@ class LookMLView(BaseModel):
 class LookMLProject(BaseModel):
     """Complete LookML project definition."""
 
-    views: list[LookMLView] = Field(default_factory=list, description="Project views")
+    views: list[LookMLView] = Field(
+        default_factory=list, description="Project views")
 
     def add_view(self, view: LookMLView) -> None:
         """Add a view to the project."""
