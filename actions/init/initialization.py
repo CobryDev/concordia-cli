@@ -77,12 +77,19 @@ def scan_for_projects():
     else:
         safe_echo("❌ No Dataform project found (workflow_settings.yaml not found in root)")
 
-    # Search for Looker project (manifest.lkml)
+    # Search for Looker project (manifest.lkml or .lkml files)
     looker_path = find_file_in_tree("manifest.lkml")
+    if not looker_path:
+        # Also check for any .lkml files as indication of Looker project
+        for root, dirs, files in os.walk("."):
+            if any(f.endswith('.lkml') for f in files):
+                looker_path = os.path.relpath(root).replace("\\", "/")
+                break
+    
     if looker_path:
         safe_echo(f"✅ Found Looker project in: {looker_path}")
     else:
-        safe_echo("❌ No Looker project found (manifest.lkml not found)")
+        safe_echo("❌ No Looker project found (no .lkml files found)")
 
     return dataform_path, looker_path
 

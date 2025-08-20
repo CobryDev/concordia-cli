@@ -1,0 +1,18 @@
+connection:
+  dataform_credentials_file: "./config/dataform-creds.json"
+  project_id: "test-project"
+  location: "US"
+  datasets:
+    - "test_data"
+
+looker:
+  project_path: "."
+  views_path: "views/test.view.lkml"
+  connection: "test_connection"
+
+model_rules:
+  type_mapping:
+    - bq_type: "STRING"
+      lookml_type: "dimension"
+      lookml_params:
+        type: "string"

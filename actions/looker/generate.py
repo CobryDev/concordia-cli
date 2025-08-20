@@ -18,9 +18,19 @@ def generate_lookml():
     click.echo("🚀 Starting LookML generation...")
 
     try:
-        # Load configuration
-        click.echo("📋 Loading configuration...")
+        # Load and validate configuration
+        click.echo("📋 Loading and validating configuration...")
         config = load_config()
+
+        # Validate configuration with strict rules
+        from ..utils.config_validator import validate_config_strict
+        try:
+            config = validate_config_strict(config.to_dict())
+            click.echo("✅ Configuration validation passed")
+        except Exception as e:
+            click.echo(f"❌ Configuration validation failed: {e}")
+            click.echo("\nTip: Run 'concordia config validate --strict' to see detailed validation errors")
+            raise ConfigurationError(f"Invalid configuration: {e}") from e
 
         # Get BigQuery credentials and connection info
         click.echo("🔐 Setting up BigQuery connection...")
