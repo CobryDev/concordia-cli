@@ -81,11 +81,11 @@ def scan_for_projects():
     looker_path = find_file_in_tree("manifest.lkml")
     if not looker_path:
         # Also check for any .lkml files as indication of Looker project
-        for root, dirs, files in os.walk("."):
+        for root, _dirs, files in os.walk("."):
             if any(f.endswith('.lkml') for f in files):
                 looker_path = os.path.relpath(root).replace("\\", "/")
                 break
-    
+
     if looker_path:
         safe_echo(f"✅ Found Looker project in: {looker_path}")
     else:
