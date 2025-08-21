@@ -154,8 +154,7 @@ class TestGenerateCommandIntegration:
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
         mock_client_instance.get_tables_metadata.return_value = self.create_mock_bigquery_data()
-        mock_client_instance.get_error_tracker.return_value = Mock(
-            print_summary=Mock())
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
         # Create looker project directory
@@ -179,8 +178,7 @@ class TestGenerateCommandIntegration:
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
         mock_client_instance.get_tables_metadata.return_value = self.create_mock_bigquery_data()
-        mock_client_instance.get_error_tracker.return_value = Mock(
-            print_summary=Mock())
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
         # Create looker project directory
@@ -232,8 +230,7 @@ class TestGenerateCommandIntegration:
             }
         }
         mock_client_instance.get_tables_metadata.return_value = mock_data
-        mock_client_instance.get_error_tracker.return_value = Mock(
-            print_summary=Mock())
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
         # Create looker project directory
@@ -303,8 +300,7 @@ class TestGenerateCommandIntegration:
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
         mock_client_instance.get_tables_metadata.return_value = {}  # No tables
-        mock_client_instance.get_error_tracker.return_value = Mock(
-            print_summary=Mock())
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
         result = self.runner.invoke(cli, ["looker", "generate"])
@@ -323,8 +319,7 @@ class TestGenerateCommandIntegration:
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
         mock_client_instance.get_tables_metadata.return_value = self.create_mock_bigquery_data()
-        mock_client_instance.get_error_tracker.return_value = Mock(
-            print_summary=Mock())
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
         # Create read-only directory to cause write error
@@ -408,8 +403,7 @@ class TestGenerateCommandIntegration:
         mock_client_instance = Mock()
         mock_client_instance.test_connection.return_value = True
         mock_client_instance.get_tables_metadata.return_value = partial_data
-        mock_client_instance.get_error_tracker.return_value = Mock(
-            print_summary=Mock())
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
         Path("looker_project/views").mkdir(parents=True)
@@ -535,8 +529,7 @@ class TestGenerateFunctionUnit:
                 "columns": [],
             }
         }
-        mock_client_instance.get_error_tracker.return_value = Mock(
-            print_summary=Mock())
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
         mock_bq_client.return_value = mock_client_instance
 
         # Create output directory
@@ -578,5 +571,4 @@ class TestGenerateFunctionUnit:
 
                 # Check success message was printed
                 args = [call.args[0] for call in mock_echo.call_args_list]
-                assert any(
-                    "Successfully generated LookML project" in arg for arg in args)
+                assert any("Successfully generated LookML project" in arg for arg in args)

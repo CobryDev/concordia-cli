@@ -51,8 +51,7 @@ class LookMLGenerator:
         view_data = view_dict["view"][view_name]
 
         # Build LookMLView without connection/description (not included in base views)
-        lookml_view = LookMLView(
-            name=view_name, sql_table_name=view_data["sql_table_name"])
+        lookml_view = LookMLView(name=view_name, sql_table_name=view_data["sql_table_name"])
 
         # Bring over dimensions from the base view dict
         if "dimension" in view_data:
@@ -78,8 +77,7 @@ class LookMLGenerator:
                 for group_name, group_values in group_dict.items():
                     group_obj = DimensionGroup(
                         name=group_name,
-                        type=DimensionGroupType(
-                            group_values.get("type", "time")),
+                        type=DimensionGroupType(group_values.get("type", "time")),
                         sql=group_values.get("sql"),
                         description=group_values.get("description"),
                         timeframes=group_values.get("timeframes"),
@@ -92,8 +90,7 @@ class LookMLGenerator:
             lookml_view.additional_params.update({"set": view_data["set"]})
 
         # Generate measures and add them to the view
-        measures = self.measure_generator.generate_measures_for_view(
-            table_metadata)
+        measures = self.measure_generator.generate_measures_for_view(table_metadata)
 
         # Convert measure dictionaries to Measure objects
         from ..models.lookml import Measure, MeasureType
@@ -218,8 +215,7 @@ class LookMLFileWriter:
             # For any other file types, generate a new file name using views_path as base
             base_name = Path(self.looker_config.views_path).stem
             base_dir = Path(self.looker_config.views_path).parent
-            file_path = project_path / base_dir / \
-                f"{base_name}_{file_suffix}.view.lkml"
+            file_path = project_path / base_dir / f"{base_name}_{file_suffix}.view.lkml"
 
         # Create the directory structure if it doesn't exist
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -266,8 +262,7 @@ class LookMLFileWriter:
 
         # Write views file
         if "view" in project_dict:
-            views_file = self.write_lookml_dict_file(
-                {"view": project_dict["view"]}, "views")
+            views_file = self.write_lookml_dict_file({"view": project_dict["view"]}, "views")
             written_files.append(views_file)
 
         return written_files

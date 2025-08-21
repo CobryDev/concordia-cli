@@ -82,7 +82,7 @@ def scan_for_projects():
     if not looker_path:
         # Also check for any .lkml files as indication of Looker project
         for root, _dirs, files in os.walk("."):
-            if any(f.endswith('.lkml') for f in files):
+            if any(f.endswith(".lkml") for f in files):
                 looker_path = os.path.relpath(root).replace("\\", "/")
                 break
 

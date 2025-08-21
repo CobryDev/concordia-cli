@@ -38,25 +38,21 @@ def load_config_file(config_path: str = "concordia.yaml") -> dict[str, Any]:
     config_file = Path(config_path)
 
     if not config_file.exists():
-        raise ConfigValidationError(
-            f"Configuration file not found: {config_path}")
+        raise ConfigValidationError(f"Configuration file not found: {config_path}")
 
     try:
-        with open(config_file, encoding='utf-8') as f:
+        with open(config_file, encoding="utf-8") as f:
             config_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        raise ConfigValidationError(
-            f"Invalid YAML syntax in {config_path}: {e}") from e
+        raise ConfigValidationError(f"Invalid YAML syntax in {config_path}: {e}") from e
     except Exception as e:
         raise ConfigValidationError(f"Error reading {config_path}: {e}") from e
 
     if config_data is None:
-        raise ConfigValidationError(
-            f"Configuration file is empty: {config_path}")
+        raise ConfigValidationError(f"Configuration file is empty: {config_path}")
 
     if not isinstance(config_data, dict):
-        raise ConfigValidationError(
-            f"Configuration must be a YAML object, got {type(config_data).__name__}")
+        raise ConfigValidationError(f"Configuration must be a YAML object, got {type(config_data).__name__}")
 
     return config_data
 
@@ -85,34 +81,39 @@ def validate_config_strict(config_data: dict[str, Any]) -> ConcordiaConfig:
 
         # Check connection template values
         if config.connection.project_id in ["your-gcp-project-id", "your-project-id"]:
-            errors.append({
-                "location": "connection.project_id",
-                "message": "Please replace template project ID with your actual GCP project ID",
-                "input": config.connection.project_id,
-                "type": "template_value"
-            })
+            errors.append(
+                {
+                    "location": "connection.project_id",
+                    "message": "Please replace template project ID with your actual GCP project ID",
+                    "input": config.connection.project_id,
+                    "type": "template_value",
+                }
+            )
 
         if config.connection.location in ["your-region", "your-location"]:
-            errors.append({
-                "location": "connection.location",
-                "message": "Please replace template location with your actual BigQuery location",
-                "input": config.connection.location,
-                "type": "template_value"
-            })
+            errors.append(
+                {
+                    "location": "connection.location",
+                    "message": "Please replace template location with your actual BigQuery location",
+                    "input": config.connection.location,
+                    "type": "template_value",
+                }
+            )
 
         # Check Looker template values
         if config.looker.connection in ["your-bigquery-connection", "your_connection_name"]:
-            errors.append({
-                "location": "looker.connection",
-                "message": "Please replace template connection name with your actual Looker BigQuery connection name",
-                "input": config.looker.connection,
-                "type": "template_value"
-            })
+            errors.append(
+                {
+                    "location": "looker.connection",
+                    "message": "Please replace template connection name with your actual Looker BigQuery connection name",
+                    "input": config.looker.connection,
+                    "type": "template_value",
+                }
+            )
 
         if errors:
             raise ConfigValidationError(
-                f"Configuration has {len(errors)} template values that must be replaced",
-                errors
+                f"Configuration has {len(errors)} template values that must be replaced", errors
             )
 
         return config
@@ -121,16 +122,12 @@ def validate_config_strict(config_data: dict[str, Any]) -> ConcordiaConfig:
         error_details = []
         for error in e.errors():
             location = " -> ".join(str(loc) for loc in error["loc"])
-            error_details.append({
-                "location": location,
-                "message": error["msg"],
-                "input": error.get("input"),
-                "type": error["type"]
-            })
+            error_details.append(
+                {"location": location, "message": error["msg"], "input": error.get("input"), "type": error["type"]}
+            )
 
         raise ConfigValidationError(
-            f"Configuration validation failed with {len(error_details)} errors",
-            error_details
+            f"Configuration validation failed with {len(error_details)} errors", error_details
         ) from e
 
 
@@ -195,34 +192,29 @@ def _check_template_values(config: ConcordiaConfig) -> list[str]:
         creds_file = config.connection.dataform_credentials_file
         # Only warn about obvious template values, not actual file paths
         if creds_file in ["path/to/your/dataform-credentials.json"]:
-            warnings.append(
-                "connection.dataform_credentials_file: Using template value, replace with actual path")
+            warnings.append("connection.dataform_credentials_file: Using template value, replace with actual path")
         # For .df-credentials.json, only warn if the file doesn't exist
         elif creds_file == ".df-credentials.json" and not Path(creds_file).exists():
             warnings.append(
                 "connection.dataform_credentials_file: File '.df-credentials.json' not found. "
-                "Create the file or remove this setting to use Application Default Credentials.")
+                "Create the file or remove this setting to use Application Default Credentials."
+            )
 
     if config.connection.project_id in ["your-gcp-project-id", "your-project-id"]:
-        warnings.append(
-            "connection.project_id: Using template value, replace with actual GCP project ID")
+        warnings.append("connection.project_id: Using template value, replace with actual GCP project ID")
 
     if config.connection.location in ["your-region", "your-location"]:
-        warnings.append(
-            "connection.location: Using template value, replace with actual BigQuery location")
+        warnings.append("connection.location: Using template value, replace with actual BigQuery location")
 
     # Check Looker template values
     if config.looker.project_path in ["./looker-project", "path/to/your/looker/project"]:
-        warnings.append(
-            "looker.project_path: Using template value, replace with actual Looker project path")
+        warnings.append("looker.project_path: Using template value, replace with actual Looker project path")
 
     if config.looker.views_path in ["views/concordia_views.view.lkml"]:
-        warnings.append(
-            "looker.views_path: Using template value, consider customizing the views file path")
+        warnings.append("looker.views_path: Using template value, consider customizing the views file path")
 
     if config.looker.connection in ["your-bigquery-connection", "your_connection_name"]:
-        warnings.append(
-            "looker.connection: Using template value, replace with actual Looker connection name")
+        warnings.append("looker.connection: Using template value, replace with actual Looker connection name")
 
     return warnings
 
@@ -237,17 +229,19 @@ def _check_missing_paths(config: ConcordiaConfig) -> list[str]:
         creds_file = config.connection.dataform_credentials_file
         # Only warn about missing files if it's not an obvious template value
         # and not the common .df-credentials.json case (handled in template check)
-        if (not creds_path.exists() and
-            creds_file not in ["path/to/your/dataform-credentials.json", ".df-credentials.json"]):
+        if not creds_path.exists() and creds_file not in [
+            "path/to/your/dataform-credentials.json",
+            ".df-credentials.json",
+        ]:
             warnings.append(
                 f"connection.dataform_credentials_file: File not found: {creds_path}. "
-                "Create the file or remove this setting to use Application Default Credentials.")
+                "Create the file or remove this setting to use Application Default Credentials."
+            )
 
     # Check Looker project path
     looker_path = Path(config.looker.project_path)
     if not looker_path.exists():
-        warnings.append(
-            f"looker.project_path: Directory not found: {looker_path}")
+        warnings.append(f"looker.project_path: Directory not found: {looker_path}")
     # Note: manifest.lkml is not required for a valid Looker project
 
     return warnings
@@ -323,7 +317,7 @@ def validate_config_file(config_path: str = "concordia.yaml", strict: bool = Fal
                 "config": config,
                 "errors": [],
                 "warnings": [],
-                "message": "Configuration is valid and ready for use."
+                "message": "Configuration is valid and ready for use.",
             }
         else:
             # Lenient validation
@@ -340,13 +334,7 @@ def validate_config_file(config_path: str = "concordia.yaml", strict: bool = Fal
                 if warnings:
                     message += f" Also found {len(warnings)} warnings."
 
-            return {
-                "success": is_valid,
-                "config": config,
-                "errors": errors,
-                "warnings": warnings,
-                "message": message
-            }
+            return {"success": is_valid, "config": config, "errors": errors, "warnings": warnings, "message": message}
 
     except ConfigValidationError as e:
         return {
@@ -354,7 +342,7 @@ def validate_config_file(config_path: str = "concordia.yaml", strict: bool = Fal
             "config": None,
             "errors": [str(e)] + [err.get("message", str(err)) for err in e.errors],
             "warnings": [],
-            "message": f"Configuration validation failed: {e}"
+            "message": f"Configuration validation failed: {e}",
         }
     except Exception as e:
         return {
@@ -362,5 +350,5 @@ def validate_config_file(config_path: str = "concordia.yaml", strict: bool = Fal
             "config": None,
             "errors": [f"Unexpected error: {e}"],
             "warnings": [],
-            "message": f"Validation failed with unexpected error: {e}"
+            "message": f"Validation failed with unexpected error: {e}",
         }

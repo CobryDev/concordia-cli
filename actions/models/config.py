@@ -20,8 +20,8 @@ class ConnectionConfig(BaseModel):
 
     dataform_credentials_file: Optional[str] = Field(
         default=None,
-        description="Path to Dataform credentials JSON file. If not provided," +
-        "will use Google Application Default Credentials.",
+        description="Path to Dataform credentials JSON file. If not provided,"
+        + "will use Google Application Default Credentials.",
         examples=["./.df-credentials.json", "./path/to/credentials.json"],
     )
     project_id: Optional[str] = Field(
@@ -69,8 +69,7 @@ class ConnectionConfig(BaseModel):
 
         # Check file extension
         if path.suffix.lower() != ".json":
-            raise ValueError(
-                f"Dataform credentials file must be a .json file: {v}")
+            raise ValueError(f"Dataform credentials file must be a .json file: {v}")
 
         return str(path)
 
@@ -93,8 +92,7 @@ class ConnectionConfig(BaseModel):
             )
 
         if len(v) < 6 or len(v) > 30:
-            raise ValueError(
-                f"GCP project ID must be between 6 and 30 characters: {v}")
+            raise ValueError(f"GCP project ID must be between 6 and 30 characters: {v}")
 
         return v
 
@@ -160,8 +158,7 @@ class ConnectionConfig(BaseModel):
 
         for dataset in v:
             if not dataset.strip():
-                raise ValueError(
-                    "Dataset names cannot be empty or whitespace only")
+                raise ValueError("Dataset names cannot be empty or whitespace only")
 
             # Basic validation for BigQuery dataset naming rules
             if not dataset.replace("_", "").isalnum():
@@ -182,13 +179,11 @@ class LookerConfig(BaseModel):
 
     project_path: str = Field(
         description="Path to Looker project directory. Can be absolute or relative to concordia.yaml location.",
-        examples=["./looker-project",
-                  "../my-looker-project", "/path/to/looker"],
+        examples=["./looker-project", "../my-looker-project", "/path/to/looker"],
     )
     views_path: str = Field(
         description="Relative path within project for generated views file. Should end with .view.lkml",
-        examples=["views/concordia_views.view.lkml",
-                  "generated/bigquery_views.view.lkml"],
+        examples=["views/concordia_views.view.lkml", "generated/bigquery_views.view.lkml"],
     )
     connection: str = Field(
         description="Looker connection name that points to your BigQuery instance",
@@ -238,8 +233,7 @@ class LookerConfig(BaseModel):
 
         # Ensure it's a relative path (not absolute)
         if Path(v).is_absolute():
-            raise ValueError(
-                f"Views path must be relative to the Looker project directory: {v}")
+            raise ValueError(f"Views path must be relative to the Looker project directory: {v}")
 
         return v
 
@@ -257,8 +251,7 @@ class LookerConfig(BaseModel):
 
         # Basic validation for connection name format
         if not v.replace("_", "").replace("-", "").isalnum():
-            raise ValueError(
-                f"Invalid connection name '{v}'. Use only letters, numbers, underscores, and hyphens.")
+            raise ValueError(f"Invalid connection name '{v}'. Use only letters, numbers, underscores, and hyphens.")
 
         return v
 
@@ -339,15 +332,12 @@ class TypeMapping(BaseModel):
 
     bq_type: str = Field(
         description="BigQuery column type (as returned by INFORMATION_SCHEMA)",
-        examples=["STRING", "INTEGER", "TIMESTAMP", "DATE", "FLOAT64"]
+        examples=["STRING", "INTEGER", "TIMESTAMP", "DATE", "FLOAT64"],
     )
     lookml_type: str = Field(
-        description="Corresponding LookML field type",
-        examples=["dimension", "dimension_group", "measure"]
+        description="Corresponding LookML field type", examples=["dimension", "dimension_group", "measure"]
     )
-    lookml_params: LookMLParams = Field(
-        description="LookML field parameters and configuration for this type mapping"
-    )
+    lookml_params: LookMLParams = Field(description="LookML field parameters and configuration for this type mapping")
 
     @field_validator("lookml_type")
     @classmethod
@@ -355,8 +345,7 @@ class TypeMapping(BaseModel):
         """Validate LookML type."""
         valid_types = {"dimension", "dimension_group", "measure"}
         if v not in valid_types:
-            raise ValueError(
-                f"Invalid LookML type '{v}'. Must be one of: {', '.join(valid_types)}")
+            raise ValueError(f"Invalid LookML type '{v}'. Must be one of: {', '.join(valid_types)}")
         return v
 
 
@@ -369,15 +358,13 @@ class ModelRules(BaseModel):
 
     naming_conventions: NamingConventions = Field(
         default_factory=NamingConventions,
-        description="Database naming conventions for identifying primary/foreign keys"
+        description="Database naming conventions for identifying primary/foreign keys",
     )
     defaults: DefaultBehaviors = Field(
-        default_factory=DefaultBehaviors,
-        description="Default view generation behaviors (measures, field visibility)"
+        default_factory=DefaultBehaviors, description="Default view generation behaviors (measures, field visibility)"
     )
     type_mapping: list[TypeMapping] = Field(
-        description="BigQuery to LookML type mappings. At least one mapping is required.",
-        min_length=1
+        description="BigQuery to LookML type mappings. At least one mapping is required.", min_length=1
     )
 
     def get_type_mapping_for_bq_type(self, bq_type: str) -> Optional[TypeMapping]:
@@ -398,16 +385,12 @@ class ConcordiaConfig(BaseModel):
     connection: ConnectionConfig = Field(
         description="BigQuery connection configuration (credentials, project, datasets)"
     )
-    looker: LookerConfig = Field(
-        description="Looker project configuration (paths, connection name)"
-    )
-    model_rules: ModelRules = Field(
-        description="Model generation rules (naming conventions, type mappings)"
-    )
+    looker: LookerConfig = Field(description="Looker project configuration (paths, connection name)")
+    model_rules: ModelRules = Field(description="Model generation rules (naming conventions, type mappings)")
 
     model_config = {"extra": "forbid"}
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_config_consistency(self):
         """Validate cross-field dependencies and consistency."""
         # Check that Looker project path and views path work together
@@ -420,8 +403,7 @@ class ConcordiaConfig(BaseModel):
             try:
                 views_dir.mkdir(parents=True, exist_ok=True)
             except Exception as e:
-                raise ValueError(
-                    f"Cannot create views directory {views_dir}: {e}") from e
+                raise ValueError(f"Cannot create views directory {views_dir}: {e}") from e
 
         return self
 
