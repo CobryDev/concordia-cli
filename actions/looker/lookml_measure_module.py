@@ -9,6 +9,7 @@ from typing import Any
 
 from ..models.config import ConcordiaConfig
 from ..models.metadata import TableMetadata
+from .field_utils import FieldIdentifier
 
 
 class LookMLMeasureGenerator:
@@ -22,6 +23,8 @@ class LookMLMeasureGenerator:
             config: The loaded ConcordiaConfig object
         """
         self.config = config
+        self.model_rules = config.model_rules
+        self.field_identifier = FieldIdentifier(self.model_rules)
 
     def generate_measures_for_view(self, table_metadata: TableMetadata) -> list[dict[str, Any]]:
         """

@@ -139,13 +139,13 @@ class DimensionGroup(BaseModel):
         if self.label:
             result["label"] = self.label
         if self.timeframes:
-            result["timeframes"] = str(self.timeframes)
+            result["timeframes"] = self.timeframes
         if not self.convert_tz:
             result["convert_tz"] = "no"
         if self.datatype:
             result["datatype"] = self.datatype
         if self.intervals:
-            result["intervals"] = str(self.intervals)
+            result["intervals"] = self.intervals
 
         # Add any additional parameters
         result.update(self.additional_params)

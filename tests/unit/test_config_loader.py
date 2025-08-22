@@ -489,3 +489,375 @@ class TestConfigLoader:
             mock_load_dataform.assert_called_once_with(creds_path)
         finally:
             os.unlink(creds_path)
+
+    @patch("actions.looker.config_loader._load_dataform_credentials")
+    @patch("actions.looker.config_loader.default")
+    def test_get_bigquery_credentials_dataform_fallback_to_adc(self, mock_default, mock_load_dataform):
+        """Test get_bigquery_credentials falls back to ADC when dataform loading fails."""
+        # Mock dataform credentials loading to fail
+        mock_load_dataform.side_effect = Exception("Failed to load dataform credentials")
+
+        # Mock successful ADC
+        mock_credentials = Mock()
+        mock_default.return_value = (mock_credentials, "adc-project")
+
+        # Create a temporary credentials file
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({"projectId": "test"}, f)
+            creds_path = f.name
+
+        try:
+            config = ConcordiaConfig(
+                connection=ConnectionConfig(
+                    dataform_credentials_file=creds_path,
+                    project_id="config-project",
+                    datasets=["test"],
+                ),
+                looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
+                model_rules=ModelRules(
+                    naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                    defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                    type_mapping=[
+                        TypeMapping(
+                            bq_type="STRING",
+                            lookml_type="dimension",
+                            lookml_params=LookMLParams(type="string"),
+                        )
+                    ],
+                ),
+            )
+
+            # Should fall back to ADC and use project_id from config
+            credentials, project_id = get_bigquery_credentials(config)
+
+            assert credentials == mock_credentials
+            assert project_id == "config-project"
+            mock_load_dataform.assert_called_once_with(creds_path)
+            mock_default.assert_called_once()
+        finally:
+            os.unlink(creds_path)
+
+    @patch("actions.looker.config_loader.default")
+    def test_get_bigquery_credentials_missing_dataform_file_fallback(self, mock_default):
+        """Test get_bigquery_credentials falls back to ADC when dataform file is missing."""
+        # Mock successful ADC
+        mock_credentials = Mock()
+        mock_default.return_value = (mock_credentials, "adc-project")
+
+        config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                project_id="config-project",
+                datasets=["test"],
+            ),
+            looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    )
+                ],
+            ),
+        )
+
+        # Manually set the non-existent file path after creation to bypass validation
+        config.connection.dataform_credentials_file = "./non-existent-file.json"
+
+        # Should fall back to ADC since file doesn't exist
+        credentials, project_id = get_bigquery_credentials(config)
+
+        assert credentials == mock_credentials
+        assert project_id == "config-project"
+        mock_default.assert_called_once()
+
+    @patch("actions.looker.config_loader.default")
+    def test_get_bigquery_credentials_adc_failure(self, mock_default):
+        """Test get_bigquery_credentials raises error when ADC fails."""
+        # Mock ADC failure
+        mock_default.side_effect = Exception("ADC not configured")
+
+        config = ConcordiaConfig(
+            connection=ConnectionConfig(
+                project_id="config-project",
+                datasets=["test"],
+            ),
+            looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    )
+                ],
+            ),
+        )
+
+        with pytest.raises(ConfigurationError) as exc_info:
+            get_bigquery_credentials(config)
+
+        assert "Failed to obtain Google credentials" in str(exc_info.value)
+        assert "gcloud auth application-default login" in str(exc_info.value)
+
+
+class TestDataformCredentialsEdgeCases:
+    """Test edge cases and malformed credentials files."""
+
+    def test_parse_dataform_config_malformed_json(self):
+        """Test _parse_dataform_config with malformed JSON."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write('{"invalid": json, content}')
+            creds_path = f.name
+
+        try:
+            with pytest.raises(json.JSONDecodeError):
+                _parse_dataform_config(creds_path)
+        finally:
+            os.unlink(creds_path)
+
+    def test_load_dataform_credentials_malformed_credentials_string(self):
+        """Test _load_dataform_credentials with malformed credentials JSON string."""
+        # Service account format with malformed credentials string
+        creds_data = {"credentials": '{"type": "service_account", invalid json}'}
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(creds_data, f)
+            creds_path = f.name
+
+        try:
+            with pytest.raises(ConfigurationError) as exc_info:
+                _load_dataform_credentials(creds_path)
+
+            assert "Invalid 'credentials' JSON string" in str(exc_info.value)
+        finally:
+            os.unlink(creds_path)
+
+    @patch("actions.looker.config_loader.service_account")
+    def test_load_dataform_credentials_service_account_string_format(self, mock_service_account):
+        """Test _load_dataform_credentials with service account credentials as JSON string."""
+        # Mock service account credentials
+        mock_credentials = Mock()
+        mock_service_account.Credentials.from_service_account_info.return_value = mock_credentials
+
+        # Service account format with credentials as JSON string
+        service_account_data = {
+            "type": "service_account",
+            "project_id": "test-project-string",
+            "private_key_id": "key_id",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nfake_key\n-----END PRIVATE KEY-----\n",
+            "client_email": "test@test-project-string.iam.gserviceaccount.com",
+            "client_id": "12345",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+        }
+
+        creds_data = {"credentials": json.dumps(service_account_data)}
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(creds_data, f)
+            creds_path = f.name
+
+        try:
+            credentials, project_id = _load_dataform_credentials(creds_path)
+
+            assert credentials == mock_credentials
+            assert project_id == "test-project-string"
+            mock_service_account.Credentials.from_service_account_info.assert_called_once_with(service_account_data)
+        finally:
+            os.unlink(creds_path)
+
+    def test_load_dataform_credentials_empty_file(self):
+        """Test _load_dataform_credentials with empty JSON file."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write("{}")
+            creds_path = f.name
+
+        try:
+            with pytest.raises(ConfigurationError) as exc_info:
+                _load_dataform_credentials(creds_path)
+
+            assert "Invalid credentials file format" in str(exc_info.value)
+        finally:
+            os.unlink(creds_path)
+
+    def test_load_dataform_credentials_null_file(self):
+        """Test _load_dataform_credentials with null JSON content."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write("null")
+            creds_path = f.name
+
+        try:
+            with pytest.raises(ConfigurationError) as exc_info:
+                _load_dataform_credentials(creds_path)
+
+            # This will fail during _parse_dataform_config when trying to access keys
+            assert "credentials" in str(exc_info.value) or "projectId" in str(exc_info.value)
+        finally:
+            os.unlink(creds_path)
+
+    @pytest.mark.parametrize(
+        "invalid_creds_data,expected_error_substring",
+        [
+            # Missing both credentials and projectId
+            ({"some_other_field": "value"}, "Invalid credentials file format"),
+            # credentials field but missing project_id
+            ({"credentials": {"type": "service_account", "client_email": "test@example.com"}}, "No 'project_id' found"),
+            # Empty credentials object
+            ({"credentials": {}}, "No 'project_id' found"),
+            # projectId present but null/empty
+            ({"projectId": ""}, "Failed to load Application Default Credentials"),
+            ({"projectId": None}, "Failed to load Application Default Credentials"),
+        ],
+    )
+    @patch("actions.looker.config_loader.default")
+    @patch("actions.looker.config_loader.service_account")
+    def test_load_dataform_credentials_various_invalid_formats(
+        self, mock_service_account, mock_default, invalid_creds_data, expected_error_substring
+    ):
+        """Test _load_dataform_credentials with various invalid credential formats."""
+        # Setup mocks
+        mock_credentials = Mock()
+        mock_service_account.Credentials.from_service_account_info.return_value = mock_credentials
+        mock_default.side_effect = Exception("ADC not configured")
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(invalid_creds_data, f)
+            creds_path = f.name
+
+        try:
+            with pytest.raises(ConfigurationError) as exc_info:
+                _load_dataform_credentials(creds_path)
+
+            assert expected_error_substring in str(exc_info.value)
+        finally:
+            os.unlink(creds_path)
+
+
+class TestLocationExtraction:
+    """Test location extraction edge cases."""
+
+    def test_get_bigquery_location_malformed_credentials_file(self):
+        """Test get_bigquery_location handles malformed credentials file gracefully."""
+        # Create malformed credentials file
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write('{"invalid": json}')
+            creds_path = f.name
+
+        try:
+            config = ConcordiaConfig(
+                connection=ConnectionConfig(dataform_credentials_file=creds_path, datasets=["test"]),
+                looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
+                model_rules=ModelRules(
+                    naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                    defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                    type_mapping=[
+                        TypeMapping(
+                            bq_type="STRING",
+                            lookml_type="dimension",
+                            lookml_params=LookMLParams(type="string"),
+                        )
+                    ],
+                ),
+            )
+
+            # Should return None and not crash
+            location = get_bigquery_location(config)
+            assert location is None
+        finally:
+            os.unlink(creds_path)
+
+    def test_get_bigquery_location_missing_credentials_file(self):
+        """Test get_bigquery_location handles missing credentials file gracefully."""
+        config = ConcordiaConfig(
+            connection=ConnectionConfig(datasets=["test"]),
+            looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    )
+                ],
+            ),
+        )
+
+        # Manually set the non-existent file path after creation to bypass validation
+        config.connection.dataform_credentials_file = "./non-existent.json"
+
+        # Should return None and not crash
+        location = get_bigquery_location(config)
+        assert location is None
+
+    def test_get_bigquery_location_config_overrides_credentials(self):
+        """Test get_bigquery_location prefers config location over credentials file."""
+        # Create credentials file with location
+        creds_data = {"projectId": "test-project", "location": "EU"}
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(creds_data, f)
+            creds_path = f.name
+
+        try:
+            config = ConcordiaConfig(
+                connection=ConnectionConfig(
+                    dataform_credentials_file=creds_path,
+                    location="US",  # Should override the EU from credentials
+                    datasets=["test"],
+                ),
+                looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
+                model_rules=ModelRules(
+                    naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                    defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                    type_mapping=[
+                        TypeMapping(
+                            bq_type="STRING",
+                            lookml_type="dimension",
+                            lookml_params=LookMLParams(type="string"),
+                        )
+                    ],
+                ),
+            )
+
+            location = get_bigquery_location(config)
+            assert location == "US"  # Config should override credentials file
+        finally:
+            os.unlink(creds_path)
+
+    def test_get_bigquery_location_credentials_file_no_location(self):
+        """Test get_bigquery_location with credentials file that has no location."""
+        # Create credentials file without location
+        creds_data = {"projectId": "test-project"}
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(creds_data, f)
+            creds_path = f.name
+
+        try:
+            config = ConcordiaConfig(
+                connection=ConnectionConfig(dataform_credentials_file=creds_path, datasets=["test"]),
+                looker=LookerConfig(project_path="./test", views_path="test.lkml", connection="test"),
+                model_rules=ModelRules(
+                    naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                    defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                    type_mapping=[
+                        TypeMapping(
+                            bq_type="STRING",
+                            lookml_type="dimension",
+                            lookml_params=LookMLParams(type="string"),
+                        )
+                    ],
+                ),
+            )
+
+            location = get_bigquery_location(config)
+            assert location is None
+        finally:
+            os.unlink(creds_path)

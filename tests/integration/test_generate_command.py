@@ -199,6 +199,69 @@ class TestGenerateCommandIntegration:
         assert "view: orders {" in views_content
         assert "sql_table_name:" in views_content
 
+    @patch("actions.looker.generate.BigQueryClient")
+    @patch("actions.looker.generate.get_bigquery_credentials")
+    @patch("actions.looker.generate.get_bigquery_location")
+    def test_dimension_group_timeframes_use_double_quotes(self, mock_location, mock_creds, mock_bq_client):
+        """Test that dimension group timeframes use double quotes in LookML output."""
+        # Mock BigQuery setup
+        mock_creds.return_value = (Mock(), "test-project")
+        mock_location.return_value = "US"
+
+        # Create mock data with timestamp column for dimension group
+        mock_client_instance = Mock()
+        mock_client_instance.test_connection.return_value = True
+        mock_data = {
+            "test_dataset.timestamp_table": {
+                "table_id": "timestamp_table",
+                "dataset_id": "test_dataset",
+                "project_id": "test-project",
+                "table_description": "Table with timestamp for testing",
+                "columns": [
+                    {
+                        "name": "created_at",
+                        "type": "TIMESTAMP",
+                        "standardized_type": "TIMESTAMP",
+                        "description": "Creation timestamp",
+                        "is_nullable": True,
+                        "is_primary_key": False,
+                    }
+                ],
+            }
+        }
+        mock_client_instance.get_tables_metadata.return_value = mock_data
+        mock_client_instance.get_error_tracker.return_value = Mock(print_summary=Mock())
+        mock_bq_client.return_value = mock_client_instance
+
+        # Create looker project directory
+        Path("looker_project/views").mkdir(parents=True)
+
+        result = self.runner.invoke(cli, ["looker", "generate"])
+
+        # Debug: print output if test fails
+        if result.exit_code != 0:
+            print(f"Command failed with exit code {result.exit_code}")
+            print(f"Output: {result.output}")
+            print(f"Exception: {result.exception}")
+
+        assert result.exit_code == 0
+
+        # Check that output files were created
+        views_file = Path("looker_project/views/generated_views.view.lkml")
+        assert views_file.exists()
+
+        # Check file contents for proper timeframes format
+        views_content = views_file.read_text()
+
+        # Verify timeframes are unquoted (correct LookML format), not single-quoted
+        assert "raw," in views_content  # unquoted timeframes
+        assert "time," in views_content
+        assert "date," in views_content
+        # Ensure single quotes are NOT used for timeframes
+        assert "'raw'" not in views_content
+        assert "'time'" not in views_content
+        assert "'date'" not in views_content
+
     def test_generate_command_missing_config_file(self):
         """Test generate command when concordia.yaml is missing."""
         os.remove("concordia.yaml")
@@ -395,7 +458,9 @@ class TestGenerateFunctionUnit:
             ConcordiaConfig,
             ConnectionConfig,
             LookerConfig,
+            LookMLParams,
             ModelRules,
+            TypeMapping,
         )
 
         mock_config = ConcordiaConfig(
@@ -405,7 +470,15 @@ class TestGenerateFunctionUnit:
                 views_path="views/test.view.lkml",
                 connection="test-connection",
             ),
-            model_rules=ModelRules(type_mapping=[]),
+            model_rules=ModelRules(
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    )
+                ]
+            ),
         )
         mock_load_config.return_value = mock_config
         mock_creds.side_effect = Exception("Credentials error")
@@ -433,8 +506,10 @@ class TestGenerateFunctionUnit:
             ConnectionConfig,
             DefaultBehaviors,
             LookerConfig,
+            LookMLParams,
             ModelRules,
             NamingConventions,
+            TypeMapping,
         )
 
         # Create a proper ConcordiaConfig object
@@ -448,7 +523,13 @@ class TestGenerateFunctionUnit:
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(pk_suffix="_pk"),
                 defaults=DefaultBehaviors(measures=["count"]),
-                type_mapping=[],
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    )
+                ],
             ),
         )
 

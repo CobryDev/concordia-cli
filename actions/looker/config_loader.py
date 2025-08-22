@@ -142,6 +142,13 @@ def _load_dataform_credentials(creds_path: str) -> tuple:
     """
     dataform_config = _parse_dataform_config(creds_path)
 
+    # Handle null or invalid config
+    if not isinstance(dataform_config, dict):
+        raise ConfigurationError(
+            "Invalid credentials file format. Expected a JSON object with either 'credentials' "
+            "section (service account) or 'projectId' field (simple format)."
+        )
+
     # Format 1: Service account credentials with nested 'credentials' key
     if "credentials" in dataform_config:
         creds_data = dataform_config["credentials"]
