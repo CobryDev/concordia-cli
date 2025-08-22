@@ -458,7 +458,9 @@ class TestGenerateFunctionUnit:
             ConcordiaConfig,
             ConnectionConfig,
             LookerConfig,
+            LookMLParams,
             ModelRules,
+            TypeMapping,
         )
 
         mock_config = ConcordiaConfig(
@@ -468,7 +470,15 @@ class TestGenerateFunctionUnit:
                 views_path="views/test.view.lkml",
                 connection="test-connection",
             ),
-            model_rules=ModelRules(type_mapping=[]),
+            model_rules=ModelRules(
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    )
+                ]
+            ),
         )
         mock_load_config.return_value = mock_config
         mock_creds.side_effect = Exception("Credentials error")
@@ -496,8 +506,10 @@ class TestGenerateFunctionUnit:
             ConnectionConfig,
             DefaultBehaviors,
             LookerConfig,
+            LookMLParams,
             ModelRules,
             NamingConventions,
+            TypeMapping,
         )
 
         # Create a proper ConcordiaConfig object
@@ -511,7 +523,13 @@ class TestGenerateFunctionUnit:
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(pk_suffix="_pk"),
                 defaults=DefaultBehaviors(measures=["count"]),
-                type_mapping=[],
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    )
+                ],
             ),
         )
 

@@ -11,6 +11,7 @@ from typing import Any, Optional
 
 import yaml
 from pydantic import ValidationError
+from pydantic_core import ErrorDetails
 
 from ..models.config import ConcordiaConfig
 
@@ -105,9 +106,21 @@ def validate_config_strict(config_data: dict[str, Any]) -> ConcordiaConfig:
             errors.append(
                 {
                     "location": "looker.connection",
-                    "message": "Please replace template connection name with your actual Looker BigQuery connection name",
+                    "message": "Please replace template connection name with your actual "
+                    "Looker BigQuery connection name",
                     "input": config.looker.connection,
                     "type": "template_value",
+                }
+            )
+
+        # Check for empty type_mapping in strict mode
+        if not config.model_rules.type_mapping:
+            errors.append(
+                {
+                    "location": "model_rules.type_mapping",
+                    "message": "At least one type mapping is required for LookML generation",
+                    "input": "[]",
+                    "type": "missing_required_data",
                 }
             )
 
@@ -146,8 +159,8 @@ def validate_config_lenient(config_data: dict[str, Any]) -> tuple[bool, list[str
         - warnings: List of warning messages (template values, missing files)
         - errors: List of error messages (structural issues)
     """
-    errors = []
-    warnings = []
+    errors: list[str] = []
+    warnings: list[str] = []
 
     try:
         # Try to create the config, but catch validation errors
@@ -247,13 +260,13 @@ def _check_missing_paths(config: ConcordiaConfig) -> list[str]:
     return warnings
 
 
-def _is_template_value_error(error: dict[str, Any]) -> bool:
+def _is_template_value_error(error: ErrorDetails) -> bool:
     """Check if validation error is due to template values."""
     message = error.get("msg", "").lower()
     return "template" in message or "replace" in message
 
 
-def _is_missing_file_error(error: dict[str, Any]) -> bool:
+def _is_missing_file_error(error: ErrorDetails) -> bool:
     """Check if validation error is due to missing files."""
     message = error.get("msg", "").lower()
     return "not found" in message or "does not exist" in message
