@@ -191,12 +191,9 @@ class TestValidateConfigStrict:
             with pytest.raises(ConfigValidationError) as exc_info:
                 validate_config_strict(config_data)
 
-            assert "template values that must be replaced" in str(
-                exc_info.value)
-            assert "connection.project_id" in str(
-                exc_info.value.errors[0]["location"])
-            assert "template project ID" in str(
-                exc_info.value.errors[0]["message"])
+            assert "template values that must be replaced" in str(exc_info.value)
+            assert "connection.project_id" in str(exc_info.value.errors[0]["location"])
+            assert "template project ID" in str(exc_info.value.errors[0]["message"])
         else:
             # Should succeed
             config = validate_config_strict(config_data)
@@ -241,12 +238,9 @@ class TestValidateConfigStrict:
             with pytest.raises(ConfigValidationError) as exc_info:
                 validate_config_strict(config_data)
 
-            assert "template values that must be replaced" in str(
-                exc_info.value)
-            assert "connection.location" in str(
-                exc_info.value.errors[0]["location"])
-            assert "template location" in str(
-                exc_info.value.errors[0]["message"])
+            assert "template values that must be replaced" in str(exc_info.value)
+            assert "connection.location" in str(exc_info.value.errors[0]["location"])
+            assert "template location" in str(exc_info.value.errors[0]["message"])
         else:
             # Should succeed
             config = validate_config_strict(config_data)
@@ -287,12 +281,9 @@ class TestValidateConfigStrict:
             with pytest.raises(ConfigValidationError) as exc_info:
                 validate_config_strict(config_data)
 
-            assert "template values that must be replaced" in str(
-                exc_info.value)
-            assert "looker.connection" in str(
-                exc_info.value.errors[0]["location"])
-            assert "template connection" in str(
-                exc_info.value.errors[0]["message"])
+            assert "template values that must be replaced" in str(exc_info.value)
+            assert "looker.connection" in str(exc_info.value.errors[0]["location"])
+            assert "template connection" in str(exc_info.value.errors[0]["message"])
         else:
             # Should succeed
             config = validate_config_strict(config_data)
@@ -318,10 +309,8 @@ class TestValidateConfigStrict:
             validate_config_strict(config_data)
 
         assert "template values that must be replaced" in str(exc_info.value)
-        assert "model_rules.type_mapping" in str(
-            exc_info.value.errors[0]["location"])
-        assert "At least one type mapping is required" in str(
-            exc_info.value.errors[0]["message"])
+        assert "model_rules.type_mapping" in str(exc_info.value.errors[0]["location"])
+        assert "At least one type mapping is required" in str(exc_info.value.errors[0]["message"])
 
     def test_validate_config_strict_multiple_errors(self):
         """Test strict validation collects multiple template value errors."""
@@ -350,8 +339,7 @@ class TestValidateConfigStrict:
         assert len(exc_info.value.errors) == 4
 
         # Check all expected errors are present
-        error_locations = [error["location"]
-                           for error in exc_info.value.errors]
+        error_locations = [error["location"] for error in exc_info.value.errors]
         assert "connection.project_id" in error_locations
         assert "connection.location" in error_locations
         assert "looker.connection" in error_locations
@@ -565,8 +553,7 @@ class TestCheckTemplateFunctions:
                 dataform_credentials_file="path/to/your/dataform-credentials.json",
                 datasets=["test"],
             ),
-            looker=LookerConfig(project_path="./test",
-                                views_path="test.view.lkml", connection="test"),
+            looker=LookerConfig(project_path="./test", views_path="test.view.lkml", connection="test"),
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(),
                 defaults=DefaultBehaviors(),
@@ -588,10 +575,8 @@ class TestCheckTemplateFunctions:
     def test_check_template_values_missing_df_credentials(self):
         """Test _check_template_values warns about missing .df-credentials.json."""
         config = ConcordiaConfig(
-            connection=ConnectionConfig(
-                dataform_credentials_file=".df-credentials.json", datasets=["test"]),
-            looker=LookerConfig(project_path="./test",
-                                views_path="test.view.lkml", connection="test"),
+            connection=ConnectionConfig(dataform_credentials_file=".df-credentials.json", datasets=["test"]),
+            looker=LookerConfig(project_path="./test", views_path="test.view.lkml", connection="test"),
             model_rules=ModelRules(
                 naming_conventions=NamingConventions(),
                 defaults=DefaultBehaviors(),
@@ -622,8 +607,7 @@ class TestCheckTemplateFunctions:
                     dataform_credentials_file=".df-credentials.json",
                     datasets=["test"],
                 ),
-                looker=LookerConfig(
-                    project_path="./test", views_path="test.view.lkml", connection="test"),
+                looker=LookerConfig(project_path="./test", views_path="test.view.lkml", connection="test"),
                 model_rules=ModelRules(
                     naming_conventions=NamingConventions(),
                     defaults=DefaultBehaviors(),
@@ -652,8 +636,7 @@ class TestCheckTemplateFunctions:
 
             config = ConcordiaConfig(
                 connection=ConnectionConfig(datasets=["test"]),
-                looker=LookerConfig(
-                    project_path="./test", views_path="test.view.lkml", connection="test"),
+                looker=LookerConfig(project_path="./test", views_path="test.view.lkml", connection="test"),
                 model_rules=ModelRules(
                     naming_conventions=NamingConventions(),
                     defaults=DefaultBehaviors(),
@@ -925,8 +908,7 @@ class TestUtilityFunctions:
     def test_format_validation_errors_with_errors(self):
         """Test format_validation_errors with actual errors."""
         errors = [
-            {"location": "connection.project_id",
-                "message": "Template value detected"},
+            {"location": "connection.project_id", "message": "Template value detected"},
             {"location": "looker.connection", "message": "Invalid connection name"},
         ]
 
