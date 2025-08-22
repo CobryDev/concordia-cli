@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "concordia-cli"
-version = "0.1.1"
+version = "0.2.0"
 description = "Concordia CLI - Generate LookML from BigQuery using Looker & Dataform"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -32,13 +36,6 @@ dependencies = [
   "pandas-gbq>=0.19.0",
   "pydantic>=2.0.0",
   "ruamel.yaml>=0.17.0",
-  "mypy>=1.17.1",
-  "pytest>=8.4.1",
-  "pytest-cov>=6.2.1",
-  "pytest-mock>=3.14.1",
-  "pandas-stubs>=2.2.2.240807",
-  "nox>=2025.5.1",
-  "types-pyopenssl>=24.1.0.20240722",
   "tomli>=2.2.1",
 ]
 
@@ -96,4 +93,11 @@ line-ending = "auto"
 [dependency-groups]
 dev = [
     "ruff>=0.12.9",
+    "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
+    "pandas-stubs>=2.2.2.240807",
+    "nox>=2025.5.1",
+    "types-pyopenssl>=24.1.0.20240722",
 ]
