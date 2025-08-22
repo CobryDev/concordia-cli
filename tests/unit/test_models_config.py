@@ -117,7 +117,8 @@ class TestConnectionConfig:
     def test_project_id_validator_template_values(self):
         """Test project ID validator allows template values."""
         for template_id in ["your-gcp-project-id", "your-project-id"]:
-            config = ConnectionConfig(project_id=template_id, datasets=["test"])
+            config = ConnectionConfig(
+                project_id=template_id, datasets=["test"])
             assert config.project_id == template_id
 
     def test_project_id_validator_valid_ids(self):
@@ -169,7 +170,8 @@ class TestConnectionConfig:
     def test_location_validator_template_values(self):
         """Test location validator allows template values."""
         for template_location in ["your-region", "your-location"]:
-            config = ConnectionConfig(location=template_location, datasets=["test"])
+            config = ConnectionConfig(
+                location=template_location, datasets=["test"])
             assert config.location == template_location
 
     def test_location_validator_valid_locations(self):
@@ -228,7 +230,8 @@ class TestConnectionConfig:
         for datasets in invalid_datasets:
             with pytest.raises(ValidationError) as exc_info:
                 ConnectionConfig(datasets=datasets)
-            assert "must contain only letters, numbers, and underscores" in str(exc_info.value)
+            assert "must contain only letters, numbers, and underscores" in str(
+                exc_info.value)
 
     def test_datasets_validator_valid_names(self):
         """Test datasets validator accepts valid dataset names."""
@@ -387,10 +390,23 @@ class TestLookerConfig:
 
     def test_views_path_validator_absolute_path(self):
         """Test views path validator rejects absolute paths."""
+        import platform
+        from pathlib import Path
+
+        # Use appropriate absolute path for the current platform
+        if platform.system() == "Windows":
+            absolute_path = "C:\\absolute\\path\\views.view.lkml"
+        else:
+            absolute_path = "/absolute/path/views.view.lkml"
+
+        # Verify our test path is actually absolute on this platform
+        assert Path(absolute_path).is_absolute(
+        ), f"Test path {absolute_path} should be absolute on {platform.system()}"
+
         with pytest.raises(ValidationError) as exc_info:
             LookerConfig(
                 project_path="./test",
-                views_path="/absolute/path/views.view.lkml",
+                views_path=absolute_path,
                 connection="test_conn",
             )
         assert "must be relative" in str(exc_info.value)
@@ -453,7 +469,8 @@ class TestLookerConfig:
                     views_path="views/test.view.lkml",
                     connection=name,
                 )
-            assert "Use only letters, numbers, underscores, and hyphens" in str(exc_info.value)
+            assert "Use only letters, numbers, underscores, and hyphens" in str(
+                exc_info.value)
 
 
 class TestTypeMapping:
@@ -497,7 +514,8 @@ class TestTypeMapping:
                     lookml_type=invalid_type,
                     lookml_params=params,
                 )
-            assert f"Invalid LookML type '{invalid_type}'" in str(exc_info.value)
+            assert f"Invalid LookML type '{invalid_type}'" in str(
+                exc_info.value)
 
 
 class TestModelRules:
@@ -609,7 +627,8 @@ class TestConcordiaConfig:
 
         assert recreated_config.connection.datasets == config.connection.datasets
         assert recreated_config.looker.project_path == config.looker.project_path
-        assert len(recreated_config.model_rules.type_mapping) == len(config.model_rules.type_mapping)
+        assert len(recreated_config.model_rules.type_mapping) == len(
+            config.model_rules.type_mapping)
 
     def test_validate_config_consistency_existing_looker_path(self):
         """Test model validator with existing Looker project path."""
