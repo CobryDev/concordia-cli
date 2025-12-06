@@ -5,7 +5,9 @@ Unit tests for the lookml_generator module.
 import os
 import tempfile
 
-from actions.looker.lookml_generator import LookMLFileWriter
+import pytest
+
+from actions.looker.lookml_generator import DuplicateViewNameError, LookMLFileWriter, LookMLGenerator
 from actions.models.config import (
     ConcordiaConfig,
     ConnectionConfig,
@@ -16,6 +18,7 @@ from actions.models.config import (
     NamingConventions,
     TypeMapping,
 )
+from actions.models.metadata import ColumnMetadata, MetadataCollection, TableMetadata
 
 
 class TestLookMLGenerator:
@@ -23,19 +26,137 @@ class TestLookMLGenerator:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.config = {
-            "looker": {
-                "project_path": "./test_looker",
-                "views_path": "views/test.view.lkml",
-                "connection": "test_connection",
-            },
-            "model_rules": {
-                "naming_conventions": {
-                    "view_prefix": "",
-                    "view_suffix": "",
-                }
-            },
-        }
+        self.config = ConcordiaConfig(
+            connection=ConnectionConfig(project_id="test-project", datasets=["test"]),
+            looker=LookerConfig(
+                project_path="./test_looker",
+                views_path="views/test.view.lkml",
+                connection="test_connection",
+            ),
+            model_rules=ModelRules(
+                naming_conventions=NamingConventions(pk_suffix="_pk", fk_suffix="_fk"),
+                defaults=DefaultBehaviors(measures=["count"], hide_fields_by_suffix=["_pk"]),
+                type_mapping=[
+                    TypeMapping(
+                        bq_type="STRING",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="string"),
+                    ),
+                    TypeMapping(
+                        bq_type="INTEGER",
+                        lookml_type="dimension",
+                        lookml_params=LookMLParams(type="number"),
+                    ),
+                ],
+            ),
+        )
+
+    def test_generate_complete_lookml_project_raises_error_on_duplicate_view_names(self):
+        """Test that duplicate view names raise DuplicateViewNameError with details."""
+        generator = LookMLGenerator(self.config)
+
+        # Create two tables with the same table_id but different dataset_ids
+        table1 = TableMetadata(
+            table_id="users",
+            dataset_id="dataset1",
+            project_id="test-project",
+            columns=[
+                ColumnMetadata(
+                    name="id",
+                    type="INTEGER",
+                    standardized_type="INTEGER",
+                    is_primary_key=True,
+                ),
+                ColumnMetadata(
+                    name="email",
+                    type="STRING",
+                    standardized_type="STRING",
+                ),
+            ],
+        )
+
+        table2 = TableMetadata(
+            table_id="users",
+            dataset_id="dataset2",
+            project_id="test-project",
+            columns=[
+                ColumnMetadata(
+                    name="id",
+                    type="INTEGER",
+                    standardized_type="INTEGER",
+                    is_primary_key=True,
+                ),
+                ColumnMetadata(
+                    name="name",
+                    type="STRING",
+                    standardized_type="STRING",
+                ),
+            ],
+        )
+
+        # Create metadata collection
+        metadata_collection = MetadataCollection(
+            tables={
+                "dataset1.users": table1,
+                "dataset2.users": table2,
+            }
+        )
+
+        # Generate project should raise DuplicateViewNameError
+        with pytest.raises(DuplicateViewNameError) as exc_info:
+            generator.generate_complete_lookml_project(metadata_collection)
+
+        # Verify error details
+        error = exc_info.value
+        assert error.view_name == "users"
+        assert len(error.conflicting_tables) == 2
+
+        # Verify error message contains table information
+        error_message = str(error)
+        assert "users" in error_message
+        assert "test-project.dataset1.users" in error_message
+        assert "test-project.dataset2.users" in error_message
+        assert "view_prefix" in error_message or "view_suffix" in error_message
+
+    def test_generate_complete_lookml_project_raises_error_on_triple_duplicate_view_names(self):
+        """Test that three tables with same table_id raise error with all conflicting tables."""
+        generator = LookMLGenerator(self.config)
+
+        # Create three tables with the same table_id but different dataset_ids
+        tables = []
+        for dataset_id in ["dataset1", "dataset2", "dataset3"]:
+            table = TableMetadata(
+                table_id="orders",
+                dataset_id=dataset_id,
+                project_id="test-project",
+                columns=[
+                    ColumnMetadata(
+                        name="id",
+                        type="INTEGER",
+                        standardized_type="INTEGER",
+                        is_primary_key=True,
+                    ),
+                ],
+            )
+            tables.append((f"{dataset_id}.orders", table))
+
+        # Create metadata collection
+        metadata_collection = MetadataCollection(tables=dict(tables))
+
+        # Generate project should raise DuplicateViewNameError
+        with pytest.raises(DuplicateViewNameError) as exc_info:
+            generator.generate_complete_lookml_project(metadata_collection)
+
+        # Verify error details
+        error = exc_info.value
+        assert error.view_name == "orders"
+        assert len(error.conflicting_tables) == 3
+
+        # Verify all three tables are in the error message
+        error_message = str(error)
+        assert "test-project.dataset1.orders" in error_message
+        assert "test-project.dataset2.orders" in error_message
+        assert "test-project.dataset3.orders" in error_message
 
 
 class TestLookMLFileWriter:

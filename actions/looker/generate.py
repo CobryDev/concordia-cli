@@ -10,7 +10,7 @@ from .config_loader import (
     get_bigquery_location,
     load_config,
 )
-from .lookml_generator import LookMLFileWriter, LookMLGenerator
+from .lookml_generator import DuplicateViewNameError, LookMLFileWriter, LookMLGenerator
 
 
 def generate_lookml():
@@ -117,6 +117,9 @@ def generate_lookml():
     except ConfigurationError as e:
         click.echo(f"❌ Configuration error: {e}")
         raise click.ClickException(f"Configuration error: {e}") from e
+    except DuplicateViewNameError as e:
+        click.echo(f"❌ {e}")
+        raise click.ClickException(str(e)) from e
     except Exception as e:
         click.echo(f"❌ Unexpected error: {e}")
         if click.confirm("Would you like to see the full error details?"):

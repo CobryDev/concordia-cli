@@ -10,6 +10,41 @@ from .lookml_measure_module import LookMLMeasureGenerator
 from .lookml_module import LookMLViewGenerator
 
 
+class DuplicateViewNameError(Exception):
+    """Raised when multiple tables generate views with the same name."""
+
+    def __init__(self, view_name: str, conflicting_tables: list[dict[str, str]]):
+        """
+        Initialize the error with view name and conflicting table information.
+
+        Args:
+            view_name: The duplicate view name
+            conflicting_tables: List of dicts with keys 'table_id', 'dataset_id', 'project_id'
+        """
+        self.view_name = view_name
+        self.conflicting_tables = conflicting_tables
+        super().__init__(self._format_message())
+
+    def _format_message(self) -> str:
+        """Format the error message with details about conflicting tables."""
+        lines = [
+            f"Duplicate view name '{self.view_name}' detected. "
+            f"The following {len(self.conflicting_tables)} table(s) would generate views with the same name:",
+            "",
+        ]
+        for table in self.conflicting_tables:
+            full_table_name = f"{table['project_id']}.{table['dataset_id']}.{table['table_id']}"
+            lines.append(f"  • {full_table_name}")
+        lines.append("")
+        lines.append(
+            "To resolve this, you can:"
+            "\n  1. Use view_prefix or view_suffix in your naming_conventions to differentiate views"
+            "\n  2. Rename one of the conflicting tables in BigQuery"
+            "\n  3. Exclude one of the tables from generation"
+        )
+        return "\n".join(lines)
+
+
 class LookMLGenerator:
     """
     Generates LookML view files from BigQuery table schemas using dictionary-based approach.
@@ -133,10 +168,35 @@ class LookMLGenerator:
 
         Returns:
             LookMLProject containing the complete project
+
+        Raises:
+            DuplicateViewNameError: If multiple tables would generate views with the same name
         """
         project = LookMLProject()
+        view_name_to_tables: dict[str, list[dict[str, str]]] = {}
 
-        # Generate all views
+        # First pass: generate all views and collect view names
+        for table_metadata in tables_metadata.get_all_tables():
+            lookml_view = self.generate_view_for_table_metadata(table_metadata)
+            view_name = lookml_view.name
+
+            # Track which tables generate each view name
+            if view_name not in view_name_to_tables:
+                view_name_to_tables[view_name] = []
+            view_name_to_tables[view_name].append(
+                {
+                    "table_id": table_metadata.table_id,
+                    "dataset_id": table_metadata.dataset_id,
+                    "project_id": table_metadata.project_id,
+                }
+            )
+
+        # Check for duplicate view names
+        for view_name, tables in view_name_to_tables.items():
+            if len(tables) > 1:
+                raise DuplicateViewNameError(view_name, tables)
+
+        # Second pass: add all views to project (no duplicates at this point)
         for table_metadata in tables_metadata.get_all_tables():
             lookml_view = self.generate_view_for_table_metadata(table_metadata)
             project.add_view(lookml_view)
