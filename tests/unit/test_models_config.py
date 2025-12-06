@@ -696,6 +696,7 @@ class TestNamingConventions:
         assert conventions.fk_suffix == "_fk"
         assert conventions.view_prefix == ""
         assert conventions.view_suffix == ""
+        assert conventions.character_replacements == {}
 
     def test_custom_naming_conventions(self):
         """Test custom naming conventions."""
@@ -704,12 +705,14 @@ class TestNamingConventions:
             fk_suffix="_ref",
             view_prefix="bq_",
             view_suffix="_view",
+            character_replacements={":": "_"},
         )
 
         assert conventions.pk_suffix == "_id"
         assert conventions.fk_suffix == "_ref"
         assert conventions.view_prefix == "bq_"
         assert conventions.view_suffix == "_view"
+        assert conventions.character_replacements == {":": "_"}
 
 
 class TestDefaultBehaviors:

@@ -69,6 +69,13 @@ class TestDimension:
             Dimension(name="   ", type=DimensionType.STRING)
         assert "Dimension name cannot be empty" in str(exc_info.value)
 
+    def test_dimension_name_validator_invalid_characters(self):
+        """Test dimension name validator rejects unsupported characters."""
+        with pytest.raises(ValidationError) as exc_info:
+            Dimension(name="invalid:name", type=DimensionType.STRING)
+
+        assert "Invalid dimension name" in str(exc_info.value)
+
     def test_dimension_name_validator_strips_whitespace(self):
         """Test dimension name validator strips whitespace."""
         dimension = Dimension(name="  test_field  ", type=DimensionType.STRING)
@@ -225,6 +232,13 @@ class TestDimensionGroup:
         with pytest.raises(ValidationError) as exc_info:
             DimensionGroup(name="", type=DimensionGroupType.TIME)
         assert "Dimension group name cannot be empty" in str(exc_info.value)
+
+    def test_dimension_group_name_validator_invalid_characters(self):
+        """Test dimension group name validator rejects unsupported characters."""
+        with pytest.raises(ValidationError) as exc_info:
+            DimensionGroup(name="created:at", type=DimensionGroupType.TIME)
+
+        assert "Invalid dimension group name" in str(exc_info.value)
 
     def test_dimension_group_name_validator_strips_whitespace(self):
         """Test dimension group name validator strips whitespace."""
@@ -486,6 +500,13 @@ class TestLookMLView:
         with pytest.raises(ValidationError) as exc_info:
             LookMLView(name="", sql_table_name="test.table")
         assert "View name cannot be empty" in str(exc_info.value)
+
+    def test_lookml_view_name_validator_invalid_characters(self):
+        """Test view name validator rejects unsupported characters."""
+        with pytest.raises(ValidationError) as exc_info:
+            LookMLView(name="users:2024", sql_table_name="test.table")
+
+        assert "Invalid view name" in str(exc_info.value)
 
     def test_lookml_view_name_validator_strips_whitespace(self):
         """Test view name validator strips whitespace."""

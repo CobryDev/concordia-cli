@@ -57,43 +57,34 @@ Automated View Generation: Create a complete, well-structured LookML view from a
 All configuration is handled in the concordia.yml file.
 
 ```yaml
-# concordia.yml - Example Configuration
+# concordia.yaml - Example Configuration
 
-# BigQuery Connection Details
 connection:
-  # (Recommended) Point to your Dataform credentials file.
+  # (Recommended) Dataform credentials file; falls back to Google ADC if missing
   dataform_credentials_file: './.df-credentials.json'
-
-  # If the file above is not found, Concordia falls back to Google ADC.
-
-  # The GCP project ID and location to target.
   project_id: 'my-gcp-project'
   location: 'europe-west2'
-
-  # The datasets to scan for tables.
   datasets:
     - 'marts'
     - 'finance'
 
-# Looker project configuration
 looker:
-  project_path: './looker_project/' # Path to your local Looker git repo
-  views_path: 'views/base/base.view.lkml' # Path for generated base view
-  connection: 'bigquery-prod' # The name of your Looker connection
+  project_path: './looker_project/'             # Path to your local Looker git repo
+  views_path: 'views/base/base.view.lkml'       # Path for generated base view
+  connection: 'bigquery-prod'                   # Looker connection name
 
-# Rules for how models and fields are generated
 model_rules:
-  # Define how to identify PKs and FKs from column names
   naming_conventions:
     pk_suffix: '_pk'
     fk_suffix: '_fk'
+    # Optional: translate unsupported characters so generated names stay LookML-safe
+    character_replacements:
+      ":": "_"          # only letters/numbers/underscores are allowed after replacement
 
-  # Define default behaviors for generated views
   defaults:
     measures: [count]
     hide_fields_by_suffix: ['_pk', '_fk']
 
-  # Map BigQuery data types to LookML
   type_mapping:
     - bq_type: 'TIMESTAMP'
       lookml_type: 'dimension_group'
@@ -102,59 +93,12 @@ model_rules:
       lookml_type: 'dimension'
       lookml_params: { type: 'number' }
     # ... and so on
-
-
-# BigQuery Connection Details
-
-connection:
-
-# (Recommended) Point to your Dataform credentials file.
-
-dataform_credentials_file: './.df-credentials.json'
-
-# If the file above is not found, Concordia falls back to Google ADC.
-
-# The GCP project ID and location to target.
-
-project_id: 'my-gcp-project'
-location: 'europe-west2'
-
-# The datasets to scan for tables.
-
-datasets: - 'marts' - 'finance'
-
-# Looker project configuration
-
-looker:
-project_path: './looker_project/' # Path to your local Looker git repo
-views_path: 'views/generated_views.view.lkml' # File path where generated views will be written
-explores_path: 'views/generated_explores.view.lkml' # File path where generated explores will be written
-connection: 'bigquery-prod' # The name of your Looker connection
-
-# Rules for how models and fields are generated
-
-model_rules:
-
-# Define how to identify PKs and FKs from column names
-
-naming_conventions:
-pk_suffix: '\_pk'
-fk_suffix: '\_fk'
-
-# Define default behaviors for generated views
-
-defaults:
-measures: [count]
-hide_fields_by_suffix: ['_pk', '_fk']
-
-# Map BigQuery data types to LookML
-
-type_mapping: - bq_type: 'TIMESTAMP'
-lookml_type: 'dimension_group'
-lookml_params: { type: 'time', timeframes: '[raw, time, date, week, month]' } - bq_type: 'INTEGER'
-lookml_type: 'dimension'
-lookml_params: { type: 'number' } # ... and so on
 ```
+
+### Validation rules that matter
+
+- View and field names must be limited to letters, numbers, and underscores. If your warehouse names contain other characters, add a `character_replacements` mapping (e.g., `":"` -> `"_"`) under `model_rules.naming_conventions`; otherwise generation fails fast with a clear error.
+- Generated LookML is parsed with the `lkml` library when available (see [lkml.load examples](https://lkml.readthedocs.io/en/latest/simple.html)) to catch malformed output early. If the installed version cannot parse, a warning is emitted and generation continues.
 
 ## Usage
 

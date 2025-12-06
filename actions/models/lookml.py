@@ -10,6 +10,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from ..utils.lookml_naming import LookMLNameValidator
+
 
 class DimensionType(str, Enum):
     """Valid LookML dimension types."""
@@ -67,7 +69,9 @@ class Dimension(BaseModel):
         """Ensure name is valid."""
         if not v or not v.strip():
             raise ValueError("Dimension name cannot be empty")
-        return v.strip()
+        name = v.strip()
+        LookMLNameValidator.ensure_allowed_characters(name, "dimension", raw_value=v)
+        return name
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization (flat form)."""
@@ -122,7 +126,9 @@ class DimensionGroup(BaseModel):
         """Ensure name is valid."""
         if not v or not v.strip():
             raise ValueError("Dimension group name cannot be empty")
-        return v.strip()
+        name = v.strip()
+        LookMLNameValidator.ensure_allowed_characters(name, "dimension group", raw_value=v)
+        return name
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization (flat form)."""
@@ -176,7 +182,9 @@ class Measure(BaseModel):
         """Ensure name is valid."""
         if not v or not v.strip():
             raise ValueError("Measure name cannot be empty")
-        return v.strip()
+        name = v.strip()
+        LookMLNameValidator.ensure_allowed_characters(name, "measure", raw_value=v)
+        return name
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for LookML serialization (flat form)."""
@@ -230,7 +238,9 @@ class LookMLView(BaseModel):
         """Ensure name is valid."""
         if not v or not v.strip():
             raise ValueError("View name cannot be empty")
-        return v.strip()
+        name = v.strip()
+        LookMLNameValidator.ensure_allowed_characters(name, "view", raw_value=v)
+        return name
 
     def add_dimension(self, dimension: Dimension) -> None:
         """Add a dimension to the view."""

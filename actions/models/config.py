@@ -8,6 +8,8 @@ replacing the previous Dict[str, Any] approach.
 from pathlib import Path
 from typing import Any, Optional
 
+from ..utils.lookml_naming import LookMLNameValidator
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -69,7 +71,8 @@ class ConnectionConfig(BaseModel):
 
         # Check file extension
         if path.suffix.lower() != ".json":
-            raise ValueError(f"Dataform credentials file must be a .json file: {v}")
+            raise ValueError(
+                f"Dataform credentials file must be a .json file: {v}")
 
         return str(path)
 
@@ -92,7 +95,8 @@ class ConnectionConfig(BaseModel):
             )
 
         if len(v) < 6 or len(v) > 30:
-            raise ValueError(f"GCP project ID must be between 6 and 30 characters: {v}")
+            raise ValueError(
+                f"GCP project ID must be between 6 and 30 characters: {v}")
 
         return v
 
@@ -158,7 +162,8 @@ class ConnectionConfig(BaseModel):
 
         for dataset in v:
             if not dataset.strip():
-                raise ValueError("Dataset names cannot be empty or whitespace only")
+                raise ValueError(
+                    "Dataset names cannot be empty or whitespace only")
 
             # Basic validation for BigQuery dataset naming rules
             if not dataset.replace("_", "").isalnum():
@@ -179,11 +184,13 @@ class LookerConfig(BaseModel):
 
     project_path: str = Field(
         description="Path to Looker project directory. Can be absolute or relative to concordia.yaml location.",
-        examples=["./looker-project", "../my-looker-project", "/path/to/looker"],
+        examples=["./looker-project",
+                  "../my-looker-project", "/path/to/looker"],
     )
     views_path: str = Field(
         description="Relative path within project for generated views file. Should end with .view.lkml",
-        examples=["views/concordia_views.view.lkml", "generated/bigquery_views.view.lkml"],
+        examples=["views/concordia_views.view.lkml",
+                  "generated/bigquery_views.view.lkml"],
     )
     connection: str = Field(
         description="Looker connection name that points to your BigQuery instance",
@@ -241,7 +248,8 @@ class LookerConfig(BaseModel):
 
         # Ensure it's a relative path (not absolute)
         if Path(v).is_absolute():
-            raise ValueError(f"Views path must be relative to the Looker project directory: {v}")
+            raise ValueError(
+                f"Views path must be relative to the Looker project directory: {v}")
 
         return v
 
@@ -259,7 +267,8 @@ class LookerConfig(BaseModel):
 
         # Basic validation for connection name format
         if not v.replace("_", "").replace("-", "").isalnum():
-            raise ValueError(f"Invalid connection name '{v}'. Use only letters, numbers, underscores, and hyphens.")
+            raise ValueError(
+                f"Invalid connection name '{v}'. Use only letters, numbers, underscores, and hyphens.")
 
         return v
 
@@ -287,6 +296,26 @@ class NamingConventions(BaseModel):
     view_suffix: Optional[str] = Field(
         default="", description="Suffix to add to all generated view names", examples=["_view", "_base", ""]
     )
+    character_replacements: dict[str, str] = Field(
+        default_factory=dict,
+        description="Mapping of unsupported characters to replacements for LookML identifiers "
+        "(e.g., {':': '_'})",
+        examples=[{":": "_"}, {"-": "_"}],
+    )
+
+    @field_validator("character_replacements")
+    @classmethod
+    def validate_character_replacements(cls, v):
+        """Ensure replacement mapping values produce valid LookML identifiers."""
+        for target, replacement in v.items():
+            if target == "":
+                raise ValueError("Replacement mapping keys cannot be empty")
+            LookMLNameValidator.ensure_allowed_characters(
+                replacement,
+                context="replacement value",
+                raw_value=replacement,
+            )
+        return v
 
 
 class DefaultBehaviors(BaseModel):
@@ -345,7 +374,8 @@ class TypeMapping(BaseModel):
     lookml_type: str = Field(
         description="Corresponding LookML field type", examples=["dimension", "dimension_group", "measure"]
     )
-    lookml_params: LookMLParams = Field(description="LookML field parameters and configuration for this type mapping")
+    lookml_params: LookMLParams = Field(
+        description="LookML field parameters and configuration for this type mapping")
 
     @field_validator("lookml_type")
     @classmethod
@@ -353,7 +383,8 @@ class TypeMapping(BaseModel):
         """Validate LookML type."""
         valid_types = {"dimension", "dimension_group", "measure"}
         if v not in valid_types:
-            raise ValueError(f"Invalid LookML type '{v}'. Must be one of: {', '.join(valid_types)}")
+            raise ValueError(
+                f"Invalid LookML type '{v}'. Must be one of: {', '.join(valid_types)}")
         return v
 
 
@@ -403,8 +434,10 @@ class ConcordiaConfig(BaseModel):
     connection: ConnectionConfig = Field(
         description="BigQuery connection configuration (credentials, project, datasets)"
     )
-    looker: LookerConfig = Field(description="Looker project configuration (paths, connection name)")
-    model_rules: ModelRules = Field(description="Model generation rules (naming conventions, type mappings)")
+    looker: LookerConfig = Field(
+        description="Looker project configuration (paths, connection name)")
+    model_rules: ModelRules = Field(
+        description="Model generation rules (naming conventions, type mappings)")
 
     model_config = {"extra": "forbid"}
 
@@ -421,7 +454,8 @@ class ConcordiaConfig(BaseModel):
             try:
                 views_dir.mkdir(parents=True, exist_ok=True)
             except Exception as e:
-                raise ValueError(f"Cannot create views directory {views_dir}: {e}") from e
+                raise ValueError(
+                    f"Cannot create views directory {views_dir}: {e}") from e
 
         return self
 
