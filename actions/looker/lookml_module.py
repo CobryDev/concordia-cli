@@ -160,18 +160,7 @@ class LookMLViewGenerator:
 
         # Add type-specific parameters
         if hasattr(type_mapping, "lookml_params") and type_mapping.lookml_params:
-            # Convert Pydantic model to dict for iteration
-            if hasattr(type_mapping.lookml_params, "model_dump"):
-                lookml_params_dict = type_mapping.lookml_params.model_dump()
-            elif hasattr(type_mapping.lookml_params, "dict"):
-                lookml_params_dict = type_mapping.lookml_params.dict()
-            elif isinstance(type_mapping.lookml_params, dict):
-                # It's already a dictionary
-                lookml_params_dict = type_mapping.lookml_params
-            else:
-                # Skip if we can't convert to dict (might be a Pydantic model we can't handle)
-                lookml_params_dict = None
-
+            lookml_params_dict = self._resolve_lookml_params(type_mapping.lookml_params)
             if lookml_params_dict:
                 for param, value in lookml_params_dict.items():
                     if param != "sql":  # sql is handled above
@@ -191,6 +180,9 @@ class LookMLViewGenerator:
         """
         Generate a LookML dimension group dictionary for time-based columns.
 
+        Uses the type_mapping config when available, falling back to hardcoded
+        defaults for backward compatibility with configs that omit time types.
+
         Args:
             column: ColumnMetadata object
 
@@ -200,8 +192,19 @@ class LookMLViewGenerator:
         column_name = column.name
         column_type = column.type
 
-        # Determine timeframes based on column type
-        if column_type in ["TIMESTAMP", "DATETIME"]:
+        type_mapping = self._find_type_mapping(column_type)
+
+        if type_mapping and type_mapping.lookml_params:
+            dimension_type = type_mapping.lookml_params.type
+            if type_mapping.lookml_params.timeframes:
+                timeframes = self._parse_timeframes(type_mapping.lookml_params.timeframes)
+            elif column_type in ["TIMESTAMP", "DATETIME"]:
+                timeframes = ["raw", "time", "date", "week", "month", "quarter", "year"]
+            elif column_type == "DATE":
+                timeframes = ["raw", "date", "week", "month", "quarter", "year"]
+            else:
+                timeframes = ["raw", "date"]
+        elif column_type in ["TIMESTAMP", "DATETIME"]:
             timeframes = ["raw", "time", "date", "week", "month", "quarter", "year"]
             dimension_type = "time"
         elif column_type == "DATE":
@@ -217,13 +220,23 @@ class LookMLViewGenerator:
 
         group_name = self.name_validator.sanitize(group_name, "dimension group")
 
-        dimension_group_dict = {
+        dimension_group_dict: dict[str, Any] = {
             group_name: {
                 "type": dimension_type,
                 "timeframes": timeframes,
                 "sql": f"${{TABLE}}.{column_name}",
             }
         }
+
+        # Pass through additional lookml_params from config (e.g. datatype, convert_tz)
+        if type_mapping and type_mapping.lookml_params:
+            lookml_params_dict = self._resolve_lookml_params(type_mapping.lookml_params)
+            if lookml_params_dict:
+                for param, value in lookml_params_dict.items():
+                    if param in ("type", "timeframes", "sql"):
+                        continue
+                    if value is not None:
+                        dimension_group_dict[group_name][param] = value
 
         # Add description if available
         if column.description:
@@ -234,6 +247,23 @@ class LookMLViewGenerator:
             dimension_group_dict[group_name]["hidden"] = "yes"
 
         return dimension_group_dict
+
+    @staticmethod
+    def _parse_timeframes(timeframes_str: str) -> list[str]:
+        """Parse timeframes from config string format like '[raw, time, date]'."""
+        cleaned = timeframes_str.strip().strip("[]")
+        return [t.strip() for t in cleaned.split(",") if t.strip()]
+
+    @staticmethod
+    def _resolve_lookml_params(lookml_params: Any) -> Optional[dict[str, Any]]:
+        """Convert lookml_params (Pydantic model or dict) into a plain dict."""
+        if hasattr(lookml_params, "model_dump"):
+            return lookml_params.model_dump()
+        if hasattr(lookml_params, "dict"):
+            return lookml_params.dict()
+        if isinstance(lookml_params, dict):
+            return lookml_params
+        return None
 
     def _resolve_dimension_group_name(self, base_name: str, column: ColumnMetadata, existing_names: set[str]) -> str:
         """

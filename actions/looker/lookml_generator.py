@@ -116,6 +116,7 @@ class LookMLGenerator:
                         sql=group_values.get("sql"),
                         description=group_values.get("description"),
                         timeframes=group_values.get("timeframes"),
+                        datatype=group_values.get("datatype"),
                     )
                     lookml_view.add_dimension_group(group_obj)
 

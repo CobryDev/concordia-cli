@@ -232,7 +232,7 @@ class TestLookMLViewGenerator:
         assert "date" in dim_group["timeframes"]
 
     def test_generate_dimension_group_date_type(self, sample_config):
-        """Test dimension group generation for DATE column."""
+        """Test dimension group generation for DATE column uses configured timeframes."""
         from actions.models.metadata import ColumnMetadata
 
         date_column = ColumnMetadata(
@@ -250,9 +250,9 @@ class TestLookMLViewGenerator:
 
         dim_group = result["birth"]
         assert dim_group["type"] == "time"
-        assert "raw" in dim_group["timeframes"]
         assert "date" in dim_group["timeframes"]
-        # Should not have 'time' timeframe for DATE type
+        # Config says [date, week, month, quarter, year] -- no raw, no time
+        assert "raw" not in dim_group["timeframes"]
         assert "time" not in dim_group["timeframes"]
 
     def test_generate_dimension_group_non_time_type(self, sample_config, sample_column_string):
@@ -479,11 +479,11 @@ class TestLookMLViewGenerator:
              "week", "month", "quarter", "year"]),
             ("DATETIME", ["raw", "time", "date",
              "week", "month", "quarter", "year"]),
-            ("DATE", ["raw", "date", "week", "month", "quarter", "year"]),
+            ("DATE", ["date", "week", "month", "quarter", "year"]),
         ],
     )
     def test_dimension_group_timeframes_by_type(self, sample_config, bq_type, expected_timeframes):
-        """Test that different time types generate appropriate timeframes."""
+        """Test that different time types generate timeframes from config."""
         generator = LookMLViewGenerator(sample_config)
 
         column = ColumnMetadata(
@@ -649,6 +649,71 @@ class TestLookMLViewGenerator:
                 assert result is None
                 mock_echo.assert_called_once()
                 assert "No type mapping found" in mock_echo.call_args[0][0]
+
+    def test_dimension_group_uses_config_timeframes(self, sample_config):
+        """Test that dimension groups read timeframes from type_mapping config."""
+        sample_config.model_rules.type_mapping = [
+            TypeMapping(
+                bq_type="DATE",
+                lookml_type="dimension_group",
+                lookml_params=LookMLParams(
+                    type="time",
+                    timeframes="[date, month, year]",
+                ),
+            ),
+        ]
+
+        generator = LookMLViewGenerator(sample_config)
+        column = ColumnMetadata(
+            name="signup_date", type="DATE", standardized_type="DATE",
+        )
+
+        result = generator._generate_dimension_group(column)
+        assert result is not None
+        dim_group = result["signup"]
+        assert dim_group["timeframes"] == ["date", "month", "year"]
+
+    def test_dimension_group_passes_extra_lookml_params(self, sample_config):
+        """Test that extra lookml_params like datatype are passed through."""
+        sample_config.model_rules.type_mapping = [
+            TypeMapping(
+                bq_type="DATE",
+                lookml_type="dimension_group",
+                lookml_params=LookMLParams(
+                    type="time",
+                    timeframes="[date, week, month, year]",
+                    datatype="date",
+                ),
+            ),
+        ]
+
+        generator = LookMLViewGenerator(sample_config)
+        column = ColumnMetadata(
+            name="order_date", type="DATE", standardized_type="DATE",
+        )
+
+        result = generator._generate_dimension_group(column)
+        assert result is not None
+        dim_group = result["order"]
+        assert dim_group["datatype"] == "date"
+        assert dim_group["timeframes"] == ["date", "week", "month", "year"]
+
+    def test_dimension_group_fallback_without_mapping(self, sample_config):
+        """Test fallback to hardcoded defaults when no type_mapping exists."""
+        sample_config.model_rules.type_mapping = []
+
+        generator = LookMLViewGenerator(sample_config)
+        column = ColumnMetadata(
+            name="created_at", type="TIMESTAMP", standardized_type="TIMESTAMP",
+        )
+
+        result = generator._generate_dimension_group(column)
+        assert result is not None
+        dim_group = result["created"]
+        assert dim_group["type"] == "time"
+        assert dim_group["timeframes"] == [
+            "raw", "time", "date", "week", "month", "quarter", "year"
+        ]
 
     def test_hidden_field_dimension_group(self, sample_config):
         """Test that dimension groups respect hidden field configuration."""
