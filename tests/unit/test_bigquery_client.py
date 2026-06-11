@@ -158,3 +158,18 @@ class TestBigQueryClient:
 
         assert client.project_id == "test_project"
         assert client.config == config
+
+    @patch("actions.looker.bigquery_client.bigquery.Client")
+    def test_bigquery_client_passes_configured_table_types_to_metadata_extractor(self, mock_client_class):
+        """Test BigQueryClient wires configured BigQuery object types into metadata extraction."""
+        mock_credentials = Mock()
+        mock_client = Mock()
+        mock_client_class.return_value = mock_client
+        config = {
+            "connection": {"include_table_types": ["BASE TABLE", "VIEW"]},
+            "model_rules": {},
+        }
+
+        client = BigQueryClient(credentials=mock_credentials, project_id="test_project", config=config)
+
+        assert client.metadata_extractor.table_types == ["BASE TABLE", "VIEW"]

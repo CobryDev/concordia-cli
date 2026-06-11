@@ -44,9 +44,16 @@ inferred from the credentials file.""",
     )
     connection["location"] = "your-region"  # e.g., 'europe-west2'
 
-    connection.yaml_set_comment_before_after_key("datasets", before="The datasets to scan for tables.")
+    connection.yaml_set_comment_before_after_key("datasets", before="The datasets to scan for tables and views.")
     datasets = CommentedSeq(["dataset1", "dataset2"])
     connection["datasets"] = datasets
+
+    connection.yaml_set_comment_before_after_key(
+        "include_table_types",
+        before="""BigQuery INFORMATION_SCHEMA table types to generate LookML for.
+Use ['BASE TABLE', 'VIEW'] to include standard BigQuery views.""",
+    )
+    connection["include_table_types"] = CommentedSeq(["BASE TABLE"])
 
     config["connection"] = connection
     config.yaml_set_comment_before_after_key("connection", before="BigQuery Connection Details")

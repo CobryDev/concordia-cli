@@ -12,13 +12,20 @@ import click
 import pandas as pd
 import pandas_gbq
 
+from ..models.config import VALID_BIGQUERY_TABLE_TYPES
 from ..models.metadata import ColumnMetadata, MetadataCollection, TableMetadata
 
 
 class MetadataExtractor:
     """Extracts metadata from BigQuery using INFORMATION_SCHEMA queries with pandas-gbq."""
 
-    def __init__(self, credentials, project_id: str, location: Optional[str] = None):
+    def __init__(
+        self,
+        credentials,
+        project_id: str,
+        location: Optional[str] = None,
+        table_types: Optional[list[str]] = None,
+    ):
         """
         Initialize the metadata extractor.
 
@@ -26,10 +33,12 @@ class MetadataExtractor:
             credentials: Google credentials object
             project_id: GCP project ID
             location: BigQuery location/region
+            table_types: BigQuery INFORMATION_SCHEMA table types to include
         """
         self.project_id = project_id
         self.location = location
         self.credentials = credentials
+        self.table_types = self._validate_table_types(table_types if table_types is not None else ["BASE TABLE"])
 
     def get_table_metadata(self, dataset_ids: list[str]) -> pd.DataFrame:
         """
@@ -43,6 +52,7 @@ class MetadataExtractor:
         """
         # Build UNION ALL query for each dataset's INFORMATION_SCHEMA
         union_queries = []
+        table_type_filter = self._table_type_filter_sql()
         for dataset_id in dataset_ids:
             safe_dataset_id = self._validate_dataset_id(dataset_id)
             sql = f"""
@@ -61,7 +71,7 @@ class MetadataExtractor:
                     ELSE NULL
                 END as table_description
             FROM `{safe_dataset_id}`.INFORMATION_SCHEMA.TABLES
-            WHERE table_type = 'BASE TABLE'
+            WHERE table_type IN ({table_type_filter})
             """  # noqa: S608 - dataset identifier validated by _validate_dataset_id
             union_queries.append(sql)
 
@@ -81,7 +91,7 @@ class MetadataExtractor:
             # Convert to DataFrame if it's a Series
             if isinstance(df, pd.Series):
                 df = df.to_frame().T
-            click.echo(f"✅ Found {len(df)} tables")
+            click.echo(f"✅ Found {len(df)} BigQuery objects")
             return df
         except Exception as e:
             click.echo(f"❌ Error extracting table metadata: {e}")
@@ -274,17 +284,21 @@ class MetadataExtractor:
 
             # Create table metadata object
             table_description = group_sorted.iloc[0]["table_description"]
+            table_type = group_sorted.iloc[0]["table_type"]
+            creation_ddl = group_sorted.iloc[0]["creation_ddl"]
             table_metadata = TableMetadata(
                 table_id=table_id,
                 dataset_id=dataset_id,
                 project_id=project_id,
                 table_description=(str(table_description) if pd.notna(table_description) else None),
+                table_type=str(table_type),
                 columns=columns,
+                creation_ddl=(str(creation_ddl) if pd.notna(creation_ddl) else None),
             )
 
             metadata_collection.add_table(table_metadata)
 
-        click.echo(f"✅ Processed metadata for {metadata_collection.table_count()} tables")
+        click.echo(f"✅ Processed metadata for {metadata_collection.table_count()} BigQuery objects")
         return metadata_collection
 
     def _get_primary_key_columns(self, primary_keys_df: pd.DataFrame) -> dict[str, list[str]]:
@@ -359,3 +373,34 @@ class MetadataExtractor:
             )
 
         return dataset_id
+
+    def _validate_table_types(self, table_types: list[str]) -> list[str]:
+        """Validate BigQuery table types before interpolating them into SQL."""
+        if not isinstance(table_types, list):
+            raise ValueError("Table types must be provided as a list")
+
+        normalized_table_types = []
+        for table_type in table_types:
+            if not isinstance(table_type, str):
+                raise ValueError("Table types must be strings")
+
+            normalized_table_type = table_type.strip().upper()
+            if not normalized_table_type:
+                raise ValueError("Table types cannot be empty or whitespace only")
+
+            if normalized_table_type not in VALID_BIGQUERY_TABLE_TYPES:
+                raise ValueError(
+                    f"Invalid BigQuery table type '{table_type}'. "
+                    f"Must be one of: {', '.join(sorted(VALID_BIGQUERY_TABLE_TYPES))}."
+                )
+            if normalized_table_type not in normalized_table_types:
+                normalized_table_types.append(normalized_table_type)
+
+        if not normalized_table_types:
+            raise ValueError("At least one BigQuery table type must be specified")
+
+        return normalized_table_types
+
+    def _table_type_filter_sql(self) -> str:
+        """Build a safe SQL literal list for the table type filter."""
+        return ", ".join(f"'{table_type}'" for table_type in self.table_types)

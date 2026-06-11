@@ -37,6 +37,14 @@ class TestConfigDocs:
         assert "looker:" in docs
         assert "model_rules:" in docs
 
+    def test_generate_config_docs_includes_table_type_configuration(self):
+        """Test that generated docs explain BigQuery table type inclusion."""
+        docs = generate_config_docs()
+
+        assert "include_table_types" in docs
+        assert 'include_table_types: ["BASE TABLE", "VIEW"]' in docs
+        assert "MATERIALIZED VIEW" in docs
+
     def test_save_config_docs_creates_file(self, tmp_path):
         """Test that save_config_docs creates a file with documentation."""
         output_file = tmp_path / "test_config.md"

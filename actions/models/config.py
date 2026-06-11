@@ -8,9 +8,20 @@ replacing the previous Dict[str, Any] approach.
 from pathlib import Path
 from typing import Any, Optional
 
+from pydantic import BaseModel, Field, field_validator, model_validator
+
 from ..utils.lookml_naming import LookMLNameValidator
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+VALID_BIGQUERY_TABLE_TYPES = frozenset(
+    {
+        "BASE TABLE",
+        "CLONE",
+        "EXTERNAL",
+        "MATERIALIZED VIEW",
+        "SNAPSHOT",
+        "VIEW",
+    }
+)
 
 
 class ConnectionConfig(BaseModel):
@@ -40,6 +51,12 @@ class ConnectionConfig(BaseModel):
         description="List of BigQuery datasets to scan for tables. At least one dataset is required.",
         min_length=1,
         examples=[["raw_data", "staging"], ["analytics", "marts"]],
+    )
+    include_table_types: list[str] = Field(
+        default_factory=lambda: ["BASE TABLE"],
+        description="BigQuery INFORMATION_SCHEMA table types to include when generating LookML.",
+        min_length=1,
+        examples=[["BASE TABLE"], ["BASE TABLE", "VIEW"]],
     )
 
     @field_validator("dataform_credentials_file")
@@ -173,6 +190,25 @@ class ConnectionConfig(BaseModel):
                 )
 
         return v
+
+    @field_validator("include_table_types")
+    @classmethod
+    def validate_include_table_types(cls, v):
+        """Validate BigQuery table types and normalize them to uppercase."""
+        normalized_table_types = []
+        for table_type in v:
+            normalized_table_type = table_type.strip().upper()
+            if not normalized_table_type:
+                raise ValueError("Table types cannot be empty or whitespace only")
+            if normalized_table_type not in VALID_BIGQUERY_TABLE_TYPES:
+                raise ValueError(
+                    f"Invalid BigQuery table type '{table_type}'. "
+                    f"Must be one of: {', '.join(sorted(VALID_BIGQUERY_TABLE_TYPES))}."
+                )
+            if normalized_table_type not in normalized_table_types:
+                normalized_table_types.append(normalized_table_type)
+
+        return normalized_table_types
 
 
 class LookerConfig(BaseModel):

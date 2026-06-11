@@ -197,12 +197,15 @@ class BigQueryClient:
         self.client = bigquery.Client(credentials=credentials, project=project_id, location=location)
         self.error_tracker = ErrorTracker()
 
+        connection_config = self.config.get("connection", {})
+        table_types = connection_config.get("include_table_types", ["BASE TABLE"])
+
         # Initialize the metadata extractor
-        self.metadata_extractor = MetadataExtractor(credentials, project_id, location)
+        self.metadata_extractor = MetadataExtractor(credentials, project_id, location, table_types)
 
     def get_tables_metadata(self, dataset_ids: list[str]) -> dict[str, dict[str, Any]]:
         """
-        Get metadata for all tables from the specified datasets using INFORMATION_SCHEMA.
+        Get metadata for configured BigQuery objects from the specified datasets using INFORMATION_SCHEMA.
 
         Args:
             dataset_ids: List of dataset IDs to scan
@@ -219,7 +222,7 @@ class BigQueryClient:
             # Wrangle the metadata into a usable format
             metadata_collection = self.metadata_extractor.wrangle_metadata(tables_df, columns_df, primary_keys_df)
 
-            click.echo(f"📊 Successfully processed {metadata_collection.table_count()} tables")
+            click.echo(f"📊 Successfully processed {metadata_collection.table_count()} BigQuery objects")
             # Convert TableMetadata objects to dictionaries
             return {key: table.model_dump() for key, table in metadata_collection.tables.items()}
 

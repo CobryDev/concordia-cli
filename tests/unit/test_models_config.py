@@ -39,6 +39,7 @@ class TestConnectionConfig:
         assert config.project_id == "test-project-123"
         assert config.location == "US"
         assert config.datasets == ["raw_data", "analytics"]
+        assert config.include_table_types == ["BASE TABLE"]
 
     def test_dataform_credentials_file_validator_none(self):
         """Test credentials file validator with None value."""
@@ -241,6 +242,43 @@ class TestConnectionConfig:
         for datasets in valid_datasets:
             config = ConnectionConfig(datasets=datasets)
             assert config.datasets == datasets
+
+    def test_include_table_types_default(self):
+        """Test table type inclusion defaults to base tables."""
+        config = ConnectionConfig(datasets=["test"])
+
+        assert config.include_table_types == ["BASE TABLE"]
+
+    def test_include_table_types_normalizes_values(self):
+        """Test table type inclusion normalizes case, whitespace, and duplicates."""
+        config = ConnectionConfig(
+            datasets=["test"],
+            include_table_types=[" base table ", "view", "VIEW", "materialized view"],
+        )
+
+        assert config.include_table_types == ["BASE TABLE", "VIEW", "MATERIALIZED VIEW"]
+
+    def test_include_table_types_rejects_empty_list(self):
+        """Test table type inclusion rejects empty lists."""
+        with pytest.raises(ValidationError) as exc_info:
+            ConnectionConfig(datasets=["test"], include_table_types=[])
+
+        assert "List should have at least 1 item" in str(exc_info.value)
+
+    def test_include_table_types_rejects_empty_strings(self):
+        """Test table type inclusion rejects empty or whitespace-only values."""
+        for table_types in [[""], ["   "], ["BASE TABLE", ""]]:
+            with pytest.raises(ValidationError) as exc_info:
+                ConnectionConfig(datasets=["test"], include_table_types=table_types)
+
+            assert "Table types cannot be empty or whitespace only" in str(exc_info.value)
+
+    def test_include_table_types_rejects_unknown_values(self):
+        """Test table type inclusion rejects values BigQuery does not expose."""
+        with pytest.raises(ValidationError) as exc_info:
+            ConnectionConfig(datasets=["test"], include_table_types=["TABLE", "VIEW"])
+
+        assert "Invalid BigQuery table type 'TABLE'" in str(exc_info.value)
 
 
 class TestLookerConfig:

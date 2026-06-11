@@ -29,7 +29,7 @@ If you've ever had to:
 
 ## How it Works
 
-Concordia operates on a simple, unidirectional data flow. It reads the metadata (column names, data types, descriptions) directly from your BigQuery tables and uses that information to generate clean, consistent, and documented LookML view files.
+Concordia operates on a simple, unidirectional data flow. It reads the metadata (column names, data types, descriptions) directly from your BigQuery tables and views and uses that information to generate clean, consistent, and documented LookML view files.
 
 `Dataform/BigQuery (Source of Truth) -> Concordia -> Looker .view Files`
 
@@ -37,7 +37,7 @@ This ensures that your semantic layer in Looker is a perfect reflection of your 
 
 ## Key Features
 
-Automated View Generation: Create a complete, well-structured LookML view from a BigQuery table with a single command.
+Automated View Generation: Create a complete, well-structured LookML view from a BigQuery table or view with a single command.
 
 - Documentation Sync: Automatically pulls column descriptions from BigQuery and populates the description tag in your LookML dimensions.
 - Convention over Configuration: Uses smart naming conventions (e.g., for primary and foreign keys) to generate better LookML.
@@ -61,37 +61,40 @@ All configuration is handled in the concordia.yml file.
 
 connection:
   # (Recommended) Dataform credentials file; falls back to Google ADC if missing
-  dataform_credentials_file: './.df-credentials.json'
-  project_id: 'my-gcp-project'
-  location: 'europe-west2'
+  dataform_credentials_file: "./.df-credentials.json"
+  project_id: "my-gcp-project"
+  location: "europe-west2"
   datasets:
-    - 'marts'
-    - 'finance'
+    - "marts"
+    - "finance"
+  # Optional: include BigQuery views in addition to base tables
+  include_table_types: ["BASE TABLE", "VIEW"]
 
 looker:
-  project_path: './looker_project/'             # Path to your local Looker git repo
-  views_path: 'views/base/base.view.lkml'       # Path for generated base view
-  connection: 'bigquery-prod'                   # Looker connection name
+  project_path: "./looker_project/" # Path to your local Looker git repo
+  views_path: "views/base/base.view.lkml" # Path for generated base view
+  connection: "bigquery-prod" # Looker connection name
 
 model_rules:
   naming_conventions:
-    pk_suffix: '_pk'
-    fk_suffix: '_fk'
+    pk_suffix: "_pk"
+    fk_suffix: "_fk"
     # Optional: translate unsupported characters so generated names stay LookML-safe
     character_replacements:
-      ":": "_"          # only letters/numbers/underscores are allowed after replacement
+      ":": "_" # only letters/numbers/underscores are allowed after replacement
 
   defaults:
     measures: [count]
-    hide_fields_by_suffix: ['_pk', '_fk']
+    hide_fields_by_suffix: ["_pk", "_fk"]
 
   type_mapping:
-    - bq_type: 'TIMESTAMP'
-      lookml_type: 'dimension_group'
-      lookml_params: { type: 'time', timeframes: '[raw, time, date, week, month]' }
-    - bq_type: 'INTEGER'
-      lookml_type: 'dimension'
-      lookml_params: { type: 'number' }
+    - bq_type: "TIMESTAMP"
+      lookml_type: "dimension_group"
+      lookml_params:
+        { type: "time", timeframes: "[raw, time, date, week, month]" }
+    - bq_type: "INTEGER"
+      lookml_type: "dimension"
+      lookml_params: { type: "number" }
     # ... and so on
 ```
 

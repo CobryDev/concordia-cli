@@ -75,11 +75,13 @@ class TestGenerateConcordiaConfig:
         assert "project_id" in connection
         assert "location" in connection
         assert "datasets" in connection
+        assert "include_table_types" in connection
 
         # Check default values
         assert connection["project_id"] == "your-gcp-project-id"
         assert connection["location"] == "your-region"
         assert connection["datasets"] == ["dataset1", "dataset2"]
+        assert connection["include_table_types"] == ["BASE TABLE"]
 
     def test_looker_section_structure(self):
         """Test looker section has correct structure and values."""
@@ -279,6 +281,7 @@ class TestWriteYamlWithComments:
 
         # Check specific values are preserved
         assert loaded_config["connection"]["project_id"] == "your-gcp-project-id"
+        assert loaded_config["connection"]["include_table_types"] == ["BASE TABLE"]
         assert loaded_config["looker"]["project_path"] == "././looker/"
         assert loaded_config["model_rules"]["naming_conventions"]["pk_suffix"] == "_pk"
 

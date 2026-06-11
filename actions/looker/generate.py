@@ -14,7 +14,7 @@ from .lookml_generator import DuplicateViewNameError, LookMLFileWriter, LookMLGe
 
 
 def generate_lookml():
-    """Generate LookML views from BigQuery tables."""
+    """Generate LookML views from BigQuery tables and views."""
     click.echo("🚀 Starting LookML generation...")
 
     try:
@@ -48,20 +48,20 @@ def generate_lookml():
             click.echo("❌ BigQuery connection test failed. Please check your configuration.")
             return
 
-        # Extract table metadata using INFORMATION_SCHEMA
-        click.echo("🔍 Extracting table metadata...")
+        # Extract metadata using INFORMATION_SCHEMA
+        click.echo("🔍 Extracting BigQuery metadata...")
         tables_metadata = bq_client.get_tables_metadata(datasets)
 
         # Get error tracker for summary reporting
         error_tracker = bq_client.get_error_tracker()
 
         if not tables_metadata:
-            click.echo("❌ No tables found in the specified datasets.")
+            click.echo("❌ No BigQuery objects found in the specified datasets.")
             # Still show error summary even if no tables found
             error_tracker.print_summary(len(datasets), 0)
             return
 
-        click.echo(f"📊 Found {len(tables_metadata)} tables to process")
+        click.echo(f"📊 Found {len(tables_metadata)} BigQuery objects to process")
 
         # Initialize generators
         generator = LookMLGenerator(config)

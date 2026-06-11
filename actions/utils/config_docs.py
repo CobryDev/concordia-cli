@@ -78,11 +78,14 @@ connection:
   # BigQuery location (optional, defaults to 'US')
   location: "US"
 
-  # List of datasets to scan for tables (required)
+  # List of datasets to scan for tables and views (required)
   datasets:
     - "raw_data"
     - "staging"
     - "marts"
+
+  # BigQuery object types to include. Add "VIEW" to generate LookML from views.
+  include_table_types: ["BASE TABLE"]
 
 # Looker project configuration
 looker:
@@ -197,7 +200,7 @@ def _generate_connection_docs() -> list[str]:
     # datasets
     docs.append("### `datasets` (required)")
     docs.append("")
-    docs.append("List of BigQuery datasets to scan for tables.")
+    docs.append("List of BigQuery datasets to scan for tables and views.")
     docs.append("")
     docs.append("- **Type**: `array of strings`")
     docs.append("- **Required**: At least one dataset must be specified")
@@ -213,6 +216,24 @@ def _generate_connection_docs() -> list[str]:
     docs.append("- At least one dataset is required")
     docs.append("- Dataset names cannot be empty")
     docs.append("- Must contain only letters, numbers, and underscores")
+    docs.append("")
+
+    # include_table_types
+    docs.append("### `include_table_types` (optional)")
+    docs.append("")
+    docs.append("BigQuery `INFORMATION_SCHEMA.TABLES.table_type` values to generate LookML for.")
+    docs.append("")
+    docs.append("- **Type**: `array of strings`")
+    docs.append('- **Default**: `["BASE TABLE"]`')
+    docs.append("- **Examples**:")
+    docs.append("  ```yaml")
+    docs.append('  include_table_types: ["BASE TABLE"]')
+    docs.append('  include_table_types: ["BASE TABLE", "VIEW"]')
+    docs.append("  ```")
+    docs.append("")
+    docs.append("**Validation Rules**:")
+    docs.append("- At least one table type is required")
+    docs.append("- Values must be valid BigQuery table types, such as `BASE TABLE`, `VIEW`, or `MATERIALIZED VIEW`")
     docs.append("")
 
     return docs
