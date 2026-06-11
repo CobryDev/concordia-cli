@@ -116,7 +116,8 @@ class TestLookMLGenerator:
         assert "users" in error_message
         assert "test-project.dataset1.users" in error_message
         assert "test-project.dataset2.users" in error_message
-        assert "view_prefix" in error_message or "view_suffix" in error_message
+        assert "Looker requires view names to be unique" in error_message
+        assert "Generate only one of the conflicting objects" in error_message
 
     def test_generate_complete_lookml_project_raises_error_on_triple_duplicate_view_names(self):
         """Test that three tables with same table_id raise error with all conflicting tables."""
@@ -157,6 +158,55 @@ class TestLookMLGenerator:
         assert "test-project.dataset1.orders" in error_message
         assert "test-project.dataset2.orders" in error_message
         assert "test-project.dataset3.orders" in error_message
+
+    def test_generate_complete_lookml_project_raises_error_on_sanitized_duplicate_view_names(self):
+        """Test that names colliding after character replacements are rejected."""
+        self.config.model_rules.naming_conventions.character_replacements = {"-": "_"}
+        generator = LookMLGenerator(self.config)
+
+        table1 = TableMetadata(
+            table_id="Order-Items",
+            dataset_id="dataset1",
+            project_id="test-project",
+            columns=[
+                ColumnMetadata(
+                    name="id",
+                    type="INTEGER",
+                    standardized_type="INTEGER",
+                    is_primary_key=True,
+                )
+            ],
+        )
+        table2 = TableMetadata(
+            table_id="order_items",
+            dataset_id="dataset2",
+            project_id="test-project",
+            columns=[
+                ColumnMetadata(
+                    name="id",
+                    type="INTEGER",
+                    standardized_type="INTEGER",
+                    is_primary_key=True,
+                )
+            ],
+        )
+
+        metadata_collection = MetadataCollection(
+            tables={
+                "dataset1.Order-Items": table1,
+                "dataset2.order_items": table2,
+            }
+        )
+
+        with pytest.raises(DuplicateViewNameError) as exc_info:
+            generator.generate_complete_lookml_project(metadata_collection)
+
+        error = exc_info.value
+        assert error.view_name == "order_items"
+        assert len(error.conflicting_tables) == 2
+        assert "test-project.dataset1.Order-Items" in str(error)
+        assert "test-project.dataset2.order_items" in str(error)
+        assert "character_replacements" in str(error)
 
 
 class TestLookMLFileWriter:

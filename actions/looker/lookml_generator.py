@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any
 
+import click
 import lkml
 
 from ..models.config import ConcordiaConfig
@@ -29,18 +30,19 @@ class DuplicateViewNameError(Exception):
         """Format the error message with details about conflicting tables."""
         lines = [
             f"Duplicate view name '{self.view_name}' detected. "
-            f"The following {len(self.conflicting_tables)} table(s) would generate views with the same name:",
+            "Looker requires view names to be unique within a project. "
+            f"The following {len(self.conflicting_tables)} BigQuery object(s) would generate the same view:",
             "",
         ]
         for table in self.conflicting_tables:
             full_table_name = f"{table['project_id']}.{table['dataset_id']}.{table['table_id']}"
-            lines.append(f"  • {full_table_name}")
+            lines.append(f"  - {full_table_name}")
         lines.append("")
         lines.append(
             "To resolve this, you can:"
-            "\n  1. Use view_prefix or view_suffix in your naming_conventions to differentiate views"
-            "\n  2. Rename one of the conflicting tables in BigQuery"
-            "\n  3. Exclude one of the tables from generation"
+            "\n  1. Rename or alias one of the conflicting BigQuery objects before generation"
+            "\n  2. Generate only one of the conflicting objects into this Looker project"
+            "\n  3. Adjust character_replacements if different source names collapse to the same LookML name"
         )
         return "\n".join(lines)
 
@@ -177,35 +179,35 @@ class LookMLGenerator:
             DuplicateViewNameError: If multiple tables would generate views with the same name
         """
         project = LookMLProject()
+        generated_views: list[LookMLView] = []
         view_name_to_tables: dict[str, list[dict[str, str]]] = {}
 
-        # First pass: generate all views and collect view names
+        # Generate all views and collect their source objects before writing anything.
         for table_metadata in tables_metadata.get_all_tables():
             lookml_view = self.generate_view_for_table_metadata(table_metadata)
-            view_name = lookml_view.name
+            generated_views.append(lookml_view)
 
-            # Track which tables generate each view name
-            if view_name not in view_name_to_tables:
-                view_name_to_tables[view_name] = []
-            view_name_to_tables[view_name].append(
-                {
-                    "table_id": table_metadata.table_id,
-                    "dataset_id": table_metadata.dataset_id,
-                    "project_id": table_metadata.project_id,
-                }
+            view_name_to_tables.setdefault(lookml_view.name, []).append(
+                self._conflict_details_for_table(table_metadata)
             )
 
-        # Check for duplicate view names
+        # Check for duplicate view names after all naming rules and sanitization are applied.
         for view_name, tables in view_name_to_tables.items():
             if len(tables) > 1:
                 raise DuplicateViewNameError(view_name, tables)
 
-        # Second pass: add all views to project (no duplicates at this point)
-        for table_metadata in tables_metadata.get_all_tables():
-            lookml_view = self.generate_view_for_table_metadata(table_metadata)
+        for lookml_view in generated_views:
             project.add_view(lookml_view)
 
         return project
+
+    def _conflict_details_for_table(self, table_metadata: TableMetadata) -> dict[str, str]:
+        """Return source table details for duplicate view-name errors."""
+        return {
+            "table_id": table_metadata.table_id,
+            "dataset_id": table_metadata.dataset_id,
+            "project_id": table_metadata.project_id,
+        }
 
     def _validate_lookml_content(self, content: str, context: str) -> None:
         """
