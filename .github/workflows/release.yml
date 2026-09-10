@@ -25,10 +25,10 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           uv pip sync --system requirements-combined.lock
 
-      - name: Run comprehensive test suite
+      - name: Run release checks
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          nox -s all
+          nox -s ci security
 
   publish:
     needs: test
