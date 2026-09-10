@@ -105,10 +105,23 @@ Use ['BASE TABLE', 'VIEW'] to include standard BigQuery views.""",
     timestamp_mapping["lookml_type"] = "dimension_group"
     timestamp_params = CommentedMap()
     timestamp_params["type"] = "time"
+    timestamp_params["datatype"] = "timestamp"
     timestamp_params["timeframes"] = "[raw, time, date, week, month, quarter, year]"
     timestamp_params["sql"] = "${TABLE}.%s"
     timestamp_mapping["lookml_params"] = timestamp_params
     type_mapping.append(timestamp_mapping)
+
+    # DATETIME mapping
+    datetime_mapping = CommentedMap()
+    datetime_mapping["bq_type"] = "DATETIME"
+    datetime_mapping["lookml_type"] = "dimension_group"
+    datetime_params = CommentedMap()
+    datetime_params["type"] = "time"
+    datetime_params["datatype"] = "datetime"
+    datetime_params["timeframes"] = "[raw, time, date, week, month, quarter, year]"
+    datetime_params["sql"] = "${TABLE}.%s"
+    datetime_mapping["lookml_params"] = datetime_params
+    type_mapping.append(datetime_mapping)
 
     # DATE mapping
     date_mapping = CommentedMap()
@@ -116,7 +129,8 @@ Use ['BASE TABLE', 'VIEW'] to include standard BigQuery views.""",
     date_mapping["lookml_type"] = "dimension_group"
     date_params = CommentedMap()
     date_params["type"] = "time"
-    date_params["timeframes"] = "[date, week, month, quarter, year]"
+    date_params["datatype"] = "date"
+    date_params["timeframes"] = "[raw, date, week, month, quarter, year]"
     date_params["sql"] = "${TABLE}.%s"
     date_mapping["lookml_params"] = date_params
     type_mapping.append(date_mapping)

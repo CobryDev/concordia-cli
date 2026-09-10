@@ -112,12 +112,29 @@ class LookMLGenerator:
 
             for group_dict in view_data["dimension_group"]:
                 for group_name, group_values in group_dict.items():
+                    known_params = {
+                        "type",
+                        "sql",
+                        "description",
+                        "timeframes",
+                        "datatype",
+                        "label",
+                        "convert_tz",
+                        "intervals",
+                    }
                     group_obj = DimensionGroup(
                         name=group_name,
                         type=DimensionGroupType(group_values.get("type", "time")),
                         sql=group_values.get("sql"),
                         description=group_values.get("description"),
                         timeframes=group_values.get("timeframes"),
+                        datatype=group_values.get("datatype"),
+                        label=group_values.get("label"),
+                        convert_tz=group_values.get("convert_tz", True),
+                        intervals=group_values.get("intervals"),
+                        additional_params={
+                            key: value for key, value in group_values.items() if key not in known_params
+                        },
                     )
                     lookml_view.add_dimension_group(group_obj)
 

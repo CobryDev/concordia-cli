@@ -132,8 +132,7 @@ class TestLookMLViewGenerator:
 
     def test_get_view_name_with_character_replacements(self, sample_config):
         """View name generation should apply configured character replacements."""
-        sample_config.model_rules.naming_conventions.character_replacements = {
-            ":": "_"}
+        sample_config.model_rules.naming_conventions.character_replacements = {":": "_"}
         generator = LookMLViewGenerator(sample_config)
 
         assert generator._get_view_name("users:2024") == "users_2024"
@@ -165,8 +164,7 @@ class TestLookMLViewGenerator:
 
     def test_generate_dimension_with_replacement_mapping(self, sample_config):
         """Dimension generation should apply configured character replacements."""
-        sample_config.model_rules.naming_conventions.character_replacements = {
-            ":": "_"}
+        sample_config.model_rules.naming_conventions.character_replacements = {":": "_"}
 
         column_with_colon = ColumnMetadata(
             name="user:id",
@@ -230,6 +228,7 @@ class TestLookMLViewGenerator:
         assert "raw" in dim_group["timeframes"]
         assert "time" in dim_group["timeframes"]
         assert "date" in dim_group["timeframes"]
+        assert dim_group["datatype"] == "timestamp"
 
     def test_generate_dimension_group_date_type(self, sample_config):
         """Test dimension group generation for DATE column."""
@@ -254,6 +253,8 @@ class TestLookMLViewGenerator:
         assert "date" in dim_group["timeframes"]
         # Should not have 'time' timeframe for DATE type
         assert "time" not in dim_group["timeframes"]
+        # DATE columns must include datatype: date to avoid Looker type mismatch
+        assert dim_group["datatype"] == "date"
 
     def test_generate_dimension_group_non_time_type(self, sample_config, sample_column_string):
         """Test dimension group generation returns None for non-time types."""
@@ -270,33 +271,26 @@ class TestLookMLViewGenerator:
 
         # Time types
         assert (
-            generator._is_time_dimension(ColumnMetadata(
-                name="test", type="TIMESTAMP", standardized_type="TIMESTAMP"))
+            generator._is_time_dimension(ColumnMetadata(name="test", type="TIMESTAMP", standardized_type="TIMESTAMP"))
             is True
         )
         assert (
-            generator._is_time_dimension(ColumnMetadata(
-                name="test", type="DATETIME", standardized_type="DATETIME"))
+            generator._is_time_dimension(ColumnMetadata(name="test", type="DATETIME", standardized_type="DATETIME"))
             is True
         )
-        assert generator._is_time_dimension(ColumnMetadata(
-            name="test", type="DATE", standardized_type="DATE")) is True
-        assert generator._is_time_dimension(ColumnMetadata(
-            name="test", type="TIME", standardized_type="TIME")) is True
+        assert generator._is_time_dimension(ColumnMetadata(name="test", type="DATE", standardized_type="DATE")) is True
+        assert generator._is_time_dimension(ColumnMetadata(name="test", type="TIME", standardized_type="TIME")) is True
 
         # Non-time types
         assert (
-            generator._is_time_dimension(ColumnMetadata(
-                name="test", type="STRING", standardized_type="STRING"))
+            generator._is_time_dimension(ColumnMetadata(name="test", type="STRING", standardized_type="STRING"))
             is False
         )
         assert (
-            generator._is_time_dimension(ColumnMetadata(
-                name="test", type="INTEGER", standardized_type="INTEGER"))
+            generator._is_time_dimension(ColumnMetadata(name="test", type="INTEGER", standardized_type="INTEGER"))
             is False
         )
-        assert generator._is_time_dimension(ColumnMetadata(
-            name="test", type="BOOL", standardized_type="BOOL")) is False
+        assert generator._is_time_dimension(ColumnMetadata(name="test", type="BOOL", standardized_type="BOOL")) is False
 
     def test_find_type_mapping(self, sample_config):
         """Test type mapping lookup."""
@@ -473,16 +467,22 @@ class TestLookMLViewGenerator:
             assert dim_group["sql"] == f"${{TABLE}}.test_{bq_type.lower()}_timestamp"
 
     @pytest.mark.parametrize(
-        "bq_type,expected_timeframes",
+        "bq_type,expected_timeframes,expected_datatype",
         [
-            ("TIMESTAMP", ["raw", "time", "date",
-             "week", "month", "quarter", "year"]),
-            ("DATETIME", ["raw", "time", "date",
-             "week", "month", "quarter", "year"]),
-            ("DATE", ["raw", "date", "week", "month", "quarter", "year"]),
+            (
+                "TIMESTAMP",
+                ["raw", "time", "date", "week", "month", "quarter", "year"],
+                "timestamp",
+            ),
+            (
+                "DATETIME",
+                ["raw", "time", "date", "week", "month", "quarter", "year"],
+                "datetime",
+            ),
+            ("DATE", ["raw", "date", "week", "month", "quarter", "year"], "date"),
         ],
     )
-    def test_dimension_group_timeframes_by_type(self, sample_config, bq_type, expected_timeframes):
+    def test_dimension_group_timeframes_by_type(self, sample_config, bq_type, expected_timeframes, expected_datatype):
         """Test that different time types generate appropriate timeframes."""
         generator = LookMLViewGenerator(sample_config)
 
@@ -504,6 +504,8 @@ class TestLookMLViewGenerator:
         dim_group = result[dim_group_name]
         assert dim_group["type"] == "time"
         assert dim_group["timeframes"] == expected_timeframes
+
+        assert dim_group["datatype"] == expected_datatype
 
     @pytest.mark.parametrize(
         "column_name,expected_group_name",
@@ -599,9 +601,36 @@ class TestLookMLViewGenerator:
         assert dim_group["description"] == "Event datetime"
 
         # DATETIME should have time and date timeframes
-        expected_timeframes = ["raw", "time", "date",
-                               "week", "month", "quarter", "year"]
+        expected_timeframes = ["raw", "time", "date", "week", "month", "quarter", "year"]
         assert dim_group["timeframes"] == expected_timeframes
+        assert dim_group["datatype"] == "datetime"
+
+    def test_dimension_group_applies_configured_parameters(self, sample_config):
+        """Configured dimension-group parameters should override defaults."""
+        timestamp_mapping = sample_config.model_rules.get_type_mapping_for_bq_type("TIMESTAMP")
+        assert timestamp_mapping is not None
+        timestamp_mapping.lookml_params = LookMLParams(
+            type="time",
+            datatype="timestamp",
+            timeframes="[raw, date, month]",
+            convert_tz=False,
+            label="Configured timestamp",
+        )
+
+        generator = LookMLViewGenerator(sample_config)
+        column = ColumnMetadata(
+            name="recorded_at",
+            type="TIMESTAMP",
+            standardized_type="TIMESTAMP",
+        )
+
+        result = generator._generate_dimension_group(column)
+
+        assert result is not None
+        dim_group = result["recorded"]
+        assert dim_group["timeframes"] == ["raw", "date", "month"]
+        assert dim_group["convert_tz"] is False
+        assert dim_group["label"] == "Configured timestamp"
 
     def test_time_dimension_identification_comprehensive(self, sample_config):
         """Test comprehensive time dimension identification for all time types."""
@@ -615,8 +644,7 @@ class TestLookMLViewGenerator:
                 type=time_type,
                 standardized_type=time_type,
             )
-            assert generator._is_time_dimension(
-                column) is True, f"{time_type} should be identified as time dimension"
+            assert generator._is_time_dimension(column) is True, f"{time_type} should be identified as time dimension"
 
         # Test non-time types
         non_time_types = ["STRING", "INTEGER", "FLOAT64", "BOOL", "GEOGRAPHY"]
@@ -686,8 +714,7 @@ class TestLookMLDimensionGenerator:
         """Test basic case dimension generation."""
         from actions.models.metadata import ColumnMetadata
 
-        column = ColumnMetadata(
-            name="status", type="STRING", standardized_type="STRING")
+        column = ColumnMetadata(name="status", type="STRING", standardized_type="STRING")
 
         case_logic = {
             "name": "status_category",
@@ -715,11 +742,9 @@ class TestLookMLDimensionGenerator:
         """Test case dimension generation with default name."""
         from actions.models.metadata import ColumnMetadata
 
-        column = ColumnMetadata(
-            name="priority", type="INTEGER", standardized_type="INTEGER")
+        column = ColumnMetadata(name="priority", type="INTEGER", standardized_type="INTEGER")
 
-        case_logic = {"conditions": [
-            {"condition": "${TABLE}.priority > 5", "value": "High"}]}
+        case_logic = {"conditions": [{"condition": "${TABLE}.priority > 5", "value": "High"}]}
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_case_dimension(column, case_logic)
@@ -753,8 +778,7 @@ class TestLookMLDimensionGenerator:
         """Test yes/no dimension generation for numeric column."""
         from actions.models.metadata import ColumnMetadata
 
-        numeric_column = ColumnMetadata(
-            name="login_count", type="INTEGER", standardized_type="INTEGER")
+        numeric_column = ColumnMetadata(name="login_count", type="INTEGER", standardized_type="INTEGER")
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_yesno_dimension(numeric_column)
@@ -769,8 +793,7 @@ class TestLookMLDimensionGenerator:
         """Test yes/no dimension generation without description."""
         from actions.models.metadata import ColumnMetadata
 
-        column = ColumnMetadata(
-            name="has_orders", type="INTEGER", standardized_type="INTEGER")
+        column = ColumnMetadata(name="has_orders", type="INTEGER", standardized_type="INTEGER")
 
         generator = LookMLDimensionGenerator(sample_config)
         result = generator.generate_yesno_dimension(column)

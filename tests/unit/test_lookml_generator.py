@@ -208,6 +208,42 @@ class TestLookMLGenerator:
         assert "test-project.dataset2.order_items" in str(error)
         assert "character_replacements" in str(error)
 
+    def test_generate_view_preserves_dimension_group_parameters(self):
+        """Configured dimension-group parameters should survive model conversion."""
+        self.config.model_rules.type_mapping.append(
+            TypeMapping(
+                bq_type="DATE",
+                lookml_type="dimension_group",
+                lookml_params=LookMLParams(
+                    type="time",
+                    datatype="date",
+                    timeframes="[raw, date, month]",
+                    label="Order date",
+                    hidden="yes",
+                ),
+            )
+        )
+        table = TableMetadata(
+            table_id="orders",
+            dataset_id="test",
+            project_id="test-project",
+            columns=[
+                ColumnMetadata(
+                    name="order_date",
+                    type="DATE",
+                    standardized_type="DATE",
+                )
+            ],
+        )
+
+        view = LookMLGenerator(self.config).generate_view_for_table_metadata(table)
+        dimension_group = view.to_dict()["view"][0]["dimension_group"][0]
+
+        assert dimension_group["datatype"] == "date"
+        assert dimension_group["timeframes"] == ["raw", "date", "month"]
+        assert dimension_group["label"] == "Order date"
+        assert dimension_group["hidden"] == "yes"
+
 
 class TestLookMLFileWriter:
     """Test LookML file writer functionality."""

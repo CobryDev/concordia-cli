@@ -12,8 +12,49 @@ import click
 from ..models.config import ConcordiaConfig, TypeMapping
 from ..models.lookml import Dimension, DimensionGroup, DimensionGroupType, DimensionType, LookMLView
 from ..models.metadata import ColumnMetadata, TableMetadata
-from .field_utils import FieldIdentifier
 from ..utils.lookml_naming import LookMLNameValidator
+from .field_utils import FieldIdentifier
+
+TEMPORAL_DIMENSION_GROUP_DEFAULTS = {
+    "TIMESTAMP": {
+        "datatype": "timestamp",
+        "timeframes": ["raw", "time", "date", "week", "month", "quarter", "year"],
+    },
+    "DATETIME": {
+        "datatype": "datetime",
+        "timeframes": ["raw", "time", "date", "week", "month", "quarter", "year"],
+    },
+    "DATE": {
+        "datatype": "date",
+        "timeframes": ["raw", "date", "week", "month", "quarter", "year"],
+    },
+}
+
+
+def _mapping_params(type_mapping: Optional[TypeMapping]) -> dict[str, Any]:
+    """Return configured LookML parameters without unset values."""
+    if type_mapping is None or not type_mapping.lookml_params:
+        return {}
+
+    params = type_mapping.lookml_params
+    if hasattr(params, "model_dump"):
+        return params.model_dump(exclude_none=True)
+    if hasattr(params, "dict"):
+        return params.dict(exclude_none=True)
+    if isinstance(params, dict):
+        return {key: value for key, value in params.items() if value is not None}
+    return {}
+
+
+def _normalize_timeframes(value: Any) -> Any:
+    """Convert configured timeframe strings to the list expected by lkml."""
+    if not isinstance(value, str):
+        return value
+
+    value = value.strip()
+    if value.startswith("[") and value.endswith("]"):
+        value = value[1:-1]
+    return [timeframe.strip().strip("\"'") for timeframe in value.split(",") if timeframe.strip()]
 
 
 class LookMLViewGenerator:
@@ -200,14 +241,8 @@ class LookMLViewGenerator:
         column_name = column.name
         column_type = column.type
 
-        # Determine timeframes based on column type
-        if column_type in ["TIMESTAMP", "DATETIME"]:
-            timeframes = ["raw", "time", "date", "week", "month", "quarter", "year"]
-            dimension_type = "time"
-        elif column_type == "DATE":
-            timeframes = ["raw", "date", "week", "month", "quarter", "year"]
-            dimension_type = "time"
-        else:
+        defaults = TEMPORAL_DIMENSION_GROUP_DEFAULTS.get(column_type)
+        if defaults is None:
             return None
 
         # Remove suffix if it's a timestamp field
@@ -219,11 +254,22 @@ class LookMLViewGenerator:
 
         dimension_group_dict = {
             group_name: {
-                "type": dimension_type,
-                "timeframes": timeframes,
+                "type": "time",
+                "datatype": defaults["datatype"],
+                "timeframes": defaults["timeframes"],
                 "sql": f"${{TABLE}}.{column_name}",
             }
         }
+
+        # Apply dimension-group configuration just as regular dimensions do.
+        type_mapping = self._find_type_mapping(column_type)
+        if type_mapping and type_mapping.lookml_type == "dimension_group":
+            for param, value in _mapping_params(type_mapping).items():
+                if param == "sql":
+                    continue
+                if param == "timeframes":
+                    value = _normalize_timeframes(value)
+                dimension_group_dict[group_name][param] = value
 
         # Add description if available
         if column.description:
@@ -432,19 +478,35 @@ class LookMLDimensionGenerator:
 
     def _generate_dimension_group_pydantic(self, column: ColumnMetadata) -> Optional[DimensionGroup]:
         """Generate a DimensionGroup object from time column metadata."""
-        if column.standardized_type == "TIMESTAMP":
-            timeframes = ["raw", "time", "date", "week", "month", "quarter", "year"]
-        elif column.standardized_type == "DATE":
-            timeframes = ["date", "week", "month", "quarter", "year"]
-        else:
-            timeframes = ["raw", "date"]
+        defaults = TEMPORAL_DIMENSION_GROUP_DEFAULTS.get(column.standardized_type)
+        if defaults is None:
+            return None
+
+        params: dict[str, Any] = {
+            "type": "time",
+            "datatype": defaults["datatype"],
+            "timeframes": defaults["timeframes"],
+        }
+        type_mapping = self.model_rules.get_type_mapping_for_bq_type(column.type)
+        if type_mapping and type_mapping.lookml_type == "dimension_group":
+            for param, value in _mapping_params(type_mapping).items():
+                if param != "sql":
+                    params[param] = _normalize_timeframes(value) if param == "timeframes" else value
+
+        known_params = {"type", "datatype", "timeframes", "label", "convert_tz", "intervals"}
+        additional_params = {key: value for key, value in params.items() if key not in known_params}
 
         return DimensionGroup(
             name=self.name_validator.sanitize(column.name, "dimension group"),
-            type=DimensionGroupType.TIME,
+            type=DimensionGroupType(params["type"]),
             sql=f"${{TABLE}}.{column.name}",
             description=column.description,
-            timeframes=timeframes,
+            timeframes=params["timeframes"],
+            datatype=params["datatype"],
+            label=params.get("label"),
+            convert_tz=params.get("convert_tz", True),
+            intervals=params.get("intervals"),
+            additional_params=additional_params,
         )
 
     def _get_view_name(self, table_id: str) -> str:
