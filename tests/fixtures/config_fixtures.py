@@ -39,13 +39,27 @@ def sample_model_rules() -> ModelRules:
                 lookml_type="dimension_group",
                 lookml_params=LookMLParams(
                     type="time",
+                    datatype="timestamp",
+                    timeframes="[raw, time, date, week, month, quarter, year]",
+                ),
+            ),
+            TypeMapping(
+                bq_type="DATETIME",
+                lookml_type="dimension_group",
+                lookml_params=LookMLParams(
+                    type="time",
+                    datatype="datetime",
                     timeframes="[raw, time, date, week, month, quarter, year]",
                 ),
             ),
             TypeMapping(
                 bq_type="DATE",
                 lookml_type="dimension_group",
-                lookml_params=LookMLParams(type="time", timeframes="[date, week, month, quarter, year]"),
+                lookml_params=LookMLParams(
+                    type="time",
+                    datatype="date",
+                    timeframes="[raw, date, week, month, quarter, year]",
+                ),
             ),
             TypeMapping(
                 bq_type="BOOL",

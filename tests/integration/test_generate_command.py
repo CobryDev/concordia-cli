@@ -292,8 +292,8 @@ class TestGenerateCommandIntegration:
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")
     @patch("actions.looker.generate.get_bigquery_location")
-    def test_generate_command_no_tables_found(self, mock_location, mock_creds, mock_bq_client):
-        """Test generate command when no tables are found."""
+    def test_generate_command_no_bigquery_objects_found(self, mock_location, mock_creds, mock_bq_client):
+        """Test generate command when no BigQuery objects are found."""
         mock_creds.return_value = (Mock(), "test-project")
         mock_location.return_value = "US"
 
@@ -306,7 +306,7 @@ class TestGenerateCommandIntegration:
         result = self.runner.invoke(cli, ["looker", "generate"])
 
         assert result.exit_code == 0
-        assert "No tables found" in result.output
+        assert "No BigQuery objects found" in result.output
 
     @patch("actions.looker.generate.BigQueryClient")
     @patch("actions.looker.generate.get_bigquery_credentials")

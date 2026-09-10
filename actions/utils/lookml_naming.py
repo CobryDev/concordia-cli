@@ -44,8 +44,7 @@ class LookMLNameValidator:
             raise ValueError(f"{context.capitalize()} name cannot be empty")
 
         if not cls.allowed_pattern.match(candidate):
-            invalid_chars = sorted(
-                {ch for ch in candidate if not (ch.isalnum() or ch == "_")})
+            invalid_chars = sorted({ch for ch in candidate if not (ch.isalnum() or ch == "_")})
             if invalid_chars:
                 invalid_display = "', '".join(invalid_chars)
                 detail = f"invalid character(s): '{invalid_display}'"

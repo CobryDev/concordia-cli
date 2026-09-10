@@ -172,6 +172,7 @@ class TestGenerateConcordiaConfig:
         assert timestamp_mapping["lookml_type"] == "dimension_group"
         params = timestamp_mapping["lookml_params"]
         assert params["type"] == "time"
+        assert params["datatype"] == "timestamp"
         assert "raw" in params["timeframes"]
         assert "time" in params["timeframes"]
         assert "date" in params["timeframes"]
@@ -187,9 +188,22 @@ class TestGenerateConcordiaConfig:
         assert date_mapping["lookml_type"] == "dimension_group"
         params = date_mapping["lookml_params"]
         assert params["type"] == "time"
+        assert params["datatype"] == "date"
         # DATE should not have 'time' timeframe
         assert "time" not in params["timeframes"]
         assert "date" in params["timeframes"]
+
+    def test_datetime_type_mapping_details(self):
+        """Test DATETIME type mapping has the correct LookML datatype."""
+        config = generate_concordia_config(None, None)
+        type_mapping = config["model_rules"]["type_mapping"]
+
+        datetime_mapping = next(m for m in type_mapping if m["bq_type"] == "DATETIME")
+
+        assert datetime_mapping["lookml_type"] == "dimension_group"
+        params = datetime_mapping["lookml_params"]
+        assert params["type"] == "time"
+        assert params["datatype"] == "datetime"
 
     def test_string_type_mapping_details(self):
         """Test STRING type mapping has correct LookML configuration."""
