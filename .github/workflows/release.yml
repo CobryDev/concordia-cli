@@ -22,9 +22,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Add uv to the PATH
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip sync requirements.txt requirements-dev.txt
+          uv pip sync --system requirements-combined.lock
 
       - name: Run comprehensive test suite
         run: |
